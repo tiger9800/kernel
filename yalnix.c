@@ -94,7 +94,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         new_entry.uprot = PROT_NONE;
         new_entry.kprot = PROT_READ|PROT_EXEC;
         new_entry.valid = 1;
-        region1[curr_page - 512] = new_entry;
+        region1[curr_page%PAGE_TABLE_LEN] = new_entry;
         printf("Text VPN: %i\n", curr_page);
         curr_page++;
     }
@@ -109,7 +109,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         new_entry.uprot = PROT_NONE;
         new_entry.kprot = PROT_READ|PROT_WRITE;
         new_entry.valid = 1;
-        region1[curr_page-512] = new_entry;
+        region1[curr_page%PAGE_TABLE_LEN] = new_entry;
         curr_page++;
     }
 
