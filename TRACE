@@ -1,2 +1,2 @@
 
-ABORT: KernelStart returned with bogus info pc of 0x1a in ExceptionInfo!
+ABORT: Exception 3 occurred but vector of (nil) is NULL

@@ -13,20 +13,25 @@ struct pte region1[PAGE_TABLE_LEN];
 
 struct PCB {
     pid_t pid;
-    // void * pc;
-    // void * sp;
-    void * region0_addr;
-}  
+    SavedContext ctx;
+    void *process_pt;
+};
 
 struct physical_frame {
     int pfn;
     struct physical_frame *next;
 };
-struct physical_frame *free_pages_head = NULL;
 
-struc
+struct free_pages {
+    int count;
+    struct physical_frame *head;
+};
+
+struct free_pages free_ll = {0, NULL};
 
 
+
+static void idle_process();
 void trap_kernel_handler(ExceptionInfo *info);
 void trap_clock_handler(ExceptionInfo *info);
 void trap_illegal_handler(ExceptionInfo *info);
@@ -38,7 +43,7 @@ void trap_tty_receive_handler(ExceptionInfo *info);
 static void getFreePages(int startPage, int endPage) {
     //first page that we can accessed
     // int pageNum = 0;
-    struct physical_frame* prevAddr = free_pages_head;
+    struct physical_frame* prevAddr = free_ll.head;
     int curr_page = startPage;
     while (curr_page < endPage) {
         struct physical_frame currFrame;
@@ -48,9 +53,12 @@ static void getFreePages(int startPage, int endPage) {
         *addr = currFrame;
         prevAddr = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
         curr_page++;
+        
     } 
-    free_pages_head = prevAddr;
+    free_ll.head = prevAddr;
 }
+
+
 
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
 
@@ -125,7 +133,8 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         printf("VPN: %i\n",curr_page);
         curr_page++;
     }
-    
+    //MAKE VALID BITS 0 FOR UNUSED
+
 
     //set pc to idle
 
@@ -136,9 +145,19 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     WriteRegister(REG_VM_ENABLE, (RCS421RegVal)1);
 
     
-    
+    info->pc = idle_process;
     //enable virtual
+    static char myArr[200];
+    info->sp = myArr;
+    info->psr = 1;
+}
 
+
+
+static void idle_process() {
+    while(1) {
+        Pause();
+    }
 }
 
 //handler
