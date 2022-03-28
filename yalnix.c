@@ -8,14 +8,18 @@
 #include <sys/types.h>
 
 void (*interruptHandlers[TRAP_VECTOR_SIZE])(ExceptionInfo *);
-struct pte region0[PAGE_TABLE_LEN];
+struct pte idle_region0[PAGE_TABLE_LEN];
+struct pte init_regio0[PAGE_TABLE_LEN];
 struct pte region1[PAGE_TABLE_LEN];
 
 struct PCB {
     pid_t pid;
     SavedContext ctx;
-    void *process_pt;
+    void *page_table0;
 };
+
+struct idle_PCB = {0, NULL, idle_region0};
+struct init_PCB = {1, NULL, init_regio0};
 
 struct physical_frame {
     int pfn;
@@ -29,7 +33,9 @@ struct free_pages {
 
 struct free_pages free_ll = {0, NULL};
 
-
+struct PCB *activeQ;
+struct PCB *readyQ;
+struct PCB *blockedQ;
 
 static void idle_process();
 void trap_kernel_handler(ExceptionInfo *info);
@@ -150,6 +156,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     static char myArr[200];
     info->sp = myArr;
     info->psr = 1;
+
 }
 
 
