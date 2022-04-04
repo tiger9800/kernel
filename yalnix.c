@@ -8,9 +8,8 @@
 #include <sys/types.h>
 
 void (*interruptHandlers[TRAP_VECTOR_SIZE])(ExceptionInfo *);
-struct pte idle_region0[PAGE_TABLE_LEN];
-struct pte init_regio0[PAGE_TABLE_LEN];
 struct pte region1[PAGE_TABLE_LEN];
+struct pte idle_region0[PAGE_TABLE_LEN];//idle always exists, so we can define it here
 
 struct PCB {
     pid_t pid;
@@ -18,8 +17,8 @@ struct PCB {
     void *page_table0;
 };
 
-struct idle_PCB = {0, NULL, idle_region0};
-struct init_PCB = {1, NULL, init_regio0};
+struct PCB idle_PCB = {0, NULL, idle_region0};
+struct PCB init_PCB = {1, NULL, init_regio0};
 
 struct physical_frame {
     int pfn;
@@ -59,7 +58,7 @@ static void getFreePages(int startPage, int endPage) {
         *addr = currFrame;
         prevAddr = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
         curr_page++;
-        
+        free_ll.count++;
     } 
     free_ll.head = prevAddr;
 }
@@ -99,7 +98,6 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     WriteRegister(REG_VECTOR_BASE, (RCS421RegVal)interruptHandlers);
 
     //put into region 1 page table
-
     //first put text into the region 1 table
     int curr_page = VMEM_1_BASE >> PAGESHIFT;
     while(curr_page < (intptr_t)(&_etext) >> PAGESHIFT) {
@@ -109,12 +107,12 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         new_entry.kprot = PROT_READ|PROT_EXEC;
         new_entry.valid = 1;
         region1[curr_page%PAGE_TABLE_LEN] = new_entry;
-        printf("Text VPN: %i\n", curr_page);
+        //printf("Text VPN: %i\n", curr_page);
         curr_page++;
     }
 
     //data/bss
-    printf("Text end address: %lu\n", (uintptr_t)(&_etext) >> PAGESHIFT);
+    //printf("Text end address: %lu\n", (uintptr_t)(&_etext) >> PAGESHIFT);
     
     curr_page = (uintptr_t)(&_etext) >> PAGESHIFT;
     while(curr_page < (UP_TO_PAGE(orig_brk) >> PAGESHIFT)) {
@@ -136,10 +134,11 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         new_entry.kprot = PROT_READ|PROT_WRITE;
         new_entry.valid = 1;
         region0[curr_page] = new_entry;
-        printf("VPN: %i\n",curr_page);
+        //printf("VPN: %i\n",curr_page);
         curr_page++;
     }
     //MAKE VALID BITS 0 FOR UNUSED
+
 
 
     //set pc to idle
@@ -153,8 +152,8 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     
     info->pc = idle_process;
     //enable virtual
-    static char myArr[200];
-    info->sp = myArr;
+    //static char myArr[200];
+    info->sp = USER_STACK_LIMIT;
     info->psr = 1;
 
 }
@@ -211,7 +210,8 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
     Halt();
 }   
 
-int SetKernelBrk(void * var) {
-    (void)var;
+//Called when malloc is caled by the kernel.
+int SetKernelBrk(void * addr) {
+    (void)var;  
     return 0;
 }
