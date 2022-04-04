@@ -13,12 +13,12 @@ struct pte idle_region0[PAGE_TABLE_LEN];//idle always exists, so we can define i
 
 struct PCB {
     pid_t pid;
-    SavedContext ctx;
+    SavedContext* ctx;
     void *page_table0;
 };
 
 struct PCB idle_PCB = {0, NULL, idle_region0};
-struct PCB init_PCB = {1, NULL, init_regio0};
+//struct PCB init_PCB = {1, NULL, init_regio0};
 
 struct physical_frame {
     int pfn;
@@ -133,7 +133,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         new_entry.uprot = PROT_NONE;
         new_entry.kprot = PROT_READ|PROT_WRITE;
         new_entry.valid = 1;
-        region0[curr_page] = new_entry;
+        idle_region0[curr_page] = new_entry;
         //printf("VPN: %i\n",curr_page);
         curr_page++;
     }
@@ -143,7 +143,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 
     //set pc to idle
 
-    WriteRegister(REG_PTR0, (RCS421RegVal)region0);
+    WriteRegister(REG_PTR0, (RCS421RegVal)idle_region0);
 
     WriteRegister(REG_PTR1, (RCS421RegVal)region1);
 
@@ -153,7 +153,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     info->pc = idle_process;
     //enable virtual
     //static char myArr[200];
-    info->sp = USER_STACK_LIMIT;
+    info->sp = (void *)USER_STACK_LIMIT;
     info->psr = 1;
 
 }
@@ -212,6 +212,6 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
 
 //Called when malloc is caled by the kernel.
 int SetKernelBrk(void * addr) {
-    (void)var;  
+    (void)addr;  
     return 0;
 }
