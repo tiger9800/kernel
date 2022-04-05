@@ -1,2 +1,313 @@
+** Hardware level 10 tracing enabled **
+** Kernel   level 0 tracing enabled **
+Hardware Hardware revision Thu Mar 11 06:14:18 2021
+Hardware Booted '/storage-home/d/df21/COMP421/labs/lab2/kernel/yalnix'
+Hardware Setting hardware initialized flag
+Hardware done setting hardware initialized flag
+Hardware HwInitMemory: name '/tmp/mem15129.1649131105', PMemFile 4
+Hardware ## sbrk(0x0), curbrk 0xc134df8
+Hardware doing data/bss/heap phys mem write addr 0x20b000 size 16384 = 0x4000
+Hardware ## sbrk(0x0), curbrk 0xc134df8
+Hardware argcount 0, argsize 0, cp 0x1fffe8, cpp 0x1fffe0
+Hardware InitDisk: disk size 0, sectors 0.000000
+Hardware InitDisk: name '/clear/courses/comp421/pub/etc/yalnixdisk'
+Hardware socketpair 5 6
+Hardware InitDisk: DiskSocket 5, SOCKET_FD 3
+Hardware InitDisk: parent
+Hardware InitDisk: doing ready read: &ready 0xc12ab70
+Hardware Done with DiskInit
+Hardware calling sigaction: &newact 0x7fffffffdb50, &flags 0x7fffffffdb58, flags 0x18000004
+Hardware sigaction newact size 32
 
-ABORT: Exception 3 occurred but vector of (nil) is NULL
+Hardware SignalHandler 1: signum 11 si 0x100ffbf0 uc 0x100ffac0
+Hardware SignalHandler 1: sig 11 code 1, addr 0x421, pc 0xc10b688, sp 0x7fffffffdba0
+Hardware SignalHandler 1: signal_count 1
+Hardware TTYs disabled due to no DISPLAY environment variable.
+Hardware initial addr 0x421 pc 0xc10b688 sp 0x7fffffffdba0 psr 0x8000000000010202
+Hardware regs: rdi c123588 rsi b rdx 0
+Hardware       rcx 4c8 r8 0 r9 0
+Hardware initialized info regs[0] = 0x421
+Hardware initialized info regs[1] = 0xc123588
+Hardware initialized info regs[2] = 0xb
+Hardware initialized info regs[3] = 0x0
+Hardware initialized info regs[4] = 0x4c8
+Hardware initialized info regs[5] = 0x0
+Hardware initialized info regs[6] = 0x0
+Hardware initialized info regs[7] = 0x0
+Hardware SignalHandlerWork: info 0x100ff9f0 signum 11 si 0x100ffbf0 uc 0x100ffac0
+Hardware signo 11, code 1, addr 0x421
+Hardware sp 0x7fffffffdba0 pc 0xc10b688 bp 0x7fffffffdba0 ax 0x421
+Hardware inside SignalHandlerWork info addr 0x421, pc 0xc10b688, sp 0x7fffffffdba0
+Hardware LoadPageInTLB: vpn 49419, addr 0xc10b000, mode 0x10421421
+Hardware LoadPageInTLB: returning since VM not enabled
+Hardware >>>> YALNIX BOOT
+Hardware args: rdi c123588 rsi b rdx 0
+Hardware       rcx 4c8 r8 0 r9 0
+Hardware original return pc 0xc10b688
+Hardware YALNIX BOOT!
+Hardware Yalnix trap orig pc (nil)
+Hardware Yalnix trap new pc 0x1a
+Hardware Back from SignalHandlerWork: vector -1
+Hardware Calling SwitchStacks for KernelStart 0x20018a
+Hardware args: &fake_info 0x100ff9f0, PmemSize 0x400000, CmdArgs 0x1fffe0
+Hardware Calling KernelStart
+Hardware CallVector: func 0x20018a, info 0x100ff9f0, SavedSP 0x100ff990
+Hardware CallVector: arg1 0x400000, arg2 0x20f000
+Hardware CallVector: arg1 0x1fffe0, arg2 0x1ff990
+Hardware Done with ValidateKernelStack: error 0
+Hardware CallVector: calling func 0x20018a
+
+Hardware WriteRegister: REG_VECTOR_BASE <- 0x20e320
+Hardware NewVectorBase 0x20e320
+Hardware Vector TRAP_KERNEL       = 0x200572
+Hardware Vector TRAP_CLOCK        = 0x200597
+Hardware Vector TRAP_ILLEGAL      = 0x2005bc
+Hardware Vector TRAP_MEMORY       = 0x2005e1
+Hardware Vector TRAP_MATH         = 0x2008b2
+Hardware Vector TRAP_TTY_RECEIVE  = 0x2008d7
+Hardware Vector TRAP_TTY_TRANSMIT = 0x2008d7
+Hardware Vector TRAP_DISK         = (nil)
+Hardware Vector Trap 8            = (nil)
+Hardware Vector Trap 9            = (nil)
+Hardware Vector Trap 10           = (nil)
+Hardware Vector Trap 11           = (nil)
+Hardware Vector Trap 12           = (nil)
+Hardware Vector Trap 13           = (nil)
+Hardware Vector Trap 14           = (nil)
+Hardware Vector Trap 15           = (nil)
+Kernel   I am about to enable virtual memeory
+Hardware WriteRegister: REG_PTR0 <- 0x20d320
+Hardware NewPTR0 0x20d320 (current value is (nil))
+Hardware WriteRegister: REG_PTR1 <- 0x20db20
+Hardware NewPTR1 0x20db20 (current value is (nil))
+Hardware WriteRegister: REG_VM_ENABLE <- 0x1
+Hardware EnableVM: PTR0 0x20d320, PTR1 0x20db20
+Hardware ValidatePTRegion0 EnableVM: PTR0 0x20d320
+Hardware ValidatePTRegion1 EnableVM: PTR1 0x20db20
+Hardware EnableVM unmapping phys mem 0: addr (nil), size 0x1fc000
+Hardware msync((nil),2080768,MS_SYNC) status 4
+Hardware EnableVM unmapping phys mem 1: addr 0x20b000, size 0x1f5000
+Hardware Done with EnableVM
+Hardware EnableVM: Done with CompareMapsAndTLB
+
+Hardware SignalHandler 2: signum 11 si 0x102ffbf0 uc 0x102ffac0
+Hardware SignalHandler 2: sig 11 code 1, addr 0x20b030, pc 0x201c2f, sp 0x1ff7f0
+Hardware SignalHandler 2: signal_count 2
+Hardware SignalHandler 2: SIGSEGV might be TLB miss
+Hardware CheckMissedTLB: addr 0x20b030
+Hardware CheckMissedTLB: This is a TLB miss (0x102ff974)
+Hardware CheckMissedTLB: TLB mapping vpn 523, addr 0x20b030, prot 3, pfn 523
+Hardware TLB miss completed successfully (signal nesting 2)
+
+Hardware SignalHandler 2: signum 11 si 0x102ffbf0 uc 0x102ffac0
+Hardware SignalHandler 2: sig 11 code 1, addr 0x20e3a0, pc 0x201cd3, sp 0x1ff7f0
+Hardware SignalHandler 2: signal_count 3
+Hardware SignalHandler 2: SIGSEGV might be TLB miss
+Hardware CheckMissedTLB: addr 0x20e3a0
+Hardware CheckMissedTLB: This is a TLB miss (0x102ff974)
+Hardware CheckMissedTLB: TLB mapping vpn 526, addr 0x20e3a0, prot 3, pfn 526
+Hardware TLB miss completed successfully (signal nesting 2)
+
+Kernel   Enabled virtual memory
+Kernel   Here is addr of idle process 2098515
+Kernel   I'm done with the kernel start
+
+Hardware CallVector: back from func 0x20018a
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware 1 Back from SwitchStacks for KernelStart
+Hardware KernelStart returned with info pc 0x200553 sp 0x200000
+Hardware ValidatePTRegion0 After KernelStart: PTR0 0x20d320
+Hardware ValidatePTRegion1 After KernelStart: PTR1 0x20db20
+Hardware SignalHandler: unblocking SIGIO (and all signals).
+Hardware SignalHandler: forcing first SIGIO now
+Hardware SignalHandler: return pc 0x200553, sp 0x200000
+Hardware Returning off the bottom of SignalHandler 1
+
+Hardware SignalHandler 1: signum 29 si 0x100ffbf0 uc 0x100ffac0
+Hardware SignalHandler 1: sig 29 code 0, addr 0x42d700003b19, pc 0x200553, sp 0x200000
+Hardware SignalHandler 1: signal_count 4
+Hardware initial addr 0x42d700003b19 pc 0x200553 sp 0x200000 psr 0x10202
+Hardware regs: rdi 0 rsi 0 rdx 0
+Hardware       rcx 0 r8 0 r9 0
+Hardware initialized info regs[0] = 0x0
+Hardware initialized info regs[1] = 0x0
+Hardware initialized info regs[2] = 0x0
+Hardware initialized info regs[3] = 0x0
+Hardware initialized info regs[4] = 0x0
+Hardware initialized info regs[5] = 0x0
+Hardware initialized info regs[6] = 0x0
+Hardware initialized info regs[7] = 0x0
+Hardware SignalHandlerWork: info 0x100ff9f0 signum 29 si 0x100ffbf0 uc 0x100ffac0
+Hardware signo 29, code 0, addr 0x42d700003b19
+Hardware sp 0x200000 pc 0x200553 bp 0x7fffffffdba0 ax (nil)
+Hardware inside SignalHandlerWork info addr 0x42d700003b19, pc 0x200553, sp 0x200000
+Hardware Back from SignalHandlerWork: vector -2
+
+Hardware SignalHandler 1: signum 11 si 0x100ffbf0 uc 0x100ffac0
+Hardware SignalHandler 1: sig 11 code 2, addr 0x200553, pc 0x200553, sp 0x200000
+Hardware SignalHandler 1: signal_count 5
+Hardware initial addr 0x200553 pc 0x200553 sp 0x200000 psr 0x10202
+Hardware regs: rdi 0 rsi 0 rdx 0
+Hardware       rcx 0 r8 0 r9 0
+Hardware initialized info regs[0] = 0x0
+Hardware initialized info regs[1] = 0x0
+Hardware initialized info regs[2] = 0x0
+Hardware initialized info regs[3] = 0x0
+Hardware initialized info regs[4] = 0x0
+Hardware initialized info regs[5] = 0x0
+Hardware initialized info regs[6] = 0x0
+Hardware initialized info regs[7] = 0x0
+Hardware SignalHandlerWork: info 0x100ff9f0 signum 11 si 0x100ffbf0 uc 0x100ffac0
+Hardware signo 11, code 2, addr 0x200553
+Hardware sp 0x200000 pc 0x200553 bp 0x7fffffffdba0 ax (nil)
+Hardware inside SignalHandlerWork info addr 0x200553, pc 0x200553, sp 0x200000
+Hardware Back from SignalHandlerWork: vector 3
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware About to call SwitchStacks for regular vector 3 = TRAP_MEMORY
+Hardware VectorBase 0x20e320, vvb 0x10400320
+Hardware Calling SwitchStacks for vector 3, VectorBase = 0x20e320
+Hardware handler 0x2005e1
+Hardware before SwitchStacks fake_info addr 0x200553, pc 0x200553, sp 0x200000
+Hardware SignalHandler: Copying to kernel stack pfns 508 509 510 511
+Hardware ValidatePTRegion0 Before Vector: PTR0 0x20d320
+Hardware ValidatePTRegion1 Before Vector: PTR1 0x20db20
+Hardware Calling TRAP_MEMORY handler 0x2005e1 with info pc 0x200553 sp 0x200000
+Hardware CallVector: func 0x2005e1, info 0x100ff9f0, SavedSP 0x100ff990
+Hardware CallVector: arg1 0x100ff9f0, arg2 0x1
+Hardware CallVector: arg1 0xfefefefefefefeff, arg2 0x1ff990
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware Done with ValidateKernelStack: error 0
+Hardware CallVector: calling func 0x2005e1
+
+Kernel   trap_memory_handler, addr:0x200553
+Kernel   trap_memory_handler, code:2
+Kernel   trap_memory_handler, pc:2098515
+Kernel   trap_memory_handler, sp:2097152
+Kernel   head value: 0xffffffff
+Kernel   head next addr: 0xffffffffffffffff
+
+Hardware CallVector: back from func 0x2005e1
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware 1 Back from SwitchStacks TRAP_MEMORY
+Hardware TRAP_MEMORY returned with info pc 0x200553 sp 0x200000
+Hardware ValidatePTRegion0 After Vector: PTR0 0x20d320
+Hardware ValidatePTRegion1 After Vector: PTR1 0x20db20
+Hardware SignalHandler: return pc 0x200553, sp 0x200000
+Hardware Returning off the bottom of SignalHandler 1
+
+Hardware SignalHandler 1: signum 11 si 0x100ffbf0 uc 0x100ffac0
+Hardware SignalHandler 1: sig 11 code 2, addr 0x200553, pc 0x200553, sp 0x200000
+Hardware SignalHandler 1: signal_count 6
+Hardware initial addr 0x200553 pc 0x200553 sp 0x200000 psr 0x10202
+Hardware regs: rdi 0 rsi 0 rdx 0
+Hardware       rcx 0 r8 0 r9 0
+Hardware initialized info regs[0] = 0x0
+Hardware initialized info regs[1] = 0x0
+Hardware initialized info regs[2] = 0x0
+Hardware initialized info regs[3] = 0x0
+Hardware initialized info regs[4] = 0x0
+Hardware initialized info regs[5] = 0x0
+Hardware initialized info regs[6] = 0x0
+Hardware initialized info regs[7] = 0x0
+Hardware SignalHandlerWork: info 0x100ff9f0 signum 11 si 0x100ffbf0 uc 0x100ffac0
+Hardware signo 11, code 2, addr 0x200553
+Hardware sp 0x200000 pc 0x200553 bp 0x7fffffffdba0 ax (nil)
+Hardware inside SignalHandlerWork info addr 0x200553, pc 0x200553, sp 0x200000
+Hardware Back from SignalHandlerWork: vector 3
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware About to call SwitchStacks for regular vector 3 = TRAP_MEMORY
+Hardware VectorBase 0x20e320, vvb 0x10400320
+Hardware Calling SwitchStacks for vector 3, VectorBase = 0x20e320
+Hardware handler 0x2005e1
+Hardware before SwitchStacks fake_info addr 0x200553, pc 0x200553, sp 0x200000
+Hardware SignalHandler: Copying to kernel stack pfns 508 509 510 511
+Hardware ValidatePTRegion0 Before Vector: PTR0 0x20d320
+Hardware ValidatePTRegion1 Before Vector: PTR1 0x20db20
+Hardware Calling TRAP_MEMORY handler 0x2005e1 with info pc 0x200553 sp 0x200000
+Hardware CallVector: func 0x2005e1, info 0x100ff9f0, SavedSP 0x100ff990
+Hardware CallVector: arg1 0x100ff9f0, arg2 0x1
+Hardware CallVector: arg1 0xfefefefefefefeff, arg2 0x1ff990
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware Done with ValidateKernelStack: error 0
+Hardware CallVector: calling func 0x2005e1
+
+Kernel   trap_memory_handler, addr:0x200553
+Kernel   trap_memory_handler, code:2
+Kernel   trap_memory_handler, pc:2098515
+Kernel   trap_memory_handler, sp:2097152
+Kernel   head value: 0xffffffff
+Kernel   head next addr: 0xffffffffffffffff
+
+Hardware CallVector: back from func 0x2005e1
+Hardware LoadKernelStackInTLB
+Hardware LoadPageInTLB: vpn 508, addr 0x1fc000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 509, addr 0x1fd000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 510, addr 0x1fe000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware LoadPageInTLB: vpn 511, addr 0x1ff000, mode 0x10421421
+Hardware LoadPageInTLB: returning since already in TLB
+Hardware Done loading kernel stack TLB entries
+Hardware 1 Back from SwitchStacks TRAP_MEMORY
+Hardware TRAP_MEMORY returned with info pc 0x200553 sp 0x200000
+Hardware ValidatePTRegion0 After Vector: PTR0 0x20d320
+Hardware ValidatePTRegion1 After Vector: PTR1 0x20db20
+
+ABORT: After Vector: PTE for other vpn 1023 addr 0x3ff000 has illegal pfn 1048575
+Hardware Halt called
+Hardware ShutdownDisk: DiskReads 0, DiskWrites 0
