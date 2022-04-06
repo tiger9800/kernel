@@ -12,6 +12,7 @@
 
 #include <comp421/hardware.h>
 #include <comp421/loadinfo.h>
+#include <util.h>
 
 
 /*
@@ -186,17 +187,13 @@ LoadProgram(char *name, char **args, int numFreePages, void** pc, void** sp, str
     // >>>> memory page indicated by that PTE's pfn field.  Set all
     // >>>> of these PTEs to be no longer valid.
 
-    for(int i = 0; i < KERNEL_STACK_BASE >> PAGESHIFT) {
+    for(int i = VMEM_0_BASE; i < KERNEL_STACK_BASE >> PAGESHIFT) {
         if(region0[i].valid == 1) {//if valid then free
             //add to the free list, by making it point to head
-            struct physical_frame currFrame;
-            currFrame.pfn = region0[i].pfn;
-            currFrame.next = free_pages.head;
-            struct physical_frame *addr = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
-            *addr = currFrame;
-            prevAddr = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
-            *free_pages->count++;
+            //add free page to free_pages region
+            addFreePage(region0[i].pfn);
             region0[i].valid = 0;
+        
         }
     }
 

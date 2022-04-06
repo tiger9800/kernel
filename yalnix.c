@@ -21,7 +21,6 @@ struct PCB idle_PCB = {0, NULL, idle_region0};
 //struct PCB init_PCB = {1, NULL, init_regio0};
 
 struct physical_frame {
-    int pfn;
     struct physical_frame *next;
 };
 
@@ -44,17 +43,18 @@ void trap_memory_handler(ExceptionInfo *info);
 void trap_math_handler(ExceptionInfo *info);
 void trap_tty_transmit_handler(ExceptionInfo *info);
 void trap_tty_receive_handler(ExceptionInfo *info);
+void addFreePage(int pfn);
+static void * reservePage(int pfn);
+static void unReservePage();
+int getFreePage();
 
-static void getFreePages(int startPage, int endPage) {
+static void initFreePages(int startPage, int endPage) {
     //first page that we can accessed
     // int pageNum = 0;
     int curr_page = startPage;
     while (curr_page < endPage) {
         struct physical_frame* currFrame = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
-        currFrame->pfn = curr_page;
         currFrame->next = free_ll.head;
-        // struct physical_frame *addr = (struct physical_frame *)curr_page << PAGESHIFT);
-        // *addr = currFrame;
         free_ll.head = currFrame;
         curr_page++;
         free_ll.count++;
@@ -90,9 +90,9 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     //free pages are from VMEM_BASE to STACK_BASE anf from orig_brk to pmem_size
 
     
-    getFreePages(MEM_INVALID_PAGES, DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT);
+    initFreePages(MEM_INVALID_PAGES, DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT);
 
-    getFreePages(UP_TO_PAGE(orig_brk) >> PAGESHIFT, DOWN_TO_PAGE(pmem_size)>> PAGESHIFT);
+    initFreePages(UP_TO_PAGE(orig_brk) >> PAGESHIFT, DOWN_TO_PAGE(pmem_size)>> PAGESHIFT);
 
     WriteRegister(REG_VECTOR_BASE, (RCS421RegVal)interruptHandlers);
 
@@ -208,32 +208,32 @@ void trap_memory_handler(ExceptionInfo *info) {
     TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
     TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
     TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
-    region1[PAGE_TABLE_LEN - 1].valid = 1;
-    region1[PAGE_TABLE_LEN - 1].pfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
-    region1[PAGE_TABLE_LEN - 1].uprot = PROT_NONE;
-    region1[PAGE_TABLE_LEN - 1].kprot = PROT_READ|PROT_WRITE;
+    // region1[PAGE_TABLE_LEN - 1].valid = 1;
+    // region1[PAGE_TABLE_LEN - 1].pfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
+    // region1[PAGE_TABLE_LEN - 1].uprot = PROT_NONE;
+    // region1[PAGE_TABLE_LEN - 1].kprot = PROT_READ|PROT_WRITE;
 
-    if(info->addr >= (void *)VMEM_1_BASE) {
-        //create mapping
-        struct physical_frame *head = (struct physical_frame *)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
-        TracePrintf(0, "head value: %p\n", *head);
-        TracePrintf(0, "head next addr: %p\n", head->next);
-        free_ll.head = head->next;
-        free_ll.count--;
-        region1[(uintptr_t)info->addr>>PAGESHIFT].valid = 1;
-        region1[(uintptr_t)info->addr>>PAGESHIFT].pfn = head->pfn;
-        region1[(uintptr_t)info->addr>>PAGESHIFT].uprot = PROT_NONE;
-        region1[(uintptr_t)info->addr>>PAGESHIFT].kprot = PROT_READ|PROT_WRITE;
-    } else {
-        struct physical_frame *head = free_ll.head;
-        TracePrintf(0, "head addr: %p\n", head);
-        free_ll.head = head->next;
-        free_ll.count--;
-        idle_region0[(uintptr_t)info->addr >> PAGESHIFT].valid = 1;
-        idle_region0[(uintptr_t)info->addr >> PAGESHIFT].pfn = head->pfn;
-        idle_region0[(uintptr_t)info->addr >> PAGESHIFT].uprot = PROT_READ|PROT_WRITE;
-        idle_region0[(uintptr_t)info->addr >> PAGESHIFT].kprot = PROT_READ|PROT_WRITE;
-    }
+    // if(info->addr >= (void *)VMEM_1_BASE) {
+    //     //create mapping
+    //     struct physical_frame *head = (struct physical_frame *)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
+    //     TracePrintf(0, "head value: %p\n", *head);
+    //     TracePrintf(0, "head next addr: %p\n", head->next);
+    //     free_ll.head = head->next;
+    //     free_ll.count--;
+    //     region1[(uintptr_t)info->addr>>PAGESHIFT].valid = 1;
+    //     region1[(uintptr_t)info->addr>>PAGESHIFT].pfn = head->pfn;
+    //     region1[(uintptr_t)info->addr>>PAGESHIFT].uprot = PROT_NONE;
+    //     region1[(uintptr_t)info->addr>>PAGESHIFT].kprot = PROT_READ|PROT_WRITE;
+    // } else {
+    //     struct physical_frame *head = free_ll.head;
+    //     TracePrintf(0, "head addr: %p\n", head);
+    //     free_ll.head = head->next;
+    //     free_ll.count--;
+    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].valid = 1;
+    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].pfn = head->pfn;
+    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].uprot = PROT_READ|PROT_WRITE;
+    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].kprot = PROT_READ|PROT_WRITE;
+    //}
     //Halt();
 }
 
@@ -259,4 +259,39 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
 int SetKernelBrk(void * addr) {
     (void)addr;  
     return 0;
+}
+
+void addFreePage(int pfn) {
+
+    
+    struct physical_frame* currFrame = (struct physical_frame *)reservePage(pfn);
+    currFrame->next = free_ll.head;
+    free_ll.head = (void *)(uintptr_t)(pfn << PAGESHIFT);
+    free_ll.count++;
+    region1[PAGE_TABLE_LEN - 1].valid = 0;     
+}
+
+int getFreePage() {
+
+    int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
+
+    struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
+
+    free_ll.head = currFrame->next; 
+    free_ll.count--;
+    
+    unReservePage();
+    return resultPfn;
+}
+
+static void * reservePage(int pfn) {
+    region1[PAGE_TABLE_LEN - 1].valid = 1;
+    region1[PAGE_TABLE_LEN - 1].pfn = pfn;
+    region1[PAGE_TABLE_LEN - 1].uprot = PROT_NONE;
+    region1[PAGE_TABLE_LEN - 1].kprot = PROT_READ|PROT_WRITE;
+    return (void *)(uintptr_t)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
+}
+
+static void unReservePage() {
+    region1[PAGE_TABLE_LEN - 1].valid = 0;
 }
