@@ -1,2 +1,2 @@
-extern void addFreePage(int pfn);
+extern void addFreePage(struct pte* newPte);
 extern int getFreePage(); 

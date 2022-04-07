@@ -20,13 +20,13 @@ struct PCB {
 struct PCB idle_PCB = {0, NULL, idle_region0};
 //struct PCB init_PCB = {1, NULL, init_regio0};
 
-struct physical_frame {
-    struct physical_frame *next;
-};
+// struct physical_frame {
+//     struct physical_frame *next;
+// };
 
 struct free_pages {
     int count;
-    struct physical_frame *head;
+    uintptr_t head;
 };
 
 struct free_pages free_ll = {0, NULL};
@@ -43,8 +43,8 @@ void trap_memory_handler(ExceptionInfo *info);
 void trap_math_handler(ExceptionInfo *info);
 void trap_tty_transmit_handler(ExceptionInfo *info);
 void trap_tty_receive_handler(ExceptionInfo *info);
-void addFreePage(int pfn);
-static void * reservePage(int pfn);
+void addFreePage(struct pte* newPte);
+static uintptr_t reservePage(int pfn);
 static void unReservePage();
 int getFreePage();
 
@@ -53,8 +53,8 @@ static void initFreePages(int startPage, int endPage) {
     // int pageNum = 0;
     int curr_page = startPage;
     while (curr_page < endPage) {
-        struct physical_frame* currFrame = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
-        currFrame->next = free_ll.head;
+        uintptr_t currFrame = (uintptr_t)(curr_page << PAGESHIFT);
+        *currFrame = free_ll.head;
         free_ll.head = currFrame;
         curr_page++;
         free_ll.count++;
@@ -261,35 +261,31 @@ int SetKernelBrk(void * addr) {
     return 0;
 }
 
-void addFreePage(int pfn) {
-
-    
-    struct physical_frame* currFrame = (struct physical_frame *)reservePage(pfn);
-    currFrame->next = free_ll.head;
-    free_ll.head = (void *)(uintptr_t)(pfn << PAGESHIFT);
+void addFreePage(struct pte* newPte) {
+    int pfn = newPte->pfn;
+    newPte->valid = 0;
+    uintptr_t currFrame = reservePage();
+    *currFrame = free_ll.head;
+    free_ll.head = (uintptr_t)(pfn << PAGESHIFT);
     free_ll.count++;
     region1[PAGE_TABLE_LEN - 1].valid = 0;     
 }
 
 int getFreePage() {
-
     int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
-
-    struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
-
-    free_ll.head = currFrame->next; 
+    uintptr_t currFrame = reservePage(resultPfn);
+    free_ll.head = *currFrame; 
     free_ll.count--;
-    
     unReservePage();
     return resultPfn;
 }
 
-static void * reservePage(int pfn) {
+static uintptr_t reservePage(int pfn) {
     region1[PAGE_TABLE_LEN - 1].valid = 1;
     region1[PAGE_TABLE_LEN - 1].pfn = pfn;
     region1[PAGE_TABLE_LEN - 1].uprot = PROT_NONE;
     region1[PAGE_TABLE_LEN - 1].kprot = PROT_READ|PROT_WRITE;
-    return (void *)(uintptr_t)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
+    return (uintptr_t)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
 }
 
 static void unReservePage() {
