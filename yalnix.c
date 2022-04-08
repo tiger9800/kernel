@@ -14,7 +14,7 @@ struct pte idle_region0[PAGE_TABLE_LEN];//idle always exists, so we can define i
 
 
 
-pcb idle_PCB = {0, NULL, idle_region0, 0, NULL, NULL};
+pcb idle_PCB;
 //struct PCB init_PCB = {1, NULL, init_regio0};
 
 //current kernel break address
@@ -26,6 +26,9 @@ struct free_pages free_ll = {0, NULL};
 struct PCB *activeQ;
 struct PCB *readyQ;
 struct PCB *blockedQ;
+
+int currPID = 1;
+
 
 //static void idle_process();
 void trap_kernel_handler(ExceptionInfo *info);
@@ -111,9 +114,6 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         //printf("Text VPN: %i\n", curr_page);
         curr_page++;
     }
-
-    //data/bss
-    //printf("Text end address: %lu\n", (uintptr_t)(&_etext) >> PAGESHIFT);
     
     curr_page = (uintptr_t)(&_etext) >> PAGESHIFT;
     while(curr_page < (UP_TO_PAGE(orig_brk) >> PAGESHIFT)) {
@@ -170,14 +170,64 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 
 
     char* arg[1] = {NULL};
+
+    idle_PCB.pid = 0;
+    idle_PCB.page_table0 = idle_region0;
+    idle_PCB.delay_clock = 0;
+    idle_PCB.parent =  NULL;
+    idle_PCB.next = NULL;
     LoadProgram("idle", arg, info, idle_region0, free_ll);
+
+    pcb* initPCB = malloc(sizeof(pcb));
+
+    struct pte *initPt0 = getNewPageTable();
+
+    initPCB->pid = currPID++;
+    initPCB->page_table0 = initPt0;
+    initPCB->parent = NULL;
+    initPCB->next = NULL;
+    initPCB->delay_clock = 0;
+    initPCB->ctx = NULL;
     
+    
+
+    ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
+
+
+    ContextSwitch(switchIdleToInit, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
+    LoadProgram("init", cmd_args, info, initPt0, free_ll);
     //create PCB for init using malloc
     //create page table for init region0
     //contextswitch to init
     //load init
 }
 
+SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2) {
+    return &((pcb*)p2)->ctx;
+}
+
+
+SavedContex *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2) {
+    
+    int curr_page;
+    for(curr_page = KERNEL_STACK_BASE >> PAGESHIFT; curr_page < (KERNEL_STACK_LIMIT >> PAGESHIFT); curr_page++) {
+        ((pcb*)p2)->page_table0[curr_page].valid = 1;
+        ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
+        ((pcb*)p2)->page_table0[curr_page].uprot = PROT_NONE;
+        unsigned int pfn = getFreePage();
+        ((pcb*)p2)->page_table0[curr_page].pfn  = pfn;
+        uintptr_t addrToCopy = reservePage(pfn);
+        memcpy(addrToCopy, (curr_page << PAGESHIFT), PAGESIZE);
+        unReservePage();
+    }
+
+
+    activeQ =  (pcb*) p2;
+    WriteRegister(REG_PTR0, (RCS421RegVal) ((pcb*)p2)->page_table0));
+    return &((pcb*)p2)->ctx;
+    
+}
+// MySwitchFunc(SavedContext * ctxp, void * p1, void * p2)
 
 
 // static void idle_process() {
@@ -325,4 +375,20 @@ static uintptr_t reservePage(int pfn) {
 static void unReservePage() {
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)(VMEM_1_LIMIT - PAGESIZE));
     region1[PAGE_TABLE_LEN - 1].valid = 0;
+}
+
+/*
+Return virtual address of a new page table
+*/
+static struct pte* getNewPageTable() {
+    unsigned int vpn = PAGE_TABLE_LEN - 2;
+    while(region1[vpn].valid) {
+        vpn--;
+    }
+    //since we left while loop, then the pte is not valid and we can create a new mapping for a region 0 page table
+    region1[vpn].valid = 1;
+    region1[vpn].pfn = getFreePage();
+    region1[vpn].kprot = PROT_READ|PROT_WRITE;
+    region1[vpn].uprot = PROT_NONE; 
+    return (struct pte *)(VMEM_1_BASE + (vpn << PAGESHIFT));
 }

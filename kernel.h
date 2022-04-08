@@ -9,7 +9,7 @@ struct physical_frame {
 
 typedef struct pcb {
     pid_t pid;
-    SavedContext *ctx;
+    SavedContext ctx;
     struct pte *page_table0;
     int delay_clock;
     struct pcb *parent;
