@@ -338,6 +338,6 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
         info->regs[i] = 0;
     }
     info->psr = 0;
-
+    TracePrintf(0, "I'm done with load\n");
     return (0);
 }

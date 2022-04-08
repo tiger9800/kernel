@@ -1,10 +1,97 @@
 ** Kernel   level 1 tracing enabled **
-** User     level 1 tracing enabled **
+Kernel   I'm in addPage and pfn is 0
+Kernel   free_ll.head is (nil)
+Kernel   I'm in addPage and pfn is 1
+Kernel   free_ll.head is 0x1000
+Kernel   I'm in addPage and pfn is 2
+Kernel   free_ll.head is 0x2000
+Kernel   I'm in addPage and pfn is 3
+Kernel   free_ll.head is 0x3000
+Kernel   I'm in addPage and pfn is 4
+Kernel   free_ll.head is 0x4000
+Kernel   I'm in addPage and pfn is 5
+Kernel   free_ll.head is 0x5000
+Kernel   I'm in addPage and pfn is 6
+Kernel   free_ll.head is 0x6000
+Kernel   I'm in addPage and pfn is 7
+Kernel   free_ll.head is 0x7000
+Kernel   I'm in addPage and pfn is 8
+Kernel   free_ll.head is 0x8000
+Kernel   I'm in addPage and pfn is 9
+Kernel   free_ll.head is 0x9000
+Kernel   I'm in addPage and pfn is 10
+Kernel   free_ll.head is 0xa000
+Kernel   I'm in addPage and pfn is 11
+Kernel   free_ll.head is 0xb000
+Kernel   I'm in addPage and pfn is 12
+Kernel   free_ll.head is 0xc000
+Kernel   I'm in addPage and pfn is 13
+Kernel   free_ll.head is 0xd000
+Kernel   I'm in addPage and pfn is 14
+Kernel   free_ll.head is 0xe000
+Kernel   I'm in addPage and pfn is 15
+Kernel   free_ll.head is 0xf000
 Kernel   LoadProgram 'idle', args 0x1ff8f0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
 Kernel   LoadProgram: size 0, argcount 0
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
-User     Idle is working
-Kernel   trap_clock_handler
+Kernel   I'm in get free page and head is 0xf000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0xe000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0xd000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0xc000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0xb000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0xa000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0x9000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0x8000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0x7000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0x6000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0x5000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm in get free page and head is 0x4000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm done with load
+Kernel   I'm gonna malloc
+Kernel   I'm inside setKernelBrk
+Kernel   VM enabled
+Kernel   I'm going to allocate new pages
+Kernel   I'm going to make bit valid of page 17
+Kernel   I'm in get free page and head is 0x3000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm going to make bit valid of page 18
+Kernel   I'm in get free page and head is 0x2000
+Kernel   I took a page and I'm going to deref it
+Kernel   I'm gonna getNewPageTable
+Kernel   I'm in get free page and head is 0x1000
+Kernel   I took a page and I'm going to deref it
+Kernel   cloneContext
+Kernel   idleToInit
+Kernel   Page: 508
+Kernel   I'm in get free page and head is (nil)
+Kernel   I took a page and I'm going to deref it
+Kernel   New pfn: 0
+Kernel   Page: 509
+Kernel   I'm in get free page and head is 0x3ff000
+Kernel   I took a page and I'm going to deref it
+Kernel   New pfn: 1023
+Kernel   Page: 510
+Kernel   I'm in get free page and head is 0x3fe000
+Kernel   I took a page and I'm going to deref it
+Kernel   New pfn: 1022
+Kernel   Page: 511
+Kernel   I'm in get free page and head is 0x3fd000
+Kernel   I took a page and I'm going to deref it
+Kernel   New pfn: 1021
+
+ABORT: Invalid pfn 1048575 found on TLB miss for addr 0x1ffff0

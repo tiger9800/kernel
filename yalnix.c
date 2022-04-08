@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <stdlib.h>
 #include "kernel.h"
 
 void (*interruptHandlers[TRAP_VECTOR_SIZE])(ExceptionInfo *);
@@ -23,9 +24,9 @@ bool vm_enabled = false;
 
 struct free_pages free_ll = {0, NULL};
 
-struct PCB *activeQ;
-struct PCB *readyQ;
-struct PCB *blockedQ;
+pcb *activeQ;
+pcb *readyQ;
+pcb *blockedQ;
 
 int currPID = 1;
 
@@ -42,6 +43,9 @@ static uintptr_t reservePage(int pfn);
 static void unReservePage();
 void addPage(int pfn);
 void addInvalidPages();
+static struct pte* getNewPageTable();
+SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2);
+SavedContext *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2);
 
 static void initFreePages(int startPage, int endPage) {
     //first page that we can accessed
@@ -92,11 +96,6 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 
     initFreePages(UP_TO_PAGE(orig_brk) >> PAGESHIFT, DOWN_TO_PAGE(pmem_size)>> PAGESHIFT);
 
-
-    struct physical_frame *currFrame = free_ll.head;
-    for (i = 0; i< 10; i++) {
-        currFrame = currFrame->next;
-    }
     WriteRegister(REG_VECTOR_BASE, (RCS421RegVal)interruptHandlers);
 
     //put into region 1 page table
@@ -178,8 +177,10 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     idle_PCB.next = NULL;
     LoadProgram("idle", arg, info, idle_region0, free_ll);
 
+    TracePrintf(0, "I'm gonna malloc\n");
     pcb* initPCB = malloc(sizeof(pcb));
 
+    TracePrintf(0, "I'm gonna getNewPageTable\n");
     struct pte *initPt0 = getNewPageTable();
 
     initPCB->pid = currPID++;
@@ -187,13 +188,12 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     initPCB->parent = NULL;
     initPCB->next = NULL;
     initPCB->delay_clock = 0;
-    initPCB->ctx = NULL;
     
     
-
+    TracePrintf(0, "cloneContext\n");
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
 
-
+    TracePrintf(0, "idleToInit\n");
     ContextSwitch(switchIdleToInit, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
     LoadProgram("init", cmd_args, info, initPt0, free_ll);
     //create PCB for init using malloc
@@ -203,27 +203,36 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 }
 
 SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2) {
+    (void)ctxp;
+    (void)p1;
     return &((pcb*)p2)->ctx;
 }
 
 
-SavedContex *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2) {
+SavedContext *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2) {
+    (void)ctxp;
+    (void)p1;
     
     int curr_page;
     for(curr_page = KERNEL_STACK_BASE >> PAGESHIFT; curr_page < (KERNEL_STACK_LIMIT >> PAGESHIFT); curr_page++) {
+        TracePrintf(0, "Page: %i\n", curr_page);
         ((pcb*)p2)->page_table0[curr_page].valid = 1;
         ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
         ((pcb*)p2)->page_table0[curr_page].uprot = PROT_NONE;
         unsigned int pfn = getFreePage();
-        ((pcb*)p2)->page_table0[curr_page].pfn  = pfn;
+         TracePrintf(0, "New pfn: %u\n", pfn);
+        ((pcb*)p2)->page_table0[curr_page].pfn = pfn;
         uintptr_t addrToCopy = reservePage(pfn);
-        memcpy(addrToCopy, (curr_page << PAGESHIFT), PAGESIZE);
+        memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
         unReservePage();
     }
 
 
     activeQ =  (pcb*) p2;
-    WriteRegister(REG_PTR0, (RCS421RegVal) ((pcb*)p2)->page_table0));
+    
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    WriteRegister(REG_PTR0, (RCS421RegVal)((pcb*)p2)->page_table0);
+    
     return &((pcb*)p2)->ctx;
     
 }
@@ -312,24 +321,32 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
 
 //Called when malloc is caled by the kernel.
 int SetKernelBrk(void * addr) { 
+    TracePrintf(0, "I'm inside setKernelBrk\n");
     if(!vm_enabled) {
         if(addr > (void *)VMEM_1_LIMIT) {
             return -1;
         }
         currentBrk = addr;
     } else {
+        TracePrintf(0, "VM enabled\n");
         int count = ((uintptr_t)(addr - UP_TO_PAGE(currentBrk)) >> PAGESHIFT) + 1;
         if (count > free_ll.count) {
            return -1;
         } 
         int i;
-        int curr_page = (UP_TO_PAGE(currentBrk) >> PAGESHIFT) - VMEM_1_BASE;
+        if(count > free_ll.count) {
+            return -1;
+        }
+        unsigned int curr_page = (UP_TO_PAGE(currentBrk) - VMEM_1_BASE) >> PAGESHIFT;
+        TracePrintf(0, "I'm going to allocate new pages\n");
         for (i = 0; i < count; i++) {
+            TracePrintf(0, "I'm going to make bit valid of page %d\n", curr_page);
             region1[curr_page].valid = 1;
             region1[curr_page].kprot = PROT_READ | PROT_WRITE;
             region1[curr_page].uprot = PROT_NONE;
             region1[curr_page++].pfn  = getFreePage();
         }
+        currentBrk = addr;
     }
     return 0;
 }
@@ -341,23 +358,26 @@ void freePage(struct pte* newPte) {
 
 void addInvalidPages() {
     int pfn;
-    for (pfn = 0; pfn < MEM_INVALID_PAGES; pfn++) {
+    for (pfn = PMEM_BASE; pfn < MEM_INVALID_PAGES; pfn++) {
         addPage(pfn);
     }
 }
 
 void addPage(int pfn) {
+    TracePrintf(0, "I'm in addPage and pfn is %i\n", pfn);
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(pfn);
     currFrame->next = free_ll.head;
     free_ll.head = (struct physical_frame *)(uintptr_t)(pfn << PAGESHIFT);
+    TracePrintf(0, "free_ll.head is %p\n", free_ll.head);
     free_ll.count++;
     unReservePage();  
 }
 
 unsigned int getFreePage() {
+    TracePrintf(0, "I'm in get free page and head is %p\n", free_ll.head);
     unsigned int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
-
+    TracePrintf(0, "I took a page and I'm going to deref it\n");
     free_ll.head = currFrame->next; 
     free_ll.count--;
     unReservePage();
@@ -390,5 +410,5 @@ static struct pte* getNewPageTable() {
     region1[vpn].pfn = getFreePage();
     region1[vpn].kprot = PROT_READ|PROT_WRITE;
     region1[vpn].uprot = PROT_NONE; 
-    return (struct pte *)(VMEM_1_BASE + (vpn << PAGESHIFT));
+    return (struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
 }
