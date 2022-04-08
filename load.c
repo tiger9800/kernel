@@ -1,9 +1,9 @@
->>>> THIS FILE IS ONLY A TEMPLATE FOR YOUR LoadProgram FUNCTION
+// >>>> THIS FILE IS ONLY A TEMPLATE FOR YOUR LoadProgram FUNCTION
 
->>>> You MUST edit each place marked by ">>>>" below to replace
->>>> the ">>>>" description with code for your kernel to implement the
->>>> behavior described.  You might also want to save the original
->>>> annotations as comments.
+// >>>> You MUST edit each place marked by ">>>>" below to replace
+// >>>> the ">>>>" description with code for your kernel to implement the
+// >>>> behavior described.  You might also want to save the original
+// >>>> annotations as comments.
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -12,7 +12,7 @@
 
 #include <comp421/hardware.h>
 #include <comp421/loadinfo.h>
-#include <util.h>
+#include "kernel.h"
 
 
 /*
@@ -36,7 +36,7 @@
  *  in this case.
  */
 int
-LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, struct pte* region0, struct free_pages* free_pages, struct PCB* newPCB)
+LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, struct free_pages free_pages)
 {
     int fd;
     int status;
@@ -154,7 +154,7 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
     // >>>> the new program being loaded.
 
     //count the number of pages that are valid
-    int count = free_pages->count;
+    int count = free_pages.count;
     for(i = 0; i < KERNEL_STACK_BASE >> PAGESHIFT; i++) {
         if (region0[i].valid == 1) {//count all the pages currently in use by the page table 0 that are not a part of the kernel
             count++;
@@ -192,7 +192,7 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
         if(region0[i].valid == 1) {//if valid then free
             //add to the free list, by making it point to head
             //add free page to free_pages region
-            addFreePage(&region0[i]);    
+            freePage(&region0[i]);  
         }
     }
 
@@ -210,6 +210,7 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
     // >>>> Region 0 page table unused (and thus invalid)
     int curr_page;
     for(curr_page = (VMEM_0_BASE >> PAGESHIFT); curr_page < MEM_INVALID_PAGES; curr_page++){
+        //TracePrintf(0, "213: Current page %i\n", curr_page);
         region0[curr_page].valid = 0;
     }
 
@@ -218,10 +219,11 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
     // >>>> page table, initialize each PTE:
     // >>>>   
     /* First, the text pages */
-    for(; curr_page < MEM_INLVAID_PAGES + text_npg; curr_page++) {
-        region0[curr_page].valid = 1
-        region0[curr_page].kprot = PROT_READ | PROT_WRITE
-        region0[curr_page].uprot = PROT_READ | PROT_EXEC
+    for(; curr_page < MEM_INVALID_PAGES + text_npg; curr_page++) {
+        //TracePrintf(0, "223: Current page %i\n", curr_page);
+        region0[curr_page].valid = 1;
+        region0[curr_page].kprot = PROT_READ | PROT_WRITE;
+        region0[curr_page].uprot = PROT_READ | PROT_EXEC;
         region0[curr_page].pfn  = getFreePage();
     }
       
@@ -233,10 +235,11 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
     // >>>>     kprot = PROT_READ | PROT_WRITE
     // >>>>     uprot = PROT_READ | PROT_WRITE
     // >>>>     pfn   = a new page of physical memory
-    for(; curr_page < MEM_INLVAID_PAGES + text_npg + data_bss_npg; curr_page++) {
-        region0[curr_page].valid = 1
-        region0[curr_page].kprot = PROT_READ | PROT_WRITE
-        region0[curr_page].uprot = PROT_READ | PROT_WRITE
+    for(; curr_page < MEM_INVALID_PAGES + text_npg + data_bss_npg; curr_page++) {
+        //TracePrintf(0, "239: Current page %i\n", curr_page);
+        region0[curr_page].valid = 1;
+        region0[curr_page].kprot = PROT_READ | PROT_WRITE;
+        region0[curr_page].uprot = PROT_READ | PROT_WRITE;
         region0[curr_page].pfn  = getFreePage();
     }
 
@@ -249,11 +252,12 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
     // >>>>     kprot = PROT_READ | PROT_WRITE
     // >>>>     uprot = PROT_READ | PROT_WRITE
     // >>>>     pfn   = a new page of physical memory
-    curr_page = USER_STACK_LIMIT >> PAGESHIFT;
+    curr_page = (USER_STACK_LIMIT >> PAGESHIFT) - 1;
     for(i = 0; i < stack_npg; i++) {
-        region0[curr_page].valid = 1
-        region0[curr_page].kprot = PROT_READ | PROT_WRITE
-        region0[curr_page].uprot = PROT_READ | PROT_WRITE
+        //TracePrintf(0, "257: Current page %i\n", curr_page);
+        region0[curr_page].valid = 1;
+        region0[curr_page].kprot = PROT_READ | PROT_WRITE;
+        region0[curr_page].uprot = PROT_READ | PROT_WRITE;
         region0[curr_page--].pfn  = getFreePage();
     }
 
@@ -268,8 +272,8 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
      *  Read the text and data from the file into memory.
      */
     if (read(fd, (void *)MEM_INVALID_SIZE, li.text_size+li.data_size)
-	!= li.text_size+li.data_size) {
-        TracePrintf(0, "LoadProgram: couldn't read for '%s'\n", name);
+	!= (int)(li.text_size+li.data_size)) {
+        //TracePrintf(0, "276 LoadProgram: couldn't read for '%s'\n", name);
         free(argbuf);
         close(fd);
 	// >>>> Since we are returning -2 here, this should mean to
@@ -288,7 +292,7 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
      */
     // >>>> For text_npg number of PTEs corresponding to the user text
     // >>>> pages, set each PTE's kprot to PROT_READ | PROT_EXEC.
-    for(curr_page = MEM_INLVAID_PAGES; curr_page < MEM_INLVAID_PAGES + text_npg; curr_page++) {
+    for(curr_page = MEM_INVALID_PAGES; curr_page < MEM_INVALID_PAGES + text_npg; curr_page++) {
         region0[curr_page].kprot = PROT_READ | PROT_EXEC;
     }
 
@@ -310,7 +314,7 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
      */
     *cpp++ = (char *)argcount;		/* the first value at cpp is argc */
     cp2 = argbuf;
-    for (i = 0; i < argcount; i++) {      /* copy each argument and set argv */
+    for (i = 0; (unsigned int)i < argcount; i++) {      /* copy each argument and set argv */
         *cpp++ = cp;
         strcpy(cp, cp2);
         cp += strlen(cp) + 1;
@@ -333,6 +337,7 @@ LoadProgram(char *name, char **args, int numFreePages, ExceptionInfo* info, stru
     for(i = 0; i < NUM_REGS; i++) {
         info->regs[i] = 0;
     }
+    info->psr = 0;
 
     return (0);
 }

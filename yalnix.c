@@ -6,28 +6,20 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include "kernel.h"
 
 void (*interruptHandlers[TRAP_VECTOR_SIZE])(ExceptionInfo *);
 struct pte region1[PAGE_TABLE_LEN];
 struct pte idle_region0[PAGE_TABLE_LEN];//idle always exists, so we can define it here
 
-struct PCB {
-    pid_t pid;
-    SavedContext* ctx;
-    void *page_table0;
-};
 
-struct PCB idle_PCB = {0, NULL, idle_region0};
+
+pcb idle_PCB = {0, NULL, idle_region0, 0, NULL, NULL};
 //struct PCB init_PCB = {1, NULL, init_regio0};
 
-// struct physical_frame {
-//     struct physical_frame *next;
-// };
-
-struct free_pages {
-    int count;
-    uintptr_t head;
-};
+//current kernel break address
+void *currentBrk;
+bool vm_enabled = false;
 
 struct free_pages free_ll = {0, NULL};
 
@@ -35,7 +27,7 @@ struct PCB *activeQ;
 struct PCB *readyQ;
 struct PCB *blockedQ;
 
-static void idle_process();
+//static void idle_process();
 void trap_kernel_handler(ExceptionInfo *info);
 void trap_clock_handler(ExceptionInfo *info);
 void trap_illegal_handler(ExceptionInfo *info);
@@ -43,18 +35,22 @@ void trap_memory_handler(ExceptionInfo *info);
 void trap_math_handler(ExceptionInfo *info);
 void trap_tty_transmit_handler(ExceptionInfo *info);
 void trap_tty_receive_handler(ExceptionInfo *info);
-void addFreePage(struct pte* newPte);
 static uintptr_t reservePage(int pfn);
 static void unReservePage();
-int getFreePage();
+void addPage(int pfn);
+void addInvalidPages();
 
 static void initFreePages(int startPage, int endPage) {
     //first page that we can accessed
     // int pageNum = 0;
     int curr_page = startPage;
     while (curr_page < endPage) {
-        uintptr_t currFrame = (uintptr_t)(curr_page << PAGESHIFT);
-        *currFrame = free_ll.head;
+        struct physical_frame* currFrame = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
+        //TracePrintf(0, "initFreePages: currFrame %p\n", currFrame);
+        
+        currFrame->next = free_ll.head;
+        //TracePrintf(0, "initFreePages: currFrame->next %p\n", currFrame->next);
+        //TracePrintf(0, "pfn:  %i\n", (uintptr_t)currFrame >> PAGESHIFT);
         free_ll.head = currFrame;
         curr_page++;
         free_ll.count++;
@@ -75,15 +71,14 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     interruptHandlers[TRAP_MEMORY] = trap_memory_handler;
 
 
-    (void)info;
-    (void)pmem_size;
-    (void)orig_brk;
     (void)cmd_args;
 
     int i;
     for (i = 7; i < TRAP_VECTOR_SIZE; i++) {
         interruptHandlers[i] = NULL;
     }
+
+    currentBrk = orig_brk;
 
     //make struct PCB initialization for idle process + free page ll
     //divide up the space into physical pages
@@ -94,6 +89,11 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 
     initFreePages(UP_TO_PAGE(orig_brk) >> PAGESHIFT, DOWN_TO_PAGE(pmem_size)>> PAGESHIFT);
 
+
+    struct physical_frame *currFrame = free_ll.head;
+    for (i = 0; i< 10; i++) {
+        currFrame = currFrame->next;
+    }
     WriteRegister(REG_VECTOR_BASE, (RCS421RegVal)interruptHandlers);
 
     //put into region 1 page table
@@ -153,34 +153,39 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 
 
     //set pc to idle
-    TracePrintf(0, "I am about to enable virtual memeory\n");
+    //TracePrintf(0, "I am about to enable virtual memeory\n");
     WriteRegister(REG_PTR0, (RCS421RegVal)idle_region0);
 
     WriteRegister(REG_PTR1, (RCS421RegVal)region1);
     
     WriteRegister(REG_VM_ENABLE, (RCS421RegVal)1);
-
-    TracePrintf(0, "Enabled virtual memory\n");
-
-
-    TracePrintf(0, "Here is addr of idle process %i\n", idle_process);
+    vm_enabled = true;
     
-    info->pc = idle_process;
-    //enable virtual
-    //static char myArr[200];
-    info->sp = (void *)KERNEL_STACK_LIMIT;
-    info->psr = 1;
-    TracePrintf(0, "I'm done with the kernel start\n");
+    addInvalidPages();
+
+    //TracePrintf(0, "Enabled virtual memory\n");
+
+
+    //TracePrintf(0, "Here is addr of idle process %i\n", idle_process);
+
+
+    char* arg[1] = {NULL};
+    LoadProgram("idle", arg, info, idle_region0, free_ll);
+    
+    //create PCB for init using malloc
+    //create page table for init region0
+    //contextswitch to init
+    //load init
 }
 
 
 
-static void idle_process() {
-    while(1) {
-        TracePrintf(0, "idle loop");
-        Pause();
-    }
-}
+// static void idle_process() {
+//     while(1) {
+//         TracePrintf(0, "idle loop");
+//         Pause();
+//     }
+// }
 
 //handler
 void trap_kernel_handler(ExceptionInfo *info) {
@@ -256,25 +261,54 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
 }   
 
 //Called when malloc is caled by the kernel.
-int SetKernelBrk(void * addr) {
-    (void)addr;  
+int SetKernelBrk(void * addr) { 
+    if(!vm_enabled) {
+        if(addr > (void *)VMEM_1_LIMIT) {
+            return -1;
+        }
+        currentBrk = addr;
+    } else {
+        int count = ((uintptr_t)(addr - UP_TO_PAGE(currentBrk)) >> PAGESHIFT) + 1;
+        if (count > free_ll.count) {
+           return -1;
+        } 
+        int i;
+        int curr_page = (UP_TO_PAGE(currentBrk) >> PAGESHIFT) - VMEM_1_BASE;
+        for (i = 0; i < count; i++) {
+            region1[curr_page].valid = 1;
+            region1[curr_page].kprot = PROT_READ | PROT_WRITE;
+            region1[curr_page].uprot = PROT_NONE;
+            region1[curr_page++].pfn  = getFreePage();
+        }
+    }
     return 0;
 }
 
-void addFreePage(struct pte* newPte) {
-    int pfn = newPte->pfn;
+void freePage(struct pte* newPte) {
+    addPage(newPte->pfn);  
     newPte->valid = 0;
-    uintptr_t currFrame = reservePage();
-    *currFrame = free_ll.head;
-    free_ll.head = (uintptr_t)(pfn << PAGESHIFT);
-    free_ll.count++;
-    region1[PAGE_TABLE_LEN - 1].valid = 0;     
 }
 
-int getFreePage() {
-    int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
-    uintptr_t currFrame = reservePage(resultPfn);
-    free_ll.head = *currFrame; 
+void addInvalidPages() {
+    int pfn;
+    for (pfn = 0; pfn < MEM_INVALID_PAGES; pfn++) {
+        addPage(pfn);
+    }
+}
+
+void addPage(int pfn) {
+    struct physical_frame* currFrame = (struct physical_frame *)reservePage(pfn);
+    currFrame->next = free_ll.head;
+    free_ll.head = (struct physical_frame *)(uintptr_t)(pfn << PAGESHIFT);
+    free_ll.count++;
+    unReservePage();  
+}
+
+unsigned int getFreePage() {
+    unsigned int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
+    struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
+
+    free_ll.head = currFrame->next; 
     free_ll.count--;
     unReservePage();
     return resultPfn;
@@ -285,9 +319,10 @@ static uintptr_t reservePage(int pfn) {
     region1[PAGE_TABLE_LEN - 1].pfn = pfn;
     region1[PAGE_TABLE_LEN - 1].uprot = PROT_NONE;
     region1[PAGE_TABLE_LEN - 1].kprot = PROT_READ|PROT_WRITE;
-    return (uintptr_t)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
+    return (uintptr_t)(VMEM_1_LIMIT - PAGESIZE);
 }
 
 static void unReservePage() {
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)(VMEM_1_LIMIT - PAGESIZE));
     region1[PAGE_TABLE_LEN - 1].valid = 0;
 }
