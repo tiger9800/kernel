@@ -192,19 +192,60 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     
     TracePrintf(0, "cloneContext\n");
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
+    TracePrintf(0, "after cloneContext PFN for init vpn 508: %u\n", idle_PCB.page_table0[508].pfn);
+    TracePrintf(0, "after cloneContext PFN for idle vpn 508: %u\n", (initPCB)->page_table0[508].pfn);
+    TracePrintf(0, "valid for init vpn 508: %u\n", idle_PCB.page_table0[508].valid);
+    TracePrintf(0, "valid for idle vpn 508: %u\n", (initPCB)->page_table0[508].valid);
 
     TracePrintf(0, "idleToInit\n");
     ContextSwitch(switchIdleToInit, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
+    TracePrintf(0, "after idleToInit PFN for init vpn 508: %u\n", idle_PCB.page_table0[508].pfn);
+    TracePrintf(0, "after idleToInit PFN for idle vpn 508: %u\n", (initPCB)->page_table0[508].pfn);
+
+    TracePrintf(0, "valid for init vpn 508: %u\n", idle_PCB.page_table0[508].valid);
+    TracePrintf(0, "valid for idle vpn 508: %u\n", (initPCB)->page_table0[508].valid);
+
     LoadProgram("init", cmd_args, info, initPt0, free_ll);
-    //create PCB for init using malloc
-    //create page table for init region0
-    //contextswitch to init
-    //load init
+    // create PCB for init using malloc
+    // create page table for init region0
+    // contextswitch to init
+    // load init
 }
 
 SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2) {
-    (void)ctxp;
+    TracePrintf(0, "flush 1st time\n");
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    TracePrintf(0, "flush done\n");
+    (void)ctxp;  
     (void)p1;
+    int curr_page;
+    for(curr_page = KERNEL_STACK_BASE >> PAGESHIFT; curr_page < (KERNEL_STACK_LIMIT >> PAGESHIFT); curr_page++) {
+        TracePrintf(0, "216 Page: %i\n", curr_page);
+        ((pcb*)p2)->page_table0[curr_page].valid = 1;
+        ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
+        ((pcb*)p2)->page_table0[curr_page].uprot = PROT_NONE;
+        unsigned int pfn = getFreePage();
+        if ((int)pfn == -1) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            // What do we want to return here? SavedContext of the first process?
+            //We do not change the page table or flush TLB
+            return &((pcb*)p1)->ctx;
+        }
+        //make ptes up to kernel stack base equal to 0
+
+        TracePrintf(0, "New pfn: %u\n", pfn);
+        ((pcb*)p2)->page_table0[curr_page].pfn = pfn;
+        uintptr_t addrToCopy = reservePage(pfn);
+        memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
+        unReservePage();
+    }
+    //make all other ptes invalid
+
+
+    TracePrintf(0, "PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
+    TracePrintf(0, "PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
+    TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
+    TracePrintf(0, "valid for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].valid);
     return &((pcb*)p2)->ctx;
 }
 
@@ -212,29 +253,31 @@ SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2) {
 SavedContext *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2) {
     (void)ctxp;
     (void)p1;
-    
-    int curr_page;
-    for(curr_page = KERNEL_STACK_BASE >> PAGESHIFT; curr_page < (KERNEL_STACK_LIMIT >> PAGESHIFT); curr_page++) {
-        TracePrintf(0, "Page: %i\n", curr_page);
-        ((pcb*)p2)->page_table0[curr_page].valid = 1;
-        ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
-        ((pcb*)p2)->page_table0[curr_page].uprot = PROT_NONE;
-        unsigned int pfn = getFreePage();
-         TracePrintf(0, "New pfn: %u\n", pfn);
-        ((pcb*)p2)->page_table0[curr_page].pfn = pfn;
-        uintptr_t addrToCopy = reservePage(pfn);
-        memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
-        unReservePage();
-    }
-
-
+    // TracePrintf(0, "flush 2nd time\n");
+    // WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    // TracePrintf(0, "flush done\n");
     activeQ =  (pcb*) p2;
+    TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
+    TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
+    TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
+    TracePrintf(0, "valid for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].valid);
+
+    unsigned int pageToVpn = ((uintptr_t)(((pcb*)p2)->page_table0) >> PAGESHIFT) % PAGE_TABLE_LEN;
+    void* physical_addr = (void *) ((uintptr_t)region1[pageToVpn].pfn << PAGESHIFT);
     
+    
+    WriteRegister(REG_PTR0, (RCS421RegVal) (physical_addr));
     WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-    WriteRegister(REG_PTR0, (RCS421RegVal)((pcb*)p2)->page_table0);
+
+    TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
+    TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
+    TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
+    TracePrintf(0, "valid for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].valid);
     
+    TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
+    TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
+
     return &((pcb*)p2)->ctx;
-    
 }
 // MySwitchFunc(SavedContext * ctxp, void * p1, void * p2)
 
@@ -344,7 +387,12 @@ int SetKernelBrk(void * addr) {
             region1[curr_page].valid = 1;
             region1[curr_page].kprot = PROT_READ | PROT_WRITE;
             region1[curr_page].uprot = PROT_NONE;
-            region1[curr_page++].pfn  = getFreePage();
+            unsigned int pfn = getFreePage();
+            if ((int)pfn == -1) {
+                TracePrintf(0, "No enough free physical memory to complete operation\n");
+                return -1;
+            }
+            region1[curr_page++].pfn = pfn;
         }
         currentBrk = addr;
     }
@@ -374,6 +422,9 @@ void addPage(int pfn) {
 }
 
 unsigned int getFreePage() {
+    if (free_ll.count == 0) {
+        return -1;
+    }
     TracePrintf(0, "I'm in get free page and head is %p\n", free_ll.head);
     unsigned int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
@@ -381,6 +432,7 @@ unsigned int getFreePage() {
     free_ll.head = currFrame->next; 
     free_ll.count--;
     unReservePage();
+    TracePrintf(0, "Took a new pfn from free list %i\n", resultPfn);
     return resultPfn;
 }
 
@@ -400,15 +452,27 @@ static void unReservePage() {
 /*
 Return virtual address of a new page table
 */
-static struct pte* getNewPageTable() {
+static struct pte*getNewPageTable() {
     unsigned int vpn = PAGE_TABLE_LEN - 2;
     while(region1[vpn].valid) {
         vpn--;
     }
     //since we left while loop, then the pte is not valid and we can create a new mapping for a region 0 page table
     region1[vpn].valid = 1;
-    region1[vpn].pfn = getFreePage();
+    unsigned int pfn = getFreePage();
+    if ((int)pfn == -1) {
+        TracePrintf(0, "No enough free physical memory to complete operation\n");
+        return (struct pte *)-1;
+    }
+    region1[vpn].pfn = pfn;
     region1[vpn].kprot = PROT_READ|PROT_WRITE;
     region1[vpn].uprot = PROT_NONE; 
+
+    int curr_page;
+    for(curr_page = 0; curr_page < (KERNEL_STACK_BASE >> PAGESHIFT); curr_page++) {
+        ((struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT)))[curr_page].valid = 0;
+    } 
+    //set every valid bit in the page table to 0.
+    //memset((void *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT)), 0, PAGE_TABLE_LEN * sizeof(struct pte));
     return (struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
 }

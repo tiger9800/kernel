@@ -1,4 +1,5 @@
 ** Kernel   level 1 tracing enabled **
+** User     level 1 tracing enabled **
 Kernel   I'm in addPage and pfn is 0
 Kernel   free_ll.head is (nil)
 Kernel   I'm in addPage and pfn is 1
@@ -39,59 +40,160 @@ Kernel   LoadProgram: size 0, argcount 0
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm in get free page and head is 0xf000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 15
 Kernel   I'm in get free page and head is 0xe000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 14
 Kernel   I'm in get free page and head is 0xd000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 13
 Kernel   I'm in get free page and head is 0xc000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 12
 Kernel   I'm in get free page and head is 0xb000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 11
 Kernel   I'm in get free page and head is 0xa000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 10
 Kernel   I'm in get free page and head is 0x9000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 9
 Kernel   I'm in get free page and head is 0x8000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 8
 Kernel   I'm in get free page and head is 0x7000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 7
 Kernel   I'm in get free page and head is 0x6000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 6
 Kernel   I'm in get free page and head is 0x5000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 5
 Kernel   I'm in get free page and head is 0x4000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 4
 Kernel   I'm done with load
 Kernel   I'm gonna malloc
 Kernel   I'm inside setKernelBrk
 Kernel   VM enabled
 Kernel   I'm going to allocate new pages
-Kernel   I'm going to make bit valid of page 17
+Kernel   I'm going to make bit valid of page 18
 Kernel   I'm in get free page and head is 0x3000
 Kernel   I took a page and I'm going to deref it
-Kernel   I'm going to make bit valid of page 18
+Kernel   Took a new pfn from free list 3
+Kernel   I'm going to make bit valid of page 19
 Kernel   I'm in get free page and head is 0x2000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 2
 Kernel   I'm gonna getNewPageTable
 Kernel   I'm in get free page and head is 0x1000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1
 Kernel   cloneContext
-Kernel   idleToInit
-Kernel   Page: 508
+Kernel   flush 1st time
+Kernel   flush done
+Kernel   216 Page: 508
 Kernel   I'm in get free page and head is (nil)
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 0
 Kernel   New pfn: 0
-Kernel   Page: 509
+Kernel   216 Page: 509
 Kernel   I'm in get free page and head is 0x3ff000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1023
 Kernel   New pfn: 1023
-Kernel   Page: 510
+Kernel   216 Page: 510
 Kernel   I'm in get free page and head is 0x3fe000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1022
 Kernel   New pfn: 1022
-Kernel   Page: 511
+Kernel   216 Page: 511
 Kernel   I'm in get free page and head is 0x3fd000
 Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1021
 Kernel   New pfn: 1021
-
-ABORT: Invalid pfn 1048575 found on TLB miss for addr 0x1ffff0
+Kernel   PFN for init vpn 508: 0
+Kernel   PFN for idle vpn 508: 508
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   after cloneContext PFN for init vpn 508: 508
+Kernel   after cloneContext PFN for idle vpn 508: 0
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   idleToInit
+Kernel   switchIdleToInit PFN for init vpn 508: 0
+Kernel   switchIdleToInit PFN for idle vpn 508: 508
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   switchIdleToInit PFN for init vpn 508: 0
+Kernel   switchIdleToInit PFN for idle vpn 508: 508
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   switchIdleToInit PFN for init vpn 508: 0
+Kernel   switchIdleToInit PFN for idle vpn 508: 508
+Kernel   after cloneContext PFN for init vpn 508: 508
+Kernel   after cloneContext PFN for idle vpn 508: 0
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   idleToInit
+Kernel   switchIdleToInit PFN for init vpn 508: 0
+Kernel   switchIdleToInit PFN for idle vpn 508: 508
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   switchIdleToInit PFN for init vpn 508: 0
+Kernel   switchIdleToInit PFN for idle vpn 508: 508
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   switchIdleToInit PFN for init vpn 508: 0
+Kernel   switchIdleToInit PFN for idle vpn 508: 508
+Kernel   after idleToInit PFN for init vpn 508: 508
+Kernel   after idleToInit PFN for idle vpn 508: 0
+Kernel   valid for init vpn 508: 1
+Kernel   valid for idle vpn 508: 1
+Kernel   LoadProgram 'init', args 0x1fffe0
+Kernel   LoadProgram: LoadInfo status 0
+Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
+Kernel   entry 0x10100
+Kernel   LoadProgram: size 0, argcount 0
+Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
+Kernel   I'm in get free page and head is 0x3fc000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1020
+Kernel   I'm in get free page and head is 0x3fb000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1019
+Kernel   I'm in get free page and head is 0x3fa000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1018
+Kernel   I'm in get free page and head is 0x3f9000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1017
+Kernel   I'm in get free page and head is 0x3f8000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1016
+Kernel   I'm in get free page and head is 0x3f7000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1015
+Kernel   I'm in get free page and head is 0x3f6000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1014
+Kernel   I'm in get free page and head is 0x3f5000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1013
+Kernel   I'm in get free page and head is 0x3f4000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1012
+Kernel   I'm in get free page and head is 0x3f3000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1011
+Kernel   I'm in get free page and head is 0x3f2000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1010
+Kernel   I'm in get free page and head is 0x3f1000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1009
+Kernel   I'm done with load
+User     Init is working
+Kernel   trap_clock_handler
