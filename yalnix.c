@@ -91,63 +91,57 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     //divide up the space into physical pages
     //free pages are from VMEM_BASE to STACK_BASE anf from orig_brk to pmem_size
 
-    
     initFreePages(MEM_INVALID_PAGES, DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT);
 
     initFreePages(UP_TO_PAGE(orig_brk) >> PAGESHIFT, DOWN_TO_PAGE(pmem_size)>> PAGESHIFT);
 
     WriteRegister(REG_VECTOR_BASE, (RCS421RegVal)interruptHandlers);
 
-    //put into region 1 page table
-    //first put text into the region 1 table
-
-
-    unsigned int curr_page = VMEM_1_BASE >> PAGESHIFT;
+    // Map pages for the kernel text (in region 1).
+    // Is &etext on the boundary?
+    unsigned int curr_page = (VMEM_1_BASE >> PAGESHIFT);
     while(curr_page < (uintptr_t)(&_etext) >> PAGESHIFT) {
-        //struct pte new_entry;
-        region1[curr_page%PAGE_TABLE_LEN].pfn = curr_page;
-        region1[curr_page%PAGE_TABLE_LEN].uprot = PROT_NONE;
-        region1[curr_page%PAGE_TABLE_LEN].kprot = PROT_READ|PROT_EXEC;
-        region1[curr_page%PAGE_TABLE_LEN].valid = 1;
-        //egion1[curr_page%PAGE_TABLE_LEN] = new_entry;
-        //printf("Text VPN: %i\n", curr_page);
+        int ind = curr_page % PAGE_TABLE_LEN;
+        region1[ind].pfn = curr_page;
+        region1[ind].uprot = PROT_NONE;
+        region1[ind].kprot = PROT_READ|PROT_EXEC;
+        region1[ind].valid = 1;
         curr_page++;
     }
     
-    curr_page = (uintptr_t)(&_etext) >> PAGESHIFT;
+    // Map pages for the kernel data, bss, and heap (in region 1).
+    // Is orig_brk on the boundary?
     while(curr_page < (UP_TO_PAGE(orig_brk) >> PAGESHIFT)) {
-        //struct pte new_entry;
-        region1[curr_page%PAGE_TABLE_LEN].pfn = curr_page;
-        region1[curr_page%PAGE_TABLE_LEN].uprot = PROT_NONE;
-        region1[curr_page%PAGE_TABLE_LEN].kprot = PROT_READ|PROT_WRITE;
-        region1[curr_page%PAGE_TABLE_LEN].valid = 1;
+        int ind = curr_page % PAGE_TABLE_LEN;
+        region1[ind].pfn = curr_page;
+        region1[ind].uprot = PROT_NONE;
+        region1[ind].kprot = PROT_READ|PROT_WRITE;
+        region1[ind].valid = 1;
         //region1[curr_page%PAGE_TABLE_LEN] = new_entry;
         curr_page++;
     }
 
-    curr_page = (uintptr_t)(orig_brk) >> PAGESHIFT;
-    while((curr_page%PAGE_TABLE_LEN) == 0) {
+    // Make all remaining pages in region 1 invalid.
+    while((curr_page%PAGE_TABLE_LEN) != 0) {
         region1[curr_page%PAGE_TABLE_LEN].valid = 0;
         curr_page++;
     }
 
-    //put kernel stack in region 0.
-    curr_page = (uintptr_t)(KERNEL_STACK_BASE) >> PAGESHIFT;
-    while(curr_page < KERNEL_STACK_LIMIT >> PAGESHIFT) {
-        idle_region0[curr_page].pfn = curr_page;
-        idle_region0[curr_page].uprot = PROT_NONE;
-        idle_region0[curr_page].kprot = PROT_READ|PROT_WRITE;
-        idle_region0[curr_page].valid = 1;
-        //printf("VPN: %i\n",curr_page);
-        curr_page++;
-    }
-
+    // Make all pages below kernel stack invalid (in region 0).
     curr_page = (uintptr_t)(PMEM_BASE) >> PAGESHIFT;
     while(curr_page < (uintptr_t)(KERNEL_STACK_BASE) >> PAGESHIFT) {
         idle_region0[curr_page].valid = 0;
         curr_page++;
     }
-    //MAKE VALID BITS 0 FOR UNUSED
+
+    // Map pages for the kernel stack (in region 0).
+    while(curr_page < KERNEL_STACK_LIMIT >> PAGESHIFT) {
+        idle_region0[curr_page].pfn = curr_page;
+        idle_region0[curr_page].uprot = PROT_NONE;
+        idle_region0[curr_page].kprot = PROT_READ|PROT_WRITE;
+        idle_region0[curr_page].valid = 1;
+        curr_page++;
+    }
 
 
 

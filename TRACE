@@ -1,5 +1,4 @@
 ** Kernel   level 1 tracing enabled **
-** User     level 1 tracing enabled **
 Kernel   I'm in addPage and pfn is 0
 Kernel   free_ll.head is (nil)
 Kernel   I'm in addPage and pfn is 1
@@ -32,7 +31,7 @@ Kernel   I'm in addPage and pfn is 14
 Kernel   free_ll.head is 0xe000
 Kernel   I'm in addPage and pfn is 15
 Kernel   free_ll.head is 0xf000
-Kernel   LoadProgram 'idle', args 0x1ff8f0
+Kernel   LoadProgram 'idle', args 0x1ff8e0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
@@ -154,10 +153,10 @@ Kernel   valid for init vpn 508: 1
 Kernel   valid for idle vpn 508: 1
 Kernel   LoadProgram 'init', args 0x1fffe0
 Kernel   LoadProgram: LoadInfo status 0
-Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
+Kernel   text_size 0x9000, data_size 0x230, bss_size 0x30b8
 Kernel   entry 0x10100
 Kernel   LoadProgram: size 0, argcount 0
-Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
+Kernel   LoadProgram: text_npg 9, data_bss_npg 4, stack_npg 1
 Kernel   I'm in get free page and head is 0x3fc000
 Kernel   I took a page and I'm going to deref it
 Kernel   Took a new pfn from free list 1020
@@ -194,6 +193,11 @@ Kernel   Took a new pfn from free list 1010
 Kernel   I'm in get free page and head is 0x3f1000
 Kernel   I took a page and I'm going to deref it
 Kernel   Took a new pfn from free list 1009
+Kernel   I'm in get free page and head is 0x3f0000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1008
+Kernel   I'm in get free page and head is 0x3ef000
+Kernel   I took a page and I'm going to deref it
+Kernel   Took a new pfn from free list 1007
 Kernel   I'm done with load
-User     Init is working
 Kernel   trap_clock_handler
