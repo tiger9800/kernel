@@ -192,7 +192,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     TracePrintf(0, "valid for idle vpn 508: %u\n", (initPCB)->page_table0[508].valid);
 
     TracePrintf(0, "idleToInit\n");
-    ContextSwitch(switchIdleToInit, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
+    ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
     TracePrintf(0, "after idleToInit PFN for init vpn 508: %u\n", idle_PCB.page_table0[508].pfn);
     TracePrintf(0, "after idleToInit PFN for idle vpn 508: %u\n", (initPCB)->page_table0[508].pfn);
 
@@ -244,13 +244,21 @@ SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2) {
 }
 
 
-SavedContext *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2) {
+SavedContext *switchProcesses(SavedContext * ctxp, void * p1, void * p2) {
     (void)ctxp;
     (void)p1;
-    // TracePrintf(0, "flush 2nd time\n");
-    // WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-    // TracePrintf(0, "flush done\n");
+
+    // Make process 2 active.
     activeQ =  (pcb*) p2;
+    // Make process 1 "ready" (if it's not idle)
+    if (((pcb*)p1)->pid) != 0) {
+        if(readyQ==NULL) {
+            readyQ = (pcb*)p1;
+        } else {
+            readyQ->next = (pcb*)p1;
+        }
+        readyQ = (pcb*)p1;
+    }
     TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
     TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
     TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
