@@ -285,6 +285,19 @@ SavedContext *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2) {
 
 //handler
 void trap_kernel_handler(ExceptionInfo *info) {
+    // check info->code to determine what function to call:
+    // YALNIX_FORK		1
+    // YALNIX_EXEC		2
+    // YALNIX_EXIT		3
+    // YALNIX_WAIT		4
+    // YALNIX_GETPID    5
+    // YALNIX_BRK		6 - check that there is >1 pages between stack and new break
+    // YALNIX_DELAY		7
+    // YALNIX_TTY_READ  21
+    // YALNIX_TTY_WRITE	22
+
+    // args for this function are in info->regs[1:8]
+    // put return value in info->regs[0] (don't put anything there if Exit is called)
     (void)info;
     
     TracePrintf(0, "trap_clock_handler");
@@ -292,6 +305,7 @@ void trap_kernel_handler(ExceptionInfo *info) {
 }
 
 void trap_clock_handler(ExceptionInfo *info) {
+    // context switch to the next runnable process (from ready queue if it's not empty) if the curren process is running for at least 2 clock ticks.
     (void)info;
     TracePrintf(0, "trap_clock_handler");
     Halt();
@@ -299,12 +313,28 @@ void trap_clock_handler(ExceptionInfo *info) {
 
 
 void trap_illegal_handler(ExceptionInfo *info) {
+    // terminate current process
+    // print message with the current process id and problem that coused it (look at info->code)
+    // can print with printf/fprintf or (better) TtyTransmit
+    // continue running other processes (context switch to the next runnable)
+    // exit status reported to the parent process of the terminated process when the parent calls the Wait
+    // kernel call should be the value ERROR; same as if child called Exit(ERROR)
     (void)info;
     TracePrintf(0, "trap_illegal_handler");
     Halt();
 }
 
 void trap_memory_handler(ExceptionInfo *info) {
+    // check info->code
+    // check whether info->addr is between break and info->sp:
+    // 1) if true: this exception represents a request by the current process to enlarge the amount of memory:
+    // - need to enlarge process's stack to "cover" info->addr (might use multiple new pages)
+    // - don't forget to check that there is more than one page between heap's break and info->addr where we want to move stack pointer
+    // - check that we have enough physical memory for enlarging stack
+    // 2) if it's some type of illegal access/error: same as trap_illegal
+    // - print message with the current process id and problem that coused it (look at info->code) and continue running other processes (context switch to the next runnable)
+
+
     TracePrintf(0, "trap_memory_handler, addr:%p\n", info->addr);
     TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
     TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
@@ -339,18 +369,28 @@ void trap_memory_handler(ExceptionInfo *info) {
 }
 
 void trap_math_handler(ExceptionInfo *info) {
+    // same as in trap_illegal (look at info->code for better description of error)
     (void)info;
     TracePrintf(0, "trap_math_handler");
     Halt();
 }
 
 void trap_tty_transmit_handler(ExceptionInfo *info) {
+    // the previous TtyTransmit hardware operation on info->code terminal has completed
+    // unblock the blocked process that started this TtyWrite kernel call that started this output
+    // if other TtyWrite calls are pending for info->code terminal, start the next one 
+    // by calling TtyTransmit(info->code, void *buf, int len)
+    // buf must ne in region 1
     (void)info;
     TracePrintf(0, "trap_tty_transmit_handler");
     Halt();
 }
 
 void trap_tty_receive_handler(ExceptionInfo *info) {
+    // a new line of input is available from the terminal of number info->code
+    // "allocate" some memory for buf (should lie in Region1!)
+    // call TtyReceive(info->code, void *buf, TERMINAL_MAX_LINE)
+    // if necessary should buffer the input line for a subsequent TtyRead kernel call by some user process.
     (void)info;
     TracePrintf(0, "trap_tty_receive_handler");
     Halt();
@@ -366,14 +406,13 @@ int SetKernelBrk(void * addr) {
         currentBrk = addr;
     } else {
         TracePrintf(0, "VM enabled\n");
+
+        // do we need to add 1?? Addr is a new break which the first byte that is not a part of the heap 
         int count = ((uintptr_t)(addr - UP_TO_PAGE(currentBrk)) >> PAGESHIFT) + 1;
         if (count > free_ll.count) {
            return -1;
         } 
         int i;
-        if(count > free_ll.count) {
-            return -1;
-        }
         unsigned int curr_page = (UP_TO_PAGE(currentBrk) - VMEM_1_BASE) >> PAGESHIFT;
         TracePrintf(0, "I'm going to allocate new pages\n");
         for (i = 0; i < count; i++) {
@@ -388,6 +427,7 @@ int SetKernelBrk(void * addr) {
             }
             region1[curr_page++].pfn = pfn;
         }
+        /// Break is not a part of heap!
         currentBrk = addr;
     }
     return 0;
