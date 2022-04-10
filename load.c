@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <stdint.h>
 
 #include <comp421/hardware.h>
 #include <comp421/loadinfo.h>
@@ -36,7 +38,7 @@
  *  in this case.
  */
 int
-LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, struct free_pages free_pages)
+LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, struct free_pages free_pages, pcb *newPCB)
 {
     int fd;
     int status;
@@ -122,6 +124,8 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     text_npg = li.text_size >> PAGESHIFT;
     data_bss_npg = UP_TO_PAGE(li.data_size + li.bss_size) >> PAGESHIFT;
     stack_npg = (USER_STACK_LIMIT - DOWN_TO_PAGE(cpp)) >> PAGESHIFT;
+    // Change to +1
+    newPCB->brk = (void *)(uintptr_t)((text_npg + data_bss_npg) << PAGESHIFT);
 
     TracePrintf(0, "LoadProgram: text_npg %d, data_bss_npg %d, stack_npg %d\n",
 	text_npg, data_bss_npg, stack_npg);
