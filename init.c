@@ -4,16 +4,17 @@
 #include <string.h>
 int x = 5;
 int y = 34;
-char s2[10] = "Help!";
+// char s2[10] = "Help!";
 int main() {
     while(1) {
         TracePrintf(0, "Init is working\n");
         int z = y - x;
         TracePrintf(0, "Result is %i\n", z);
-        char *s = malloc(sizeof(char)*5);
-        strcpy(s, s2);
-        TracePrintf(0, "Malloced string: %s\n", s);
+        // char *s = malloc(sizeof(char)*5);
+        // strcpy(s, s2);
+        // TracePrintf(0, "Malloced string: %s\n", s);
         TracePrintf(0, "PID of the current process: %i\n", GetPid());
+        // TracePrintf(0, "Delay return value is %i\n", Delay(1));
         Pause();
     }
     return 0;

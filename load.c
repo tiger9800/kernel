@@ -1,10 +1,3 @@
-// >>>> THIS FILE IS ONLY A TEMPLATE FOR YOUR LoadProgram FUNCTION
-
-// >>>> You MUST edit each place marked by ">>>>" below to replace
-// >>>> the ">>>>" description with code for your kernel to implement the
-// >>>> behavior described.  You might also want to save the original
-// >>>> annotations as comments.
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
@@ -57,28 +50,27 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     TracePrintf(0, "LoadProgram '%s', args %p\n", name, args);
 
     if ((fd = open(name, O_RDONLY)) < 0) {
-	TracePrintf(0, "LoadProgram: can't open file '%s'\n", name);
-	return (-1);
+	    TracePrintf(0, "LoadProgram: can't open file '%s'\n", name);
+	    return (-1);
     }
 
     status = LoadInfo(fd, &li);
     TracePrintf(0, "LoadProgram: LoadInfo status %d\n", status);
     switch (status) {
-	case LI_SUCCESS:
-	    break;
-	case LI_FORMAT_ERROR:
-	    TracePrintf(0,
-		"LoadProgram: '%s' not in Yalnix format\n", name);
-	    close(fd);
-	    return (-1);
-	case LI_OTHER_ERROR:
-	    TracePrintf(0, "LoadProgram: '%s' other error\n", name);
-	    close(fd);
-	    return (-1);
-	default:
-	    TracePrintf(0, "LoadProgram: '%s' unknown error\n", name);
-	    close(fd);
-	    return (-1);
+	    case LI_SUCCESS:
+	        break;
+	    case LI_FORMAT_ERROR:
+	        TracePrintf(0, "LoadProgram: '%s' not in Yalnix format\n", name);
+	        close(fd);
+	        return (-1);
+	    case LI_OTHER_ERROR:
+	        TracePrintf(0, "LoadProgram: '%s' other error\n", name);
+	        close(fd);
+	        return (-1);
+	    default:
+	        TracePrintf(0, "LoadProgram: '%s' unknown error\n", name);
+	        close(fd);
+	        return (-1);
     }
     TracePrintf(0, "text_size 0x%lx, data_size 0x%lx, bss_size 0x%lx\n",
 	li.text_size, li.data_size, li.bss_size);
@@ -124,11 +116,11 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     text_npg = li.text_size >> PAGESHIFT;
     data_bss_npg = UP_TO_PAGE(li.data_size + li.bss_size) >> PAGESHIFT;
     stack_npg = (USER_STACK_LIMIT - DOWN_TO_PAGE(cpp)) >> PAGESHIFT;
-    // Initialize a break for this process.
-    newPCB->brk = (void *)(uintptr_t)((text_npg + data_bss_npg) << PAGESHIFT);
-
     TracePrintf(0, "LoadProgram: text_npg %d, data_bss_npg %d, stack_npg %d\n",
 	text_npg, data_bss_npg, stack_npg);
+
+    // Initialize a break for this process's heap.
+    newPCB->brk = (void *)(uintptr_t)((text_npg + data_bss_npg) << PAGESHIFT);
 
     /*
      *  Make sure we have enough *virtual* memory to fit everything within
@@ -137,12 +129,10 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
      */
     if (MEM_INVALID_PAGES + text_npg + data_bss_npg + 1 + stack_npg +
 	1 + KERNEL_STACK_PAGES > PAGE_TABLE_LEN) {
-	TracePrintf(0,
-	    "LoadProgram: program '%s' size too large for VIRTUAL memory\n",
-	    name);
-	free(argbuf);
-	close(fd);
-	return (-1);
+	    TracePrintf(0, "LoadProgram: program '%s' size too large for VIRTUAL memory\n",name);
+	    free(argbuf);
+	    close(fd);
+	    return (-1);
     }
 
     /*
@@ -157,21 +147,20 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>> freed below before we allocate the needed pages for
     // >>>> the new program being loaded.
 
-    //count the number of pages that are valid
+    // Count the number of pages that are valid.
     int count = free_pages.count;
+    // Count all the pages currently in use by the page table 0 that are not a part of the kernel.
     for(i = 0; i < KERNEL_STACK_BASE >> PAGESHIFT; i++) {
-        if (region0[i].valid == 1) {//count all the pages currently in use by the page table 0 that are not a part of the kernel
+        if (region0[i].valid == 1) {
             count++;
         }
     }
-
     if (count < text_npg + data_bss_npg + 1 + stack_npg) {
-	TracePrintf(0,
-	    "LoadProgram: program '%s' size too large for PHYSICAL memory\n",
+	    TracePrintf(0, "LoadProgram: program '%s' size too large for PHYSICAL memory\n",
 	    name);
-	free(argbuf);
-	close(fd);
-	return (-1);
+	    free(argbuf);
+	    close(fd);
+	    return (-1);
     }
     
 
@@ -193,14 +182,13 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>> of these PTEs to be no longer valid.
 
     for(i = VMEM_0_BASE; i < KERNEL_STACK_BASE >> PAGESHIFT; i++) {
-        if(region0[i].valid == 1) {//if valid then free
-            //add to the free list, by making it point to head
-            //add free page to free_pages region
+        // If a page is valid, free it.
+        if(region0[i].valid == 1) {
+            // Add to the free list, by making it point to free list head.
+            // Set a valid bit to 0.
             freePage(&region0[i]);  
         }
     }
-
-
 
     /*
      *  Fill in the page table with the right number of text,
@@ -212,23 +200,26 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
 
     // >>>> Leave the first MEM_INVALID_PAGES number of PTEs in the
     // >>>> Region 0 page table unused (and thus invalid)
-    int curr_page;
-    for(curr_page = (VMEM_0_BASE >> PAGESHIFT); curr_page < MEM_INVALID_PAGES; curr_page++){
-        //TracePrintf(0, "213: Current page %i\n", curr_page);
+    int curr_page = (VMEM_0_BASE >> PAGESHIFT);
+    while (curr_page < MEM_INVALID_PAGES){
         region0[curr_page].valid = 0;
+        curr_page++;
     }
-
-
     // >>>> For the next text_npg number of PTEs in the Region 0
     // >>>> page table, initialize each PTE:
     // >>>>   
     /* First, the text pages */
-    for(; curr_page < MEM_INVALID_PAGES + text_npg; curr_page++) {
-        //TracePrintf(0, "223: Current page %i\n", curr_page);
+    while (curr_page < MEM_INVALID_PAGES + text_npg) {
         region0[curr_page].valid = 1;
-        region0[curr_page].kprot = PROT_READ | PROT_WRITE;
-        region0[curr_page].uprot = PROT_READ | PROT_EXEC;
-        region0[curr_page].pfn  = getFreePage();
+        region0[curr_page].kprot = PROT_READ|PROT_WRITE;
+        region0[curr_page].uprot = PROT_READ|PROT_EXEC;
+        unsigned int pfn = getFreePage();
+        if ((int)pfn == -1) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            return (-2);
+        }
+        region0[curr_page].pfn = pfn;
+        curr_page++;
     }
       
 
@@ -239,12 +230,18 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>>     kprot = PROT_READ | PROT_WRITE
     // >>>>     uprot = PROT_READ | PROT_WRITE
     // >>>>     pfn   = a new page of physical memory
-    for(; curr_page < MEM_INVALID_PAGES + text_npg + data_bss_npg; curr_page++) {
+    while (curr_page < MEM_INVALID_PAGES + text_npg + data_bss_npg) {
         //TracePrintf(0, "239: Current page %i\n", curr_page);
         region0[curr_page].valid = 1;
-        region0[curr_page].kprot = PROT_READ | PROT_WRITE;
-        region0[curr_page].uprot = PROT_READ | PROT_WRITE;
-        region0[curr_page].pfn  = getFreePage();
+        region0[curr_page].kprot = PROT_READ|PROT_WRITE;
+        region0[curr_page].uprot = PROT_READ|PROT_WRITE;
+        unsigned int pfn = getFreePage();
+        if ((int)pfn == -1) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            return (-2);
+        }
+        region0[curr_page].pfn = pfn;
+        curr_page++;
     }
 
     /* And finally the user stack pages */
@@ -257,12 +254,17 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>>     uprot = PROT_READ | PROT_WRITE
     // >>>>     pfn   = a new page of physical memory
     curr_page = (USER_STACK_LIMIT >> PAGESHIFT) - 1;
-    for(i = 0; i < stack_npg; i++) {
+    for (i = 0; i < stack_npg; i++) {
         //TracePrintf(0, "257: Current page %i\n", curr_page);
         region0[curr_page].valid = 1;
         region0[curr_page].kprot = PROT_READ | PROT_WRITE;
         region0[curr_page].uprot = PROT_READ | PROT_WRITE;
-        region0[curr_page--].pfn  = getFreePage();
+        unsigned int pfn = getFreePage();
+        if ((int)pfn == -1) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            return (-2);
+        }
+        region0[curr_page--].pfn = pfn;
     }
 
     /*

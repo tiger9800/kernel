@@ -13,7 +13,7 @@ struct pcb {
     int pid;
     SavedContext ctx;
     struct pte *page_table0;
-    int delay_clock;
+    int delay_offset;
     struct pcb *parent;
     struct pcb *next;
     void *brk;
