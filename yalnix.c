@@ -65,6 +65,7 @@ static void printQueue(queue q);
 // Kernel call helpers.
 static int KernelGetPid();
 static int KernelDelay(int clock_ticks);
+static int KernelUserBrk(ExceptionInfo *info);
 
 
 
@@ -276,12 +277,10 @@ void trap_kernel_handler(ExceptionInfo *info) {
         case YALNIX_WAIT:
             break;
         case YALNIX_GETPID:
-            TracePrintf(0, "in getpid_handler\n"); 
             info->regs[0] = KernelGetPid();
-            TracePrintf(0, "return value %i\n", info->regs[0]);
             break;
         case YALNIX_BRK:
-            // check that there is >1 pages between stack and new break
+            info->regs[0] = KernelUserBrk(info);
             break;
         case YALNIX_DELAY:
             info->regs[0] = KernelDelay(info->regs[1]);
@@ -394,6 +393,7 @@ void trap_memory_handler(ExceptionInfo *info) {
             unsigned int pfn = getFreePage();
             if ((int)pfn == -1) {
                 TracePrintf(0, "No enough free physical memory to complete operation\n");
+                // free previous (i + 1) pages
                 // TODO: terminate process
             }
             active->page_table0[curr_page++].pfn = pfn;
@@ -453,6 +453,7 @@ int SetKernelBrk(void *addr) {
             unsigned int pfn = getFreePage();
             if ((int)pfn == -1) {
                 TracePrintf(0, "No enough free physical memory to complete operation\n");
+                // free previous (i + 1) pages
                 return -1;
             }
             region1[curr_page++].pfn = pfn;
@@ -672,6 +673,15 @@ static void runNextProcess() {
     ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
 }
 
+static void printQueue(queue q) {
+    int i = 1;
+    pcb *cur = q.head;
+    while(cur != NULL) {
+        TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
+        cur = cur->next;
+    }
+}
+
 
 // Helpers for kernel calls.
 
@@ -697,11 +707,42 @@ static int KernelDelay(int clock_ticks) {
     }
 }
 
-static void printQueue(queue q) {
-    int i = 1;
-    pcb *cur = q.head;
-    while(cur != NULL) {
-        TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
-        cur = cur->next;
+static int KernelUserBrk(ExceptionInfo *info) {
+    (void)info;
+    void *addr = (void *)info->regs[1];
+    if (addr == NULL || addr <= active->brk || addr >= info->sp) {
+        return ERROR;
     }
+    // addr must be between the process's break and stack pointer.
+    // This is a request to enlarge process's heap to "cover" addr.
+    int new_gap = ((uintptr_t)(DOWN_TO_PAGE(info->sp) - UP_TO_PAGE(addr)) >> PAGESHIFT);
+    TracePrintf(0, "new gap when malloc was done: %i\n", new_gap);
+    // Check that there is more than one page between process's break and a new stack pointer.
+    if (new_gap < 1) {
+        return ERROR; 
+    }
+    int count = ((uintptr_t)(UP_TO_PAGE(addr) - UP_TO_PAGE(active->brk)) >> PAGESHIFT);
+    // Check whether there is enough physical memory.
+    if (count > free_ll.count) {
+        return ERROR;
+    } 
+    int i;
+    unsigned int curr_page = (UP_TO_PAGE(active->brk) >> PAGESHIFT) % PAGE_TABLE_LEN;
+    for (i = 0; i < count; i++) {
+        TracePrintf(0, "VPN we use for malloc: %i\n", curr_page);
+        (active->page_table0)[curr_page].valid = 1;
+        (active->page_table0)[curr_page].kprot = PROT_READ|PROT_WRITE;
+        (active->page_table0)[curr_page].uprot = PROT_READ|PROT_WRITE;
+        unsigned int pfn = getFreePage();
+        if ((int)pfn == -1) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            // free previous (i + 1) pages
+            return ERROR;
+        }
+        (active->page_table0)[curr_page++].pfn = pfn;
+    }
+    // Note: break is not a part of heap.
+    active->brk = (void *)UP_TO_PAGE(addr);
+    return 0;
 }
+

@@ -120,7 +120,7 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
 	text_npg, data_bss_npg, stack_npg);
 
     // Initialize a break for this process's heap.
-    newPCB->brk = (void *)(uintptr_t)((text_npg + data_bss_npg) << PAGESHIFT);
+    newPCB->brk = (void *)(uintptr_t)((MEM_INVALID_PAGES + text_npg + data_bss_npg) << PAGESHIFT);
 
     /*
      *  Make sure we have enough *virtual* memory to fit everything within

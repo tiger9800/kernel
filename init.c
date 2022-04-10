@@ -4,19 +4,30 @@
 #include <string.h>
 int x = 5;
 int y = 34;
-// char s2[10] = "Help!";
+char s2[10] = "Help!";
 int main() {
     while(1) {
         TracePrintf(0, "Init is working\n");
         int z = y - x;
         TracePrintf(0, "Result is %i\n", z);
-        // char *s = malloc(sizeof(char)*5);
-        // strcpy(s, s2);
-        // TracePrintf(0, "Malloced string: %s\n", s);
+
+        // Test Brk()
+        char *s = malloc(sizeof(char)*20000);
+        if (s == NULL) {
+            TracePrintf(0, "Pointer is null!\n");
+        } else {
+            strcpy(s, s2);
+            TracePrintf(0, "Malloced string: %s\n", s);
+        }
+
+        // Test GetPid()
         TracePrintf(0, "PID of the current process: %i\n", GetPid());
-        TracePrintf(0, "1st delay return value is %i\n", Delay(5));
-        TracePrintf(0, "2nd delay return value is %i\n", Delay(-1));
-        TracePrintf(0, "3rd delay return value is %i\n", Delay(2));
+
+
+        // Test Delay()
+        // TracePrintf(0, "1st delay return value is %i\n", Delay(5));
+        // TracePrintf(0, "2nd delay return value is %i\n", Delay(-1));
+        // TracePrintf(0, "3rd delay return value is %i\n", Delay(2));
         Pause();
     }
     return 0;
