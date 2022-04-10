@@ -132,30 +132,22 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
     // Switch from idle process to init.
     if (active->pid == idle_PCB.pid) {
-        TracePrintf(0, "Switch from idle to init in KernelStart (active pid=%i)\n", active->pid);
+        // Where the idle process will resume after cloneContext.
+        TracePrintf(0, "Where the idle process will resume after cloneContext\n", active->pid);
+        TracePrintf(0, "The idle process performs ContextSwitch with init (active pid=%i)\n", active->pid);
+        // Idle process performs switch with init process.
         ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
-        //  // Check cmd_args, run the specified process or init otherwise
-        // if (cmd_args[0] == NULL) {
-        //     LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
-        // } else {
-        //     LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
-        // }
     } else {
-        // Can uncomment this to see that it runs twice (first time with pid = 0, second time with pid=1)!
-        // TracePrintf(0, "Switch from idle to init in KernelStart (active pid=%i)\n", active->pid);
+        // Where init process will resume after switchProcesses.
+        TracePrintf(0, "Where the init process will resume after switchProcesses\n", active->pid);
+        TracePrintf(0, "Init loads its program from file (active pid=%i)\n", active->pid);
+        // Init loads its code.
         if (cmd_args[0] == NULL) {
             LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
         } else {
             LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
         }
     }
-
-    // // Check cmd_args, run the specified process or init otherwise
-    // if (cmd_args[0] == NULL) {
-    //     LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
-    // } else {
-    //     LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
-    // }
 }
 
 static void initPageTables() {
@@ -239,18 +231,6 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
         unReservePage();
         curr_page++;
     }
-    TracePrintf(0, "When copying kernel stack from process %i to process %i:\n", ((pcb*)p1)->pid, ((pcb*)p2)->pid);
-    TracePrintf(0, "In process %i:\n", ((pcb*)p1)->pid);
-    TracePrintf(0, "Valid bit = %i for vpn 508 in cloneContext\n", ((pcb*)p1)->page_table0[508].valid);
-    TracePrintf(0, "PFN = %i for vpn 508 in cloneContext\n", ((pcb*)p1)->page_table0[508].pfn);
-    TracePrintf(0, "PFN = %i for vpn 509 in cloneContext\n", ((pcb*)p1)->page_table0[509].pfn);
-    TracePrintf(0, "PFN = %i for vpn 510 in cloneContext\n", ((pcb*)p1)->page_table0[510].pfn);
-
-    TracePrintf(0, "In process %i:\n", ((pcb*)p2)->pid);
-    TracePrintf(0, "Valid bit = %i for vpn 508 in cloneContext\n", ((pcb*)p2)->page_table0[508].valid);
-    TracePrintf(0, "PFN = %i for vpn 508 in cloneContext\n", ((pcb*)p2)->page_table0[508].pfn);
-    TracePrintf(0, "PFN = %i for vpn 509 in cloneContext\n", ((pcb*)p2)->page_table0[509].pfn);
-    TracePrintf(0, "PFN = %i for vpn 510 in cloneContext\n", ((pcb*)p2)->page_table0[510].pfn);
     return &((pcb*)p2)->ctx;
 }
 
@@ -260,7 +240,6 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     (void)p1;
     TracePrintf(0, "Doing a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
-    TracePrintf(0, "Find a virtual address for pt0: %p\n", pt0_virtual_addr);
     if (((pcb*)p2)->pid == 0) {
         // Idle is a special process. Its PT0 is not on the boundary!!!
         // But we know for sure that it's virtual address == physical address.
@@ -270,10 +249,8 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
         // Otherwise, we need to find a physical address.
         // Convert a virtual address of page table 0 to its vpn.
         unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
-        TracePrintf(0, "Find a vpn for pt0: %u\n", pt0_vpn);
         // Find a corresponding physical address of page table 0.
         void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
-        TracePrintf(0, "Physical address of pt0: %p\n", pt0_physical_addr);
         // Let hardware know a physical address of a new page table 0.
         WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
     }
@@ -282,7 +259,7 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
 
     // Make process 2 active.
     active = (pcb *)p2;
-    TracePrintf(0, "Done doing a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+
     return &((pcb*)p2)->ctx;
 }
 
@@ -336,14 +313,16 @@ void trap_clock_handler(ExceptionInfo *info) {
         curr_process = curr_process->next;
     }
 
-    if (prevActive != NULL && prevActive->pid == active->pid) {
-        // The process is running for at least 2 clock ticks.
+    if (active->pid == 0 || (prevActive != NULL && prevActive->pid == active->pid)) {
+        // If idle is running or if some process is running for at least 2 clock ticks: ContextSwitch!
         // Take the next process from the ready queue.
         pcb *nextReady = dequeue(&readyQ);
-        // Put a current process in the ready queue.
-        enqueue(active, &readyQ);
-        // Context switch between them.
+        // Context switch to this process.
         if (nextReady != NULL) {
+            // Put a current non-idle process in the ready queue.
+            if (active->pid != 0) {
+                enqueue(active, &readyQ);
+            }
             prevActive = active;
             ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
         }
