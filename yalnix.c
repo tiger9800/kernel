@@ -134,18 +134,28 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     if (active->pid == idle_PCB.pid) {
         TracePrintf(0, "Switch from idle to init in KernelStart (active pid=%i)\n", active->pid);
         ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
+        //  // Check cmd_args, run the specified process or init otherwise
+        // if (cmd_args[0] == NULL) {
+        //     LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
+        // } else {
+        //     LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
+        // }
     } else {
         // Can uncomment this to see that it runs twice (first time with pid = 0, second time with pid=1)!
         // TracePrintf(0, "Switch from idle to init in KernelStart (active pid=%i)\n", active->pid);
-        // ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
+        if (cmd_args[0] == NULL) {
+            LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
+        } else {
+            LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
+        }
     }
 
-    // Check cmd_args, run the specified process or init otherwise
-    if (cmd_args[0] == NULL) {
-        LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
-    } else {
-        LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
-    }
+    // // Check cmd_args, run the specified process or init otherwise
+    // if (cmd_args[0] == NULL) {
+    //     LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
+    // } else {
+    //     LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
+    // }
 }
 
 static void initPageTables() {

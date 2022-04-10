@@ -14,7 +14,7 @@ int main() {
         // strcpy(s, s2);
         // TracePrintf(0, "Malloced string: %s\n", s);
         TracePrintf(0, "PID of the current process: %i\n", GetPid());
-        // TracePrintf(0, "Delay return value is %i\n", Delay(1));
+        TracePrintf(0, "Delay return value is %i\n", Delay(1));
         Pause();
     }
     return 0;
