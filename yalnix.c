@@ -8,30 +8,30 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include "kernel.h"
-
+// Interrupt vector.
 void (*interruptHandlers[TRAP_VECTOR_SIZE])(ExceptionInfo *);
+// Page table for region 1 (shared between all the processes).
 struct pte region1[PAGE_TABLE_LEN];
-struct pte idle_region0[PAGE_TABLE_LEN];//idle always exists, so we can define it here
-
-
-
+// Page table for region 0 of the idle process.
+struct pte idle_region0[PAGE_TABLE_LEN]; 
+// PCB of the idle process.
 pcb idle_PCB;
-//struct PCB init_PCB = {1, NULL, init_regio0};
 
-//current kernel break address
+// Current kernel break address.
 void *currentBrk;
+// Boolean saying whether virtual memory has been enabled.
 bool vm_enabled = false;
-
+// Initialized linked list of free physical pages.
 struct free_pages free_ll = {0, NULL};
-
-pcb *activeQ;
-pcb *readyQ;
-pcb *blockedQ;
-
+// Pointer to PCB of currently active processs.
+pcb *active;
+// FIFO queues of ready and blocked processes.
+queue readyQ = {NULL, NULL, 0};
+queue blockedQ = {NULL, NULL, 0};
+// PID of the next process to be created.
 int currPID = 1;
 
-
-//static void idle_process();
+// Interrupt handler routines.
 void trap_kernel_handler(ExceptionInfo *info);
 void trap_clock_handler(ExceptionInfo *info);
 void trap_illegal_handler(ExceptionInfo *info);
@@ -39,67 +39,105 @@ void trap_memory_handler(ExceptionInfo *info);
 void trap_math_handler(ExceptionInfo *info);
 void trap_tty_transmit_handler(ExceptionInfo *info);
 void trap_tty_receive_handler(ExceptionInfo *info);
+// Routines for pages manipulation.
+static void initPageTables();
+static void initFreePages(int start_addr, int end_addr);
 static uintptr_t reservePage(int pfn);
 static void unReservePage();
 void addPage(int pfn);
 void addInvalidPages();
-static struct pte* getNewPageTable();
-SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2);
-SavedContext *switchIdleToInit(SavedContext * ctxp, void * p1, void * p2);
+static struct pte *getNewPageTable();
+// MySwitch functions.
+SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2);
+SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2);
 
-static void initFreePages(int startPage, int endPage) {
-    //first page that we can accessed
-    // int pageNum = 0;
-    int curr_page = startPage;
-    while (curr_page < endPage) {
-        struct physical_frame* currFrame = (struct physical_frame *)(uintptr_t)(curr_page << PAGESHIFT);
-        //TracePrintf(0, "initFreePages: currFrame %p\n", currFrame);
-        
-        currFrame->next = free_ll.head;
-        //TracePrintf(0, "initFreePages: currFrame->next %p\n", currFrame->next);
-        //TracePrintf(0, "pfn:  %i\n", (uintptr_t)currFrame >> PAGESHIFT);
-        free_ll.head = currFrame;
-        curr_page++;
-        free_ll.count++;
-    } 
-}
+// Functions for working with queues. 
+static void enqueue(pcb* proc, queue* queue);
+
+
+// Kernel call helpers.
+static int GetPid_kernel();
 
 
 
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
+    (void)cmd_args;
 
-
+    // Create an interrupt vector.
     interruptHandlers[TRAP_KERNEL] = trap_kernel_handler;
     interruptHandlers[TRAP_CLOCK] = trap_clock_handler;
     interruptHandlers[TRAP_ILLEGAL] = trap_illegal_handler;
+    interruptHandlers[TRAP_MEMORY] = trap_memory_handler;
     interruptHandlers[TRAP_MATH] = trap_math_handler;
     interruptHandlers[TRAP_TTY_TRANSMIT] = trap_tty_transmit_handler;
     interruptHandlers[TRAP_TTY_RECEIVE] = trap_tty_transmit_handler;
-    interruptHandlers[TRAP_MEMORY] = trap_memory_handler;
-
-
-    (void)cmd_args;
-
+    // Init all other handlers to NULL.
     int i;
     for (i = 7; i < TRAP_VECTOR_SIZE; i++) {
         interruptHandlers[i] = NULL;
     }
-
+    // Set a current break.
     currentBrk = orig_brk;
 
-    //make struct PCB initialization for idle process + free page ll
-    //divide up the space into physical pages
-    //free pages are from VMEM_BASE to STACK_BASE anf from orig_brk to pmem_size
+    // Put all pages from region 0 to a free list (except for invalid pages and kernel stack).
+    initFreePages(MEM_INVALID_SIZE, DOWN_TO_PAGE(KERNEL_STACK_BASE));
+    // Put all pages above kernel heap to a free list.
+    initFreePages(UP_TO_PAGE(orig_brk), DOWN_TO_PAGE(pmem_size));
 
-    initFreePages(MEM_INVALID_PAGES, DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT);
-
-    initFreePages(UP_TO_PAGE(orig_brk) >> PAGESHIFT, DOWN_TO_PAGE(pmem_size)>> PAGESHIFT);
-
+    // Let hardware know where interrupt vector is located. 
     WriteRegister(REG_VECTOR_BASE, (RCS421RegVal)interruptHandlers);
 
+    // Create an initial mapping between physical and virtual addresses.
+    initPageTables();
+
+    // Let hardware know where page tables are located.
+    WriteRegister(REG_PTR0, (RCS421RegVal)idle_region0);
+    WriteRegister(REG_PTR1, (RCS421RegVal)region1);
+    
+    // Enable virtual memory.
+    WriteRegister(REG_VM_ENABLE, (RCS421RegVal)1);
+    vm_enabled = true;
+
+    // Add "invalid" pages to a list of free pages.
+    addInvalidPages();
+
+    // Create an array of arguments for loading idle.c
+    char* arg[1] = {NULL};
+
+    // Initailize some PCB values for the idle process.
+    idle_PCB.pid = 0;
+    idle_PCB.page_table0 = idle_region0;
+    idle_PCB.delay_clock = 0;
+    // Load an idle process.
+    LoadProgram("idle", arg, info, idle_region0, free_ll, &idle_PCB);
+
+    // Allocate memory for PCB of init process (first process to run).
+    pcb *initPCB = malloc(sizeof(pcb));
+
+    // Create a page table for this process.
+    struct pte *initPt0 = getNewPageTable();
+    // Init some PCB values for this process.
+    initPCB->pid = currPID++;
+    initPCB->page_table0 = initPt0;
+    initPCB->delay_clock = 0;
+    
+
+    // Save current context to the saved context of process to be run after KernelStart()
+    ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
+    // Switch from idle process to init.
+    ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
+
+    // Check cmd_args, run the specified process or init otherwise
+    if (cmd_args[0] == NULL) {
+        LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
+    } else {
+        LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
+    }
+}
+
+static void initPageTables() {
     // Map pages for the kernel text (in region 1).
-    // Is &etext on the boundary?
-    unsigned int curr_page = (VMEM_1_BASE >> PAGESHIFT);
+    unsigned int curr_page = PAGE_TABLE_LEN;
     while(curr_page < (uintptr_t)(&_etext) >> PAGESHIFT) {
         int ind = curr_page % PAGE_TABLE_LEN;
         region1[ind].pfn = curr_page;
@@ -110,20 +148,19 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     }
     
     // Map pages for the kernel data, bss, and heap (in region 1).
-    // Is orig_brk on the boundary?
-    while(curr_page < (UP_TO_PAGE(orig_brk) >> PAGESHIFT)) {
+    // currentBrk is set to orig_break when we call this function.
+    while(curr_page < (UP_TO_PAGE(currentBrk) >> PAGESHIFT)) {
         int ind = curr_page % PAGE_TABLE_LEN;
         region1[ind].pfn = curr_page;
         region1[ind].uprot = PROT_NONE;
         region1[ind].kprot = PROT_READ|PROT_WRITE;
         region1[ind].valid = 1;
-        //region1[curr_page%PAGE_TABLE_LEN] = new_entry;
         curr_page++;
     }
 
     // Make all remaining pages in region 1 invalid.
-    while((curr_page%PAGE_TABLE_LEN) != 0) {
-        region1[curr_page%PAGE_TABLE_LEN].valid = 0;
+    while((curr_page % PAGE_TABLE_LEN) != 0) {
+        region1[curr_page % PAGE_TABLE_LEN].valid = 0;
         curr_page++;
     }
 
@@ -142,174 +179,96 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         idle_region0[curr_page].valid = 1;
         curr_page++;
     }
-
-
-
-    //set pc to idle
-    //TracePrintf(0, "I am about to enable virtual memeory\n");
-    WriteRegister(REG_PTR0, (RCS421RegVal)idle_region0);
-
-    WriteRegister(REG_PTR1, (RCS421RegVal)region1);
-    
-    WriteRegister(REG_VM_ENABLE, (RCS421RegVal)1);
-    vm_enabled = true;
-    
-    addInvalidPages();
-
-    //TracePrintf(0, "Enabled virtual memory\n");
-
-
-    //TracePrintf(0, "Here is addr of idle process %i\n", idle_process);
-
-
-    char* arg[1] = {NULL};
-
-    idle_PCB.pid = 0;
-    idle_PCB.page_table0 = idle_region0;
-    idle_PCB.delay_clock = 0;
-    idle_PCB.parent =  NULL;
-    idle_PCB.next = NULL;
-    LoadProgram("idle", arg, info, idle_region0, free_ll);
-
-    TracePrintf(0, "I'm gonna malloc\n");
-    pcb* initPCB = malloc(sizeof(pcb));
-
-    TracePrintf(0, "I'm gonna getNewPageTable\n");
-    struct pte *initPt0 = getNewPageTable();
-
-    initPCB->pid = currPID++;
-    initPCB->page_table0 = initPt0;
-    initPCB->parent = NULL;
-    initPCB->next = NULL;
-    initPCB->delay_clock = 0;
-    
-    
-    TracePrintf(0, "cloneContext\n");
-    ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
-    TracePrintf(0, "after cloneContext PFN for init vpn 508: %u\n", idle_PCB.page_table0[508].pfn);
-    TracePrintf(0, "after cloneContext PFN for idle vpn 508: %u\n", (initPCB)->page_table0[508].pfn);
-    TracePrintf(0, "valid for init vpn 508: %u\n", idle_PCB.page_table0[508].valid);
-    TracePrintf(0, "valid for idle vpn 508: %u\n", (initPCB)->page_table0[508].valid);
-
-    TracePrintf(0, "idleToInit\n");
-    ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
-    TracePrintf(0, "after idleToInit PFN for init vpn 508: %u\n", idle_PCB.page_table0[508].pfn);
-    TracePrintf(0, "after idleToInit PFN for idle vpn 508: %u\n", (initPCB)->page_table0[508].pfn);
-
-    TracePrintf(0, "valid for init vpn 508: %u\n", idle_PCB.page_table0[508].valid);
-    TracePrintf(0, "valid for idle vpn 508: %u\n", (initPCB)->page_table0[508].valid);
-
-    LoadProgram("init", cmd_args, info, initPt0, free_ll);
-    // create PCB for init using malloc
-    // create page table for init region0
-    // contextswitch to init
-    // load init
 }
 
-SavedContext  *cloneContext(SavedContext * ctxp, void * p1, void * p2) {
-    TracePrintf(0, "flush 1st time\n");
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-    TracePrintf(0, "flush done\n");
+SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;  
-    (void)p1;
-    int curr_page;
-    for(curr_page = KERNEL_STACK_BASE >> PAGESHIFT; curr_page < (KERNEL_STACK_LIMIT >> PAGESHIFT); curr_page++) {
-        TracePrintf(0, "216 Page: %i\n", curr_page);
+    // ASK: What to do with the ptes below kernel stack? 
+    // For now, set them all to 0.
+    int curr_page = 0;
+    while (curr_page < (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT)) {
+        ((pcb*)p2)->page_table0[curr_page].valid = 0;
+        curr_page++;
+    }
+    // Make a "deep" copy of the kernel stack.
+    while(curr_page < (UP_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT)) {
         ((pcb*)p2)->page_table0[curr_page].valid = 1;
-        ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
+        ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ|PROT_WRITE;
         ((pcb*)p2)->page_table0[curr_page].uprot = PROT_NONE;
+        // Get a free pfn for this page.
         unsigned int pfn = getFreePage();
         if ((int)pfn == -1) {
             TracePrintf(0, "No enough free physical memory to complete operation\n");
-            // What do we want to return here? SavedContext of the first process?
-            //We do not change the page table or flush TLB
+            // Call "terminate process" that will:
+            // 1) "unmap" page_table0 address
+            // 2) free a physical page for this process's page table0
+            // 3) add all valid pages in this page table to a free list.
+            // 4) save exit status and add process to the statusQueue of its parent.
+            // Return context of the 1st process since switch wasn't successful.
             return &((pcb*)p1)->ctx;
         }
-        //make ptes up to kernel stack base equal to 0
-
-        TracePrintf(0, "New pfn: %u\n", pfn);
         ((pcb*)p2)->page_table0[curr_page].pfn = pfn;
+        // Map pfn to some virtual address.
         uintptr_t addrToCopy = reservePage(pfn);
+        // Copy contents of the whole page to a new physical page.
         memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
+        // Unmap this pfn since we won't use it anymore.
         unReservePage();
+        curr_page++;
     }
-    //make all other ptes invalid
-
-
-    TracePrintf(0, "PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
-    TracePrintf(0, "PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
-    TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
-    TracePrintf(0, "valid for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].valid);
     return &((pcb*)p2)->ctx;
 }
 
 
-SavedContext *switchProcesses(SavedContext * ctxp, void * p1, void * p2) {
+SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;
-    (void)p1;
 
     // Make process 2 active.
-    activeQ =  (pcb*) p2;
+    active = (pcb *)p2;
     // Make process 1 "ready" (if it's not idle)
-    if (((pcb*)p1)->pid) != 0) {
-        if(readyQ==NULL) {
-            readyQ = (pcb*)p1;
-        } else {
-            readyQ->next = (pcb*)p1;
-        }
-        readyQ = (pcb*)p1;
+    if ((((pcb*)p1)->pid) != 0) {
+        enqueue((pcb*)p1, &readyQ);
     }
-    TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
-    TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
-    TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
-    TracePrintf(0, "valid for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].valid);
-
-    unsigned int pageToVpn = ((uintptr_t)(((pcb*)p2)->page_table0) >> PAGESHIFT) % PAGE_TABLE_LEN;
-    void* physical_addr = (void *) ((uintptr_t)region1[pageToVpn].pfn << PAGESHIFT);
-    
-    
-    WriteRegister(REG_PTR0, (RCS421RegVal) (physical_addr));
+    // Convert a virtual address of page table 0 to its vpn.
+    unsigned int pt0_vpn = ((uintptr_t)(((pcb*)p2)->page_table0) >> PAGESHIFT) % PAGE_TABLE_LEN;
+    // Find a corresponding physical address of page table 0.
+    void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
+    // Let hardware know a physical address of new page table 0.
+    WriteRegister(REG_PTR0, (RCS421RegVal) (pt0_physical_addr));
+    // Flush TLB for an entire region 0.
     WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-
-    TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
-    TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
-    TracePrintf(0, "valid for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].valid);
-    TracePrintf(0, "valid for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].valid);
-    
-    TracePrintf(0, "switchIdleToInit PFN for init vpn 508: %u\n", ((pcb*)p2)->page_table0[508].pfn);
-    TracePrintf(0, "switchIdleToInit PFN for idle vpn 508: %u\n", ((pcb*)p1)->page_table0[508].pfn);
-
     return &((pcb*)p2)->ctx;
 }
-// MySwitchFunc(SavedContext * ctxp, void * p1, void * p2)
 
-
-// static void idle_process() {
-//     while(1) {
-//         TracePrintf(0, "idle loop");
-//         Pause();
-//     }
-// }
-
-//handler
 void trap_kernel_handler(ExceptionInfo *info) {
-    // check info->code to determine what function to call:
-    // YALNIX_FORK		1
-    // YALNIX_EXEC		2
-    // YALNIX_EXIT		3
-    // YALNIX_WAIT		4
-    // YALNIX_GETPID    5
-    // YALNIX_BRK		6 - check that there is >1 pages between stack and new break
-    // YALNIX_DELAY		7
-    // YALNIX_TTY_READ  21
-    // YALNIX_TTY_WRITE	22
-
     // args for this function are in info->regs[1:8]
     // put return value in info->regs[0] (don't put anything there if Exit is called)
-    (void)info;
-    
-    TracePrintf(0, "trap_clock_handler");
-    Halt();
+    switch (info->code) {
+        case YALNIX_FORK:
+            break;
+        case YALNIX_EXEC:
+            break;
+        case YALNIX_EXIT:
+            break;
+        case YALNIX_WAIT:
+            break;
+        case YALNIX_GETPID:
+            TracePrintf(0, "in getpid_handler\n"); 
+            info->regs[0] = GetPid_kernel();
+            TracePrintf(0, "return value %i\n", info->regs[0]);
+            break;
+        case YALNIX_BRK:
+            // check that there is >1 pages between stack and new break
+            break;
+        case YALNIX_DELAY:
+            break;
+        case YALNIX_TTY_READ:
+            break;
+        case YALNIX_TTY_WRITE:
+            break;
+        default:
+            TracePrintf(0, "Invalid code in the trap_kernel_handler\n");
+    }
 }
 
 void trap_clock_handler(ExceptionInfo *info) {
@@ -333,47 +292,62 @@ void trap_illegal_handler(ExceptionInfo *info) {
 }
 
 void trap_memory_handler(ExceptionInfo *info) {
-    // check info->code
-    // check whether info->addr is between break and info->sp:
-    // 1) if true: this exception represents a request by the current process to enlarge the amount of memory:
-    // - need to enlarge process's stack to "cover" info->addr (might use multiple new pages)
-    // - don't forget to check that there is more than one page between heap's break and info->addr where we want to move stack pointer
-    // - check that we have enough physical memory for enlarging stack
-    // 2) if it's some type of illegal access/error: same as trap_illegal
-    // - print message with the current process id and problem that coused it (look at info->code) and continue running other processes (context switch to the next runnable)
-
 
     TracePrintf(0, "trap_memory_handler, addr:%p\n", info->addr);
     TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
     TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
     TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
-    // region1[PAGE_TABLE_LEN - 1].valid = 1;
-    // region1[PAGE_TABLE_LEN - 1].pfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
-    // region1[PAGE_TABLE_LEN - 1].uprot = PROT_NONE;
-    // region1[PAGE_TABLE_LEN - 1].kprot = PROT_READ|PROT_WRITE;
 
-    // if(info->addr >= (void *)VMEM_1_BASE) {
-    //     //create mapping
-    //     struct physical_frame *head = (struct physical_frame *)((PAGE_TABLE_LEN - 1) << PAGESHIFT);
-    //     TracePrintf(0, "head value: %p\n", *head);
-    //     TracePrintf(0, "head next addr: %p\n", head->next);
-    //     free_ll.head = head->next;
-    //     free_ll.count--;
-    //     region1[(uintptr_t)info->addr>>PAGESHIFT].valid = 1;
-    //     region1[(uintptr_t)info->addr>>PAGESHIFT].pfn = head->pfn;
-    //     region1[(uintptr_t)info->addr>>PAGESHIFT].uprot = PROT_NONE;
-    //     region1[(uintptr_t)info->addr>>PAGESHIFT].kprot = PROT_READ|PROT_WRITE;
-    // } else {
-    //     struct physical_frame *head = free_ll.head;
-    //     TracePrintf(0, "head addr: %p\n", head);
-    //     free_ll.head = head->next;
-    //     free_ll.count--;
-    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].valid = 1;
-    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].pfn = head->pfn;
-    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].uprot = PROT_READ|PROT_WRITE;
-    //     idle_region0[(uintptr_t)info->addr >> PAGESHIFT].kprot = PROT_READ|PROT_WRITE;
-    //}
-    //Halt();
+    if (info->addr == NULL || info->addr <= active->brk || info->addr >= info->sp) {
+        // TODO: terminate process (context switch to next ready process)
+        TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", GetPid_kernel());
+        switch (info->code) {
+            case TRAP_MEMORY_MAPERR:
+                TracePrintf(0, "No mapping at addr %p\n", info->addr);
+                break;
+            case TRAP_MEMORY_ACCERR:
+                TracePrintf(0, "Protection violation at addr %p\n", info->addr);
+                break;
+            case TRAP_MEMORY_KERNEL:
+                TracePrintf(0, "Linux kernel sent SIGSEGV at addr %p\n", info->addr);
+                break;
+            case TRAP_MEMORY_USER:
+                TracePrintf(0, "Received SIGSEGV from user at addr %p\n", info->addr);
+                break;
+            default:
+                TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
+        }
+    } else {
+        // info->addr is between the process's break and stack pointer.
+        // This is a request to enlarge process's stack to "cover" info->addr.
+        int new_gap = ((uintptr_t)(DOWN_TO_PAGE(info->addr) - UP_TO_PAGE(active->brk)) >> PAGESHIFT);
+        // Check that there is more than one page between process's break and a new stack pointer.
+        if (new_gap < 1) {
+            // TODO: terminate process 
+        }
+        int count = ((uintptr_t)(DOWN_TO_PAGE(info->sp) - DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
+        // Check that we have enough physical memory for enlarging stack.
+        if (count > free_ll.count) {
+           // TODO: terminate process 
+        } 
+        int i;
+        unsigned int curr_page = (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT;
+        for (i = 0; i < count; i++) {
+            active->page_table0[curr_page].valid = 1;
+            active->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
+            active->page_table0[curr_page].uprot = PROT_READ | PROT_WRITE;
+            unsigned int pfn = getFreePage();
+            if ((int)pfn == -1) {
+                TracePrintf(0, "No enough free physical memory to complete operation\n");
+                // TODO: terminate process
+            }
+            active->page_table0[curr_page++].pfn = pfn;
+        }
+        // Note: stack pointer is not a part of stack?
+        // Lower a stack pointer.
+        info->sp = info->addr;
+        TracePrintf(0, "Process's stack was expanded.\n");
+    }
 }
 
 void trap_math_handler(ExceptionInfo *info) {
@@ -404,29 +378,23 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
     Halt();
 }   
 
-//Called when malloc is caled by the kernel.
-int SetKernelBrk(void * addr) { 
-    TracePrintf(0, "I'm inside setKernelBrk\n");
+// Called when malloc is called by the kernel.
+int SetKernelBrk(void *addr) { 
     if(!vm_enabled) {
-        if(addr > (void *)VMEM_1_LIMIT) {
+        if(addr > (void *)VMEM_LIMIT) {
             return -1;
         }
         currentBrk = addr;
     } else {
-        TracePrintf(0, "VM enabled\n");
-
-        // do we need to add 1?? Addr is a new break which the first byte that is not a part of the heap 
-        int count = ((uintptr_t)(addr - UP_TO_PAGE(currentBrk)) >> PAGESHIFT) + 1;
+        int count = ((uintptr_t)(UP_TO_PAGE(addr) - UP_TO_PAGE(currentBrk)) >> PAGESHIFT);
         if (count > free_ll.count) {
            return -1;
         } 
         int i;
-        unsigned int curr_page = (UP_TO_PAGE(currentBrk) - VMEM_1_BASE) >> PAGESHIFT;
-        TracePrintf(0, "I'm going to allocate new pages\n");
+        unsigned int curr_page = (UP_TO_PAGE(currentBrk) >> PAGESHIFT) % PAGE_TABLE_LEN;
         for (i = 0; i < count; i++) {
-            TracePrintf(0, "I'm going to make bit valid of page %d\n", curr_page);
             region1[curr_page].valid = 1;
-            region1[curr_page].kprot = PROT_READ | PROT_WRITE;
+            region1[curr_page].kprot = PROT_READ|PROT_WRITE;
             region1[curr_page].uprot = PROT_NONE;
             unsigned int pfn = getFreePage();
             if ((int)pfn == -1) {
@@ -435,17 +403,30 @@ int SetKernelBrk(void * addr) {
             }
             region1[curr_page++].pfn = pfn;
         }
-        /// Break is not a part of heap!
+        /// Note: break is not a part of heap.
         currentBrk = addr;
     }
     return 0;
 }
 
+// Don't include page for end_addr.
+static void initFreePages(int start_addr, int end_addr) {
+    int curr_addr;
+    for (curr_addr = start_addr; curr_addr < end_addr; curr_addr+=PAGESIZE) {
+        struct physical_frame* currFrame = (struct physical_frame *)(uintptr_t)curr_addr;
+        currFrame->next = free_ll.head;
+        free_ll.head = currFrame;
+        free_ll.count++;
+    } 
+}
+
+// Frees the pte of the page table.
 void freePage(struct pte* newPte) {
     addPage(newPte->pfn);  
     newPte->valid = 0;
 }
 
+// Adds all invalid pages to a free list of pages.
 void addInvalidPages() {
     int pfn;
     for (pfn = PMEM_BASE; pfn < MEM_INVALID_PAGES; pfn++) {
@@ -453,28 +434,32 @@ void addInvalidPages() {
     }
 }
 
+// Adds a physical page to a free list of pages.
 void addPage(int pfn) {
-    TracePrintf(0, "I'm in addPage and pfn is %i\n", pfn);
+    // TracePrintf(0, "I'm in addPage and pfn is %i\n", pfn);
+    // Get a virtual address that maps to desired pfn.
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(pfn);
     currFrame->next = free_ll.head;
+    // Set a head to a physical address of this page.
     free_ll.head = (struct physical_frame *)(uintptr_t)(pfn << PAGESHIFT);
-    TracePrintf(0, "free_ll.head is %p\n", free_ll.head);
+    // TracePrintf(0, "free_ll.head is %p\n", free_ll.head);
     free_ll.count++;
     unReservePage();  
 }
 
+// Removes a free page from the list of fre pages.
 unsigned int getFreePage() {
     if (free_ll.count == 0) {
         return -1;
     }
-    TracePrintf(0, "I'm in get free page and head is %p\n", free_ll.head);
+    // TracePrintf(0, "I'm in get free page and head is %p\n", free_ll.head);
     unsigned int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
+    // Map a virtual address to resultPfn.
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
-    TracePrintf(0, "I took a page and I'm going to deref it\n");
     free_ll.head = currFrame->next; 
     free_ll.count--;
     unReservePage();
-    TracePrintf(0, "Took a new pfn from free list %i\n", resultPfn);
+    // TracePrintf(0, "Took a new pfn from free list %i\n", resultPfn);
     return resultPfn;
 }
 
@@ -492,29 +477,58 @@ static void unReservePage() {
 }
 
 /*
-Return virtual address of a new page table
+    Return virtual address of a new page table
 */
-static struct pte*getNewPageTable() {
-    unsigned int vpn = PAGE_TABLE_LEN - 2;
-    while(region1[vpn].valid) {
+static struct pte *getNewPageTable() {
+    // Reserve a vpn in page table 1 for this purpose.
+    int vpn = PAGE_TABLE_LEN - 2;
+    while(vpn >= 0 && region1[vpn].valid) {
         vpn--;
     }
-    //since we left while loop, then the pte is not valid and we can create a new mapping for a region 0 page table
+    if (vpn < 0) {
+        // No enough free virtual pages in region 1.
+        return NULL;
+    }
+    // Otherwise, pte is not valid and we can create a new mapping for a region 0 page table.
     region1[vpn].valid = 1;
+    // Get a physical page for this page table.
     unsigned int pfn = getFreePage();
     if ((int)pfn == -1) {
         TracePrintf(0, "No enough free physical memory to complete operation\n");
-        return (struct pte *)-1;
+        return NULL;
     }
     region1[vpn].pfn = pfn;
     region1[vpn].kprot = PROT_READ|PROT_WRITE;
     region1[vpn].uprot = PROT_NONE; 
 
-    int curr_page;
-    for(curr_page = 0; curr_page < (KERNEL_STACK_BASE >> PAGESHIFT); curr_page++) {
-        ((struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT)))[curr_page].valid = 0;
-    } 
-    //set every valid bit in the page table to 0.
-    //memset((void *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT)), 0, PAGE_TABLE_LEN * sizeof(struct pte));
-    return (struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
+    // We set every valid bit in the page table to 0 in MySwitchFunc for "consistency."
+    uintptr_t pt0_vrt_addr = (uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
+    // "Clear" this chunk of memory to avoid weird bugs.
+    memset((void *)pt0_vrt_addr, 0, PAGE_TABLE_LEN * sizeof(struct pte));
+    return (struct pte *)pt0_vrt_addr;
+}
+
+/**
+ * @brief Adds proc to the specified queue
+ * 
+ * @param proc element to put on the queue
+ * @param queue queue to add the element to
+ */
+static void enqueue(pcb* proc, queue* queue) {
+    if(queue->count == 0) {
+        queue->head = proc;
+        queue->tail = proc;
+    }
+    else {
+        queue->tail->next = proc;
+        queue->tail = proc;
+    }
+    queue->count++;
+}
+
+
+// Helpers for kernel calls.
+
+static int GetPid_kernel() {
+    return active->pid;
 }
