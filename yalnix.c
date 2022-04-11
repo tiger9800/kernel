@@ -311,8 +311,12 @@ void trap_memory_handler(ExceptionInfo *info) {
     TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
     TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
     TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
-    // Note: the last page of the user stack *ends* at virtual address info->sp.
-    if (info->addr == NULL || info->addr <= active->brk || info->addr >= info->sp) {
+
+    unsigned int curr_page = (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT;
+    if (active->page_table0[curr_page].valid) {
+        // Just set a stack pointer to this address.
+        info->sp = info->addr;
+    } else if (info->addr == NULL || info->addr <= active->brk || info->addr >= info->sp) {
         // TODO: terminate process (context switch to next ready process)
         TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
         switch (info->code) {
@@ -339,13 +343,12 @@ void trap_memory_handler(ExceptionInfo *info) {
         if (new_gap < 1) {
             // TODO: terminate process 
         }
-        int count = ((uintptr_t)(DOWN_TO_PAGE(info->sp) - DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
+        int count = ((uintptr_t)(DOWN_TO_PAGE(active->min_sp) - DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
         // Check that we have enough physical memory for enlarging stack.
         if (count > free_ll.count) {
            // TODO: terminate process 
         } 
         int i;
-        unsigned int curr_page = (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT;
         for (i = 0; i < count; i++) {
             active->page_table0[curr_page].valid = 1;
             active->page_table0[curr_page].kprot = PROT_READ | PROT_WRITE;
@@ -354,6 +357,8 @@ void trap_memory_handler(ExceptionInfo *info) {
         }
         // Lower a stack pointer.
         info->sp = info->addr;
+        // Lower a pointer to the lowest allocated page for the user stack.
+        active->min_sp = (void *)DOWN_TO_PAGE(info->addr);
         TracePrintf(0, "Process's stack was expanded.\n");
     }
 }

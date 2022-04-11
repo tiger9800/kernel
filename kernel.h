@@ -17,6 +17,7 @@ struct pcb {
     struct pcb *parent;
     struct pcb *next;
     void *brk;
+    void *min_sp;
     int n_child;
     queue *statusQ;
     int status;
