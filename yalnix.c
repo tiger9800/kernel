@@ -306,17 +306,25 @@ void trap_illegal_handler(ExceptionInfo *info) {
 }
 
 void trap_memory_handler(ExceptionInfo *info) {
+    TracePrintf(0, "trap_memory_handler!\n");
+    TracePrintf(0, "Requested address: %p\n", info->addr);
+    TracePrintf(0, "Current lowest sp: %p\n", active->min_sp);
+    TracePrintf(0, "Current break: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
+    TracePrintf(0, "Requested vpn: %u\n", (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
+    TracePrintf(0, "Current min_sp vpn: %u\n", (uintptr_t)(active->min_sp) >> PAGESHIFT);
+    TracePrintf(0, "Current brk vpn: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
 
-    TracePrintf(0, "trap_memory_handler, addr:%p\n", info->addr);
-    TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
-    TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
-    TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
+
+    // TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
+    // TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
+    // TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
+
 
     unsigned int curr_page = (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT;
-    if (active->page_table0[curr_page].valid) {
+    if (DOWN_TO_PAGE(info->addr) >= (intptr_t)active->min_sp) {
         // Just set a stack pointer to this address.
         info->sp = info->addr;
-    } else if (info->addr == NULL || info->addr <= active->brk || info->addr >= info->sp) {
+    } else if (info->addr == NULL || info->addr <= active->brk || info->addr >= active->min_sp) {
         // TODO: terminate process (context switch to next ready process)
         TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
         switch (info->code) {
