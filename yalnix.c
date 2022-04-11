@@ -65,6 +65,7 @@ static pcb *dequeue(queue* queue);
 static void delayProcess(pcb* proc, int delay);
 static void runNextProcess();
 static void printQueue(queue q);
+static pcb *init_pcb();
 
 
 // Kernel call helpers.
@@ -124,18 +125,13 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     // Load an idle process.
     LoadProgram("idle", arg, info, idle_region0, free_ll, &idle_PCB);
 
-    // Allocate memory for PCB of init process (first process to run).
-    pcb *initPCB = malloc(sizeof(pcb));
+    //Initialize a PCB of init process (first process to run).
+    pcb *initPCB = init_pcb();
 
-    // Create a page table for this process.
-    struct pte *initPt0 = getNewPageTable();
-    if (initPCB == NULL || initPt0 == NULL) {
+    if (initPCB == NULL) {
         TracePrintf(0, "No enough physical or virtual memory to create a process\n");
         Halt();
     }
-    // Init some PCB values for this process.
-    initPCB->pid = currPID++;
-    initPCB->page_table0 = initPt0;
 
     // Save current context to the saved context of process to be run after KernelStart()
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
@@ -148,9 +144,9 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         // Where init process will resume after switchProcesses.
         // Init loads its code.
         if (cmd_args[0] == NULL) {
-            LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
+            LoadProgram("init", cmd_args, info, initPCB->page_table0, free_ll, initPCB);
         } else {
-            LoadProgram(cmd_args[0], cmd_args, info, initPt0, free_ll, initPCB);
+            LoadProgram(cmd_args[0], cmd_args, info, initPCB->page_table0, free_ll, initPCB);
         }
     }
 }
@@ -323,7 +319,7 @@ void trap_memory_handler(ExceptionInfo *info) {
     unsigned int curr_page = (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT;
     if (DOWN_TO_PAGE(info->addr) >= (intptr_t)active->min_sp) {
         // Just set a stack pointer to this address.
-        info->sp = info->addr;
+        // info->sp = info->addr;
     } else if (info->addr == NULL || info->addr <= active->brk || info->addr >= active->min_sp) {
         // TODO: terminate process (context switch to next ready process)
         TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
@@ -364,7 +360,7 @@ void trap_memory_handler(ExceptionInfo *info) {
             active->page_table0[curr_page++].pfn = getFreePage();
         }
         // Lower a stack pointer.
-        info->sp = info->addr;
+        // info->sp = info->addr;
         // Lower a pointer to the lowest allocated page for the user stack.
         active->min_sp = (void *)DOWN_TO_PAGE(info->addr);
         TracePrintf(0, "Process's stack was expanded.\n");
@@ -625,9 +621,6 @@ static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
     return 0;
 }
 
-
-
-
 /*
  *  Queue functions.
  */
@@ -682,8 +675,8 @@ static pcb *dequeue(queue* queue) {
  * @param delay clock_ticks to be delayed by.
  */
 static void delayProcess(pcb* proc, int delay) {
-    proc->delay_offset = delay;
     if(blockedQ.count == 0) {
+        proc->delay_offset = delay;
         // No need to care about specific order.
         enqueue(proc, &blockedQ);
     } else {
@@ -691,32 +684,29 @@ static void delayProcess(pcb* proc, int delay) {
         // Insert processes according to its delay time.
         pcb* prev_process = NULL;
         pcb* curr_process = blockedQ.head;
-        while (curr_process != NULL && curr_process->delay_offset < delay) {
+        int sum = 0;
+        while (curr_process != NULL && (sum + curr_process->delay_offset) < delay) {
+            sum += curr_process->delay_offset;
             prev_process = curr_process;
             curr_process = curr_process->next;
+        }
+        // Adjust delay offsets.
+        proc->delay_offset = delay - sum;
+        if (curr_process != NULL) {
+            curr_process->delay_offset = curr_process->delay_offset - proc->delay_offset;
         }
         // Three cases are possible.
         if (curr_process == blockedQ.head) {
             // 1. Insert this process at the beginning of the queue.
-            // Adjust delay offsets.
-            curr_process->delay_offset -= delay;
-            // Adjust pointers.
             proc->next = curr_process;
             blockedQ.head = proc;  
         } else if (prev_process == blockedQ.tail) {
             // 2. Insert this process at the end of the queue.
-            // Adjust delay offsets.
-            proc->delay_offset = delay - (blockedQ.tail->delay_offset);
-            // Adjust pointers.
             proc->next = NULL;
             blockedQ.tail->next = proc;
             blockedQ.tail = proc;
         } else {
             // 3. Insert this process between prev_process and curr_process.
-            // Need to adjust delay offsets.
-            proc->delay_offset = delay - prev_process->delay_offset;
-            curr_process->delay_offset -= delay;
-            // Adjust pointers.
             prev_process->next = proc;
             proc->next = curr_process;
         }
@@ -818,16 +808,16 @@ static int KernelFork() {
     // Create a new process: pcb, page table
     // Make an exact copy of the page table of the currently active process's page table 0
     // ContextSwitch will return 2 times and we should return 0 for child and child's pcb for parent
-    pcb *childPCB = malloc(sizeof(pcb));
-    struct pte *childPt0 = getNewPageTable();
-    if(childPCB == NULL || childPt0 == NULL) {
-        return ERROR;
-    }
-    // Init some PCB values for this process.
-    childPCB->pid = currPID++;
-    childPCB->page_table0 = childPt0;
+    pcb *childPCB = init_pcb();
     childPCB->parent = active;
-    childPCB->n_child++;
+    childPCB->brk = active->brk;
+    childPCB->min_sp = active->min_sp;
+
+    // Update some values in parent's pcb.
+    active->n_child++;
+    if (active->statusQ == NULL) {
+        active->statusQ = malloc(sizeof(queue));
+    }
 
     TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
     if (copyMemoryImage(childPCB, active) == -1) {
@@ -848,4 +838,20 @@ static int KernelFork() {
         printQueue(readyQ);
         return childPCB->pid;
     }
+}
+
+static pcb *init_pcb() {
+    pcb *newPCB = malloc(sizeof(pcb));
+    struct pte *newPt0 = getNewPageTable();
+    if(newPCB == NULL || newPt0 == NULL) {
+        return NULL;
+    }
+    // Init some PCB values for this process.
+    newPCB->pid = currPID++;
+    newPCB->page_table0 = newPt0;
+    newPCB->parent = NULL;
+    newPCB->next = NULL;
+    newPCB->n_child = 0;
+    newPCB->statusQ = NULL;
+    return newPCB;
 }

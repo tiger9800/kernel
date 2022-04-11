@@ -121,7 +121,6 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
 
     // Initialize a break for this process's heap.
     newPCB->brk = (void *)(uintptr_t)((MEM_INVALID_PAGES + text_npg + data_bss_npg) << PAGESHIFT);
-    newPCB->min_sp = (void *)(USER_STACK_LIMIT - PAGESIZE);
 
     /*
      *  Make sure we have enough *virtual* memory to fit everything within
@@ -169,6 +168,8 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>> Initialize sp for the current process to (void *)cpp.
     // >>>> The value of cpp was initialized above.
     info->sp = (void *)cpp;
+    newPCB->min_sp = info->sp;
+
 
     /*
      *  Free all the old physical memory belonging to this process,
