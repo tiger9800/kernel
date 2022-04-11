@@ -52,6 +52,7 @@ void addPage(int pfn);
 void addInvalidPages();
 static struct pte *getNewPageTable();
 static int copyPTE(struct pte* dest, struct pte* src, int curr_page);
+static int copyMemoryImage(pcb *destProc, pcb *srcProc);
 
 // MySwitch functions.
 SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2);
@@ -154,64 +155,17 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     }
 }
 
-static void initPageTables() {
-    // Map pages for the kernel text (in region 1).
-    unsigned int curr_page = PAGE_TABLE_LEN;
-    while(curr_page < (uintptr_t)(&_etext) >> PAGESHIFT) {
-        int ind = curr_page % PAGE_TABLE_LEN;
-        region1[ind].pfn = curr_page;
-        region1[ind].uprot = PROT_NONE;
-        region1[ind].kprot = PROT_READ|PROT_EXEC;
-        region1[ind].valid = 1;
-        curr_page++;
-    }
-    
-    // Map pages for the kernel data, bss, and heap (in region 1).
-    // currentBrk is set to orig_break when we call this function.
-    while(curr_page < (UP_TO_PAGE(currentBrk) >> PAGESHIFT)) {
-        int ind = curr_page % PAGE_TABLE_LEN;
-        region1[ind].pfn = curr_page;
-        region1[ind].uprot = PROT_NONE;
-        region1[ind].kprot = PROT_READ|PROT_WRITE;
-        region1[ind].valid = 1;
-        curr_page++;
-    }
 
-    // Make all remaining pages in region 1 invalid.
-    while((curr_page % PAGE_TABLE_LEN) != 0) {
-        region1[curr_page % PAGE_TABLE_LEN].valid = 0;
-        curr_page++;
-    }
-
-    // Make all pages below kernel stack invalid (in region 0).
-    curr_page = (uintptr_t)(PMEM_BASE) >> PAGESHIFT;
-    while(curr_page < (uintptr_t)(KERNEL_STACK_BASE) >> PAGESHIFT) {
-        idle_region0[curr_page].valid = 0;
-        curr_page++;
-    }
-
-    // Map pages for the kernel stack (in region 0).
-    while(curr_page < KERNEL_STACK_LIMIT >> PAGESHIFT) {
-        idle_region0[curr_page].pfn = curr_page;
-        idle_region0[curr_page].uprot = PROT_NONE;
-        idle_region0[curr_page].kprot = PROT_READ|PROT_WRITE;
-        idle_region0[curr_page].valid = 1;
-        curr_page++;
-    }
-}
+/*
+ *  MySwitchFunc functions.
+ */
 
 SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;  
     (void)p1;
-    // ASK: What to do with the ptes below kernel stack? 
-    // For now, set them all to 0.
-    int curr_page = 0;
-    while (curr_page < (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT)) {
-        ((pcb*)p2)->page_table0[curr_page].valid = 0;
-        curr_page++;
-    }
+    int curr_page;
     // Make a "deep" copy of the kernel stack.
-    while(curr_page < (UP_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT)) {
+    for (curr_page = (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page < (UP_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT); curr_page++) {
         // Get a free pfn for this page.
         struct pte *dest = &((pcb*)p2)->page_table0[curr_page];
         struct pte *src = &((pcb*)p1)->page_table0[curr_page];
@@ -220,41 +174,12 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
             // Call "terminate process" that will:
             // 1) "unmap" page_table0 address
             // 2) free a physical page for this process's page table0
+            // 3) free PCB
             // 3) add all valid pages in this page table to a free list.
             // 4) save exit status and add process to the statusQueue of its parent.
             // Return context of the 1st process since switch wasn't successful.
             return &((pcb*)p2)->ctx;
         }
-       
-        curr_page++;
-    }
-    return &((pcb*)p2)->ctx;
-}
-
-SavedContext  *cloneChild(SavedContext *ctxp, void *p1, void *p2) {
-    (void)ctxp;  
-    // Set all invalid pages to 0.
-    int curr_page = 0;
-    while (curr_page < MEM_INVALID_PAGES) {
-        ((pcb*)p2)->page_table0[curr_page].valid = 0;
-        curr_page++;
-    }
-    // Make a "deep" copy of the kernel stack.
-    while(curr_page < (UP_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT)) {
-        // Get a free pfn for this page.
-        struct pte *dest = &((pcb*)p2)->page_table0[curr_page];
-        struct pte *src = &((pcb*)p1)->page_table0[curr_page];
-        if (copyPTE(dest, src, curr_page) == ERROR) {
-            TracePrintf(0, "No enough free physical memory to complete operation\n");
-            // Call "terminate process" that will:
-            // 1) "unmap" page_table0 address
-            // 2) free a physical page for this process's page table0
-            // 3) add all valid pages in this page table to a free list.
-            // 4) save exit status and add process to the statusQueue of its parent.
-            // Return context of the 1st process since switch wasn't successful.
-            return &((pcb*)p2)->ctx;
-        }
-        curr_page++;
     }
     return &((pcb*)p2)->ctx;
 }
@@ -287,6 +212,10 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
 
     return &((pcb*)p2)->ctx;
 }
+
+/*
+ *  Trap handlers (located in the interrupt vector table).
+ */
 
 void trap_kernel_handler(ExceptionInfo *info) {
     // args for this function are in info->regs[1:8]
@@ -483,7 +412,56 @@ int SetKernelBrk(void *addr) {
     return 0;
 }
 
-// Don't include page for end_addr.
+/*
+ *  Helper functions for memory manipulation.
+ */
+
+static void initPageTables() {
+    // Map pages for the kernel text (in region 1).
+    unsigned int curr_page = PAGE_TABLE_LEN;
+    while(curr_page < (uintptr_t)(&_etext) >> PAGESHIFT) {
+        int ind = curr_page % PAGE_TABLE_LEN;
+        region1[ind].pfn = curr_page;
+        region1[ind].uprot = PROT_NONE;
+        region1[ind].kprot = PROT_READ|PROT_EXEC;
+        region1[ind].valid = 1;
+        curr_page++;
+    }
+    
+    // Map pages for the kernel data, bss, and heap (in region 1).
+    // currentBrk is set to orig_break when we call this function.
+    while(curr_page < (UP_TO_PAGE(currentBrk) >> PAGESHIFT)) {
+        int ind = curr_page % PAGE_TABLE_LEN;
+        region1[ind].pfn = curr_page;
+        region1[ind].uprot = PROT_NONE;
+        region1[ind].kprot = PROT_READ|PROT_WRITE;
+        region1[ind].valid = 1;
+        curr_page++;
+    }
+
+    // Make all remaining pages in region 1 invalid.
+    while((curr_page % PAGE_TABLE_LEN) != 0) {
+        region1[curr_page % PAGE_TABLE_LEN].valid = 0;
+        curr_page++;
+    }
+
+    // Make all pages below kernel stack invalid (in region 0).
+    curr_page = (uintptr_t)(PMEM_BASE) >> PAGESHIFT;
+    while(curr_page < (uintptr_t)(KERNEL_STACK_BASE) >> PAGESHIFT) {
+        idle_region0[curr_page].valid = 0;
+        curr_page++;
+    }
+
+    // Map pages for the kernel stack (in region 0).
+    while(curr_page < KERNEL_STACK_LIMIT >> PAGESHIFT) {
+        idle_region0[curr_page].pfn = curr_page;
+        idle_region0[curr_page].uprot = PROT_NONE;
+        idle_region0[curr_page].kprot = PROT_READ|PROT_WRITE;
+        idle_region0[curr_page].valid = 1;
+        curr_page++;
+    }
+}
+
 static void initFreePages(int start_addr, int end_addr) {
     int curr_addr;
     for (curr_addr = start_addr; curr_addr < end_addr; curr_addr+=PAGESIZE) {
@@ -590,6 +568,56 @@ static struct pte *getNewPageTable() {
     return pt0_vrt_addr;
 }
 
+static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
+    if(!src->valid) {
+        dest->valid = 0;
+    } else {
+        dest->valid = 1;
+        dest->kprot = src->kprot;
+        dest->uprot = src->uprot;
+        int pfn = getFreePage();
+        if (pfn == -1) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            return ERROR;
+        }
+        dest->pfn = pfn;
+        // Map pfn to some virtual address.
+        uintptr_t addrToCopy = reservePage(pfn);
+        // Copy contents of the whole page to a new physical page. 
+        memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
+        // Unmap this pfn since we won't use it anymore.
+        unReservePage();
+    }
+    return 0;
+}
+
+static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
+    int curr_page;
+    // Make a "deep" copy of the user memory.
+    for (curr_page = MEM_INVALID_PAGES; curr_page < (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page++) {
+        // Get a free pfn for this page if needed.
+        struct pte *dest = &destProc->page_table0[curr_page];
+        struct pte *src = &srcProc->page_table0[curr_page];
+        if (copyPTE(dest, src, curr_page) == ERROR) {
+            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            // Call "terminate process" that will:
+            // 1) "unmap" page_table0 address
+            // 2) free a physical page for this process's page table0
+            // 3) add all valid pages in this page table to a free list.
+            // 4) save exit status and add process to the statusQueue of its parent.
+            // Return context of the 1st process since switch wasn't successful.
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+
+
+/*
+ *  Queue functions.
+ */
 /**
  * @brief Adds proc to the specified queue
  * 
@@ -713,65 +741,9 @@ static void printQueue(queue q) {
     }
 }
 
-/**
- * @brief Kernel call for fork.
- * 
+/*
+ *  Helper functions for kernel calls.
  */
-static int KernelFork() {
-    // Create a new process: pcb, page table
-    // Make an exact copy of the page table of the currently active process's page table 0
-    // ContextSwitch will return 2 times and we should return 0 for child and child's pcb for parent
-    pcb *childPCB = malloc(sizeof(pcb));
-    struct pte *childPt0 = getNewPageTable();
-    if(childPCB == NULL || childPt0 == NULL) {
-        return ERROR;
-    }
-    // Init some PCB values for this process.
-    childPCB->pid = currPID++;
-    childPCB->page_table0 = childPt0;
-    TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
-    ContextSwitch(cloneChild, &childPCB->ctx, (void *)active, (void *)childPCB);
-    if(active->pid == childPCB->pid) {
-        TracePrintf(0, "Print a blocked queue when a child is running (pid = %i):\n", active->pid);
-        printQueue(blockedQ);
-        TracePrintf(0, "Print a ready queue when a child is running (pid = %i):\n", active->pid);
-        printQueue(readyQ);
-        return 0;
-    } else {
-        enqueue(childPCB, &readyQ);
-        TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
-        printQueue(blockedQ);
-        TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
-        printQueue(readyQ);
-        return childPCB->pid;
-    }
-}
-
-
-// Helpers for kernel calls.
-
-static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
-    if(!src->valid) {
-        dest->valid = 0;
-    } else {
-        dest->valid = 1;
-        dest->kprot = src->kprot;
-        dest->uprot = src->uprot;
-        int pfn = getFreePage();
-        if (pfn == -1) {
-            TracePrintf(0, "No enough free physical memory to complete operation\n");
-            return ERROR;
-        }
-        dest->pfn = pfn;
-        // Map pfn to some virtual address.
-        uintptr_t addrToCopy = reservePage(pfn);
-        // Copy contents of the whole page to a new physical page. 
-        memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
-        // Unmap this pfn since we won't use it anymore.
-        unReservePage();
-    }
-    return 0;
-}
 
 static int KernelGetPid() {
     return active->pid;
@@ -825,3 +797,42 @@ static int KernelUserBrk(ExceptionInfo *info) {
     return 0;
 }
 
+/**
+ * @brief Kernel call for fork.
+ * 
+ */
+static int KernelFork() {
+    // Create a new process: pcb, page table
+    // Make an exact copy of the page table of the currently active process's page table 0
+    // ContextSwitch will return 2 times and we should return 0 for child and child's pcb for parent
+    pcb *childPCB = malloc(sizeof(pcb));
+    struct pte *childPt0 = getNewPageTable();
+    if(childPCB == NULL || childPt0 == NULL) {
+        return ERROR;
+    }
+    // Init some PCB values for this process.
+    childPCB->pid = currPID++;
+    childPCB->page_table0 = childPt0;
+    childPCB->parent = active;
+    childPCB->n_child++;
+
+    TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
+    if (copyMemoryImage(childPCB, active) == -1) {
+        return ERROR;
+    }
+    ContextSwitch(cloneContext, &childPCB->ctx, (void *)active, (void *)childPCB);
+    if(active->pid == childPCB->pid) {
+        TracePrintf(0, "Print a blocked queue when a child is running (pid = %i):\n", active->pid);
+        printQueue(blockedQ);
+        TracePrintf(0, "Print a ready queue when a child is running (pid = %i):\n", active->pid);
+        printQueue(readyQ);
+        return 0;
+    } else {
+        enqueue(childPCB, &readyQ);
+        TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
+        printQueue(blockedQ);
+        TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
+        printQueue(readyQ);
+        return childPCB->pid;
+    }
+}
