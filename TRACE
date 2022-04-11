@@ -1,203 +1,2096 @@
 ** Kernel   level 1 tracing enabled **
-Kernel   I'm in addPage and pfn is 0
-Kernel   free_ll.head is (nil)
-Kernel   I'm in addPage and pfn is 1
-Kernel   free_ll.head is 0x1000
-Kernel   I'm in addPage and pfn is 2
-Kernel   free_ll.head is 0x2000
-Kernel   I'm in addPage and pfn is 3
-Kernel   free_ll.head is 0x3000
-Kernel   I'm in addPage and pfn is 4
-Kernel   free_ll.head is 0x4000
-Kernel   I'm in addPage and pfn is 5
-Kernel   free_ll.head is 0x5000
-Kernel   I'm in addPage and pfn is 6
-Kernel   free_ll.head is 0x6000
-Kernel   I'm in addPage and pfn is 7
-Kernel   free_ll.head is 0x7000
-Kernel   I'm in addPage and pfn is 8
-Kernel   free_ll.head is 0x8000
-Kernel   I'm in addPage and pfn is 9
-Kernel   free_ll.head is 0x9000
-Kernel   I'm in addPage and pfn is 10
-Kernel   free_ll.head is 0xa000
-Kernel   I'm in addPage and pfn is 11
-Kernel   free_ll.head is 0xb000
-Kernel   I'm in addPage and pfn is 12
-Kernel   free_ll.head is 0xc000
-Kernel   I'm in addPage and pfn is 13
-Kernel   free_ll.head is 0xd000
-Kernel   I'm in addPage and pfn is 14
-Kernel   free_ll.head is 0xe000
-Kernel   I'm in addPage and pfn is 15
-Kernel   free_ll.head is 0xf000
-Kernel   LoadProgram 'idle', args 0x1ff8e0
+** User     level 1 tracing enabled **
+Kernel   LoadProgram 'idle', args 0x1ff8f0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
 Kernel   LoadProgram: size 0, argcount 0
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
-Kernel   I'm in get free page and head is 0xf000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 15
-Kernel   I'm in get free page and head is 0xe000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 14
-Kernel   I'm in get free page and head is 0xd000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 13
-Kernel   I'm in get free page and head is 0xc000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 12
-Kernel   I'm in get free page and head is 0xb000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 11
-Kernel   I'm in get free page and head is 0xa000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 10
-Kernel   I'm in get free page and head is 0x9000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 9
-Kernel   I'm in get free page and head is 0x8000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 8
-Kernel   I'm in get free page and head is 0x7000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 7
-Kernel   I'm in get free page and head is 0x6000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 6
-Kernel   I'm in get free page and head is 0x5000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 5
-Kernel   I'm in get free page and head is 0x4000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 4
 Kernel   I'm done with load
-Kernel   I'm gonna malloc
-Kernel   I'm inside setKernelBrk
-Kernel   VM enabled
-Kernel   I'm going to allocate new pages
-Kernel   I'm going to make bit valid of page 18
-Kernel   I'm in get free page and head is 0x3000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 3
-Kernel   I'm going to make bit valid of page 19
-Kernel   I'm in get free page and head is 0x2000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 2
-Kernel   I'm gonna getNewPageTable
-Kernel   I'm in get free page and head is 0x1000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1
-Kernel   cloneContext
-Kernel   flush 1st time
-Kernel   flush done
-Kernel   216 Page: 508
-Kernel   I'm in get free page and head is (nil)
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 0
-Kernel   New pfn: 0
-Kernel   216 Page: 509
-Kernel   I'm in get free page and head is 0x3ff000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1023
-Kernel   New pfn: 1023
-Kernel   216 Page: 510
-Kernel   I'm in get free page and head is 0x3fe000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1022
-Kernel   New pfn: 1022
-Kernel   216 Page: 511
-Kernel   I'm in get free page and head is 0x3fd000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1021
-Kernel   New pfn: 1021
-Kernel   PFN for init vpn 508: 0
-Kernel   PFN for idle vpn 508: 508
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   after cloneContext PFN for init vpn 508: 508
-Kernel   after cloneContext PFN for idle vpn 508: 0
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   idleToInit
-Kernel   switchIdleToInit PFN for init vpn 508: 0
-Kernel   switchIdleToInit PFN for idle vpn 508: 508
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   switchIdleToInit PFN for init vpn 508: 0
-Kernel   switchIdleToInit PFN for idle vpn 508: 508
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   switchIdleToInit PFN for init vpn 508: 0
-Kernel   switchIdleToInit PFN for idle vpn 508: 508
-Kernel   after cloneContext PFN for init vpn 508: 508
-Kernel   after cloneContext PFN for idle vpn 508: 0
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   idleToInit
-Kernel   switchIdleToInit PFN for init vpn 508: 0
-Kernel   switchIdleToInit PFN for idle vpn 508: 508
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   switchIdleToInit PFN for init vpn 508: 0
-Kernel   switchIdleToInit PFN for idle vpn 508: 508
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
-Kernel   switchIdleToInit PFN for init vpn 508: 0
-Kernel   switchIdleToInit PFN for idle vpn 508: 508
-Kernel   after idleToInit PFN for init vpn 508: 508
-Kernel   after idleToInit PFN for idle vpn 508: 0
-Kernel   valid for init vpn 508: 1
-Kernel   valid for idle vpn 508: 1
+Kernel   Clone context from idle to init in KernelStart (active pid=0)
+Kernel   Where the idle process will resume after cloneContext
+Kernel   The idle process performs ContextSwitch with init (active pid=0)
+Kernel   Doing a context switch from process 0 to process 1!
+Kernel   Where the init process will resume after switchProcesses
+Kernel   Init loads its program from file (active pid=1)
 Kernel   LoadProgram 'init', args 0x1fffe0
 Kernel   LoadProgram: LoadInfo status 0
-Kernel   text_size 0x9000, data_size 0x230, bss_size 0x30b8
+Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
 Kernel   LoadProgram: size 0, argcount 0
-Kernel   LoadProgram: text_npg 9, data_bss_npg 4, stack_npg 1
-Kernel   I'm in get free page and head is 0x3fc000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1020
-Kernel   I'm in get free page and head is 0x3fb000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1019
-Kernel   I'm in get free page and head is 0x3fa000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1018
-Kernel   I'm in get free page and head is 0x3f9000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1017
-Kernel   I'm in get free page and head is 0x3f8000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1016
-Kernel   I'm in get free page and head is 0x3f7000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1015
-Kernel   I'm in get free page and head is 0x3f6000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1014
-Kernel   I'm in get free page and head is 0x3f5000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1013
-Kernel   I'm in get free page and head is 0x3f4000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1012
-Kernel   I'm in get free page and head is 0x3f3000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1011
-Kernel   I'm in get free page and head is 0x3f2000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1010
-Kernel   I'm in get free page and head is 0x3f1000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1009
-Kernel   I'm in get free page and head is 0x3f0000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1008
-Kernel   I'm in get free page and head is 0x3ef000
-Kernel   I took a page and I'm going to deref it
-Kernel   Took a new pfn from free list 1007
+Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
+Kernel   Created a child with pid 2
+Kernel   ContexSwitch return 0
+User     I'm parent: 1
 Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   Created a child with pid 3
+Kernel   ContexSwitch return 0
+User     I'm parent: 1
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 1 to process 2!
+Kernel   ContexSwitch return 0
+User     I'm child: 2
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=1 and delayed time 0
+Kernel   Created a child with pid 4
+Kernel   ContexSwitch return 0
+User     I'm parent: 2
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 2 to process 3!
+Kernel   ContexSwitch return 0
+User     I'm child: 3
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=1 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   3. Process with pid=2 and delayed time 0
+Kernel   Created a child with pid 5
+Kernel   ContexSwitch return 0
+User     I'm parent: 3
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 3 to process 1!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=2 and delayed time 0
+Kernel   3. Process with pid=5 and delayed time 0
+Kernel   4. Process with pid=3 and delayed time 0
+Kernel   Created a child with pid 6
+Kernel   ContexSwitch return 0
+User     I'm parent: 1
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 1 to process 4!
+Kernel   ContexSwitch return 0
+User     I'm child: 4
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=5 and delayed time 0
+Kernel   3. Process with pid=3 and delayed time 0
+Kernel   4. Process with pid=6 and delayed time 0
+Kernel   5. Process with pid=1 and delayed time 0
+Kernel   Created a child with pid 7
+Kernel   ContexSwitch return 0
+User     I'm parent: 4
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 4 to process 2!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=5 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   3. Process with pid=6 and delayed time 0
+Kernel   4. Process with pid=1 and delayed time 0
+Kernel   5. Process with pid=7 and delayed time 0
+Kernel   6. Process with pid=4 and delayed time 0
+Kernel   Created a child with pid 8
+Kernel   ContexSwitch return 0
+User     I'm parent: 2
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 2 to process 5!
+Kernel   ContexSwitch return 0
+User     I'm child: 5
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=6 and delayed time 0
+Kernel   3. Process with pid=1 and delayed time 0
+Kernel   4. Process with pid=7 and delayed time 0
+Kernel   5. Process with pid=4 and delayed time 0
+Kernel   6. Process with pid=8 and delayed time 0
+Kernel   7. Process with pid=2 and delayed time 0
+Kernel   Created a child with pid 9
+Kernel   ContexSwitch return 0
+User     I'm parent: 5
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 5 to process 3!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=6 and delayed time 0
+Kernel   2. Process with pid=1 and delayed time 0
+Kernel   3. Process with pid=7 and delayed time 0
+Kernel   4. Process with pid=4 and delayed time 0
+Kernel   5. Process with pid=8 and delayed time 0
+Kernel   6. Process with pid=2 and delayed time 0
+Kernel   7. Process with pid=9 and delayed time 0
+Kernel   8. Process with pid=5 and delayed time 0
+Kernel   Created a child with pid 10
+Kernel   ContexSwitch return 0
+User     I'm parent: 3
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 3 to process 6!
+Kernel   ContexSwitch return 0
+User     I'm child: 6
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=1 and delayed time 0
+Kernel   2. Process with pid=7 and delayed time 0
+Kernel   3. Process with pid=4 and delayed time 0
+Kernel   4. Process with pid=8 and delayed time 0
+Kernel   5. Process with pid=2 and delayed time 0
+Kernel   6. Process with pid=9 and delayed time 0
+Kernel   7. Process with pid=5 and delayed time 0
+Kernel   8. Process with pid=10 and delayed time 0
+Kernel   9. Process with pid=3 and delayed time 0
+Kernel   Created a child with pid 11
+Kernel   ContexSwitch return 0
+User     I'm parent: 6
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 6 to process 1!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   3. Process with pid=8 and delayed time 0
+Kernel   4. Process with pid=2 and delayed time 0
+Kernel   5. Process with pid=9 and delayed time 0
+Kernel   6. Process with pid=5 and delayed time 0
+Kernel   7. Process with pid=10 and delayed time 0
+Kernel   8. Process with pid=3 and delayed time 0
+Kernel   9. Process with pid=11 and delayed time 0
+Kernel   10. Process with pid=6 and delayed time 0
+Kernel   Created a child with pid 12
+Kernel   ContexSwitch return 0
+User     I'm parent: 1
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 1 to process 7!
+Kernel   ContexSwitch return 0
+User     I'm child: 7
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+Kernel   3. Process with pid=2 and delayed time 0
+Kernel   4. Process with pid=9 and delayed time 0
+Kernel   5. Process with pid=5 and delayed time 0
+Kernel   6. Process with pid=10 and delayed time 0
+Kernel   7. Process with pid=3 and delayed time 0
+Kernel   8. Process with pid=11 and delayed time 0
+Kernel   9. Process with pid=6 and delayed time 0
+Kernel   10. Process with pid=12 and delayed time 0
+Kernel   11. Process with pid=1 and delayed time 0
+Kernel   Created a child with pid 13
+Kernel   ContexSwitch return 0
+User     I'm parent: 7
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 7 to process 4!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=8 and delayed time 0
+Kernel   2. Process with pid=2 and delayed time 0
+Kernel   3. Process with pid=9 and delayed time 0
+Kernel   4. Process with pid=5 and delayed time 0
+Kernel   5. Process with pid=10 and delayed time 0
+Kernel   6. Process with pid=3 and delayed time 0
+Kernel   7. Process with pid=11 and delayed time 0
+Kernel   8. Process with pid=6 and delayed time 0
+Kernel   9. Process with pid=12 and delayed time 0
+Kernel   10. Process with pid=1 and delayed time 0
+Kernel   11. Process with pid=13 and delayed time 0
+Kernel   12. Process with pid=7 and delayed time 0
+Kernel   Created a child with pid 14
+Kernel   ContexSwitch return 0
+User     I'm parent: 4
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 4 to process 8!
+Kernel   ContexSwitch return 0
+User     I'm child: 8
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=9 and delayed time 0
+Kernel   3. Process with pid=5 and delayed time 0
+Kernel   4. Process with pid=10 and delayed time 0
+Kernel   5. Process with pid=3 and delayed time 0
+Kernel   6. Process with pid=11 and delayed time 0
+Kernel   7. Process with pid=6 and delayed time 0
+Kernel   8. Process with pid=12 and delayed time 0
+Kernel   9. Process with pid=1 and delayed time 0
+Kernel   10. Process with pid=13 and delayed time 0
+Kernel   11. Process with pid=7 and delayed time 0
+Kernel   12. Process with pid=14 and delayed time 0
+Kernel   13. Process with pid=4 and delayed time 0
+Kernel   Created a child with pid 15
+Kernel   ContexSwitch return 0
+User     I'm parent: 8
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 8 to process 2!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=9 and delayed time 0
+Kernel   2. Process with pid=5 and delayed time 0
+Kernel   3. Process with pid=10 and delayed time 0
+Kernel   4. Process with pid=3 and delayed time 0
+Kernel   5. Process with pid=11 and delayed time 0
+Kernel   6. Process with pid=6 and delayed time 0
+Kernel   7. Process with pid=12 and delayed time 0
+Kernel   8. Process with pid=1 and delayed time 0
+Kernel   9. Process with pid=13 and delayed time 0
+Kernel   10. Process with pid=7 and delayed time 0
+Kernel   11. Process with pid=14 and delayed time 0
+Kernel   12. Process with pid=4 and delayed time 0
+Kernel   13. Process with pid=15 and delayed time 0
+Kernel   14. Process with pid=8 and delayed time 0
+Kernel   Created a child with pid 16
+Kernel   ContexSwitch return 0
+User     I'm parent: 2
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 2 to process 9!
+Kernel   ContexSwitch return 0
+User     I'm child: 9
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=5 and delayed time 0
+Kernel   2. Process with pid=10 and delayed time 0
+Kernel   3. Process with pid=3 and delayed time 0
+Kernel   4. Process with pid=11 and delayed time 0
+Kernel   5. Process with pid=6 and delayed time 0
+Kernel   6. Process with pid=12 and delayed time 0
+Kernel   7. Process with pid=1 and delayed time 0
+Kernel   8. Process with pid=13 and delayed time 0
+Kernel   9. Process with pid=7 and delayed time 0
+Kernel   10. Process with pid=14 and delayed time 0
+Kernel   11. Process with pid=4 and delayed time 0
+Kernel   12. Process with pid=15 and delayed time 0
+Kernel   13. Process with pid=8 and delayed time 0
+Kernel   14. Process with pid=16 and delayed time 0
+Kernel   15. Process with pid=2 and delayed time 0
+Kernel   Created a child with pid 17
+Kernel   ContexSwitch return 0
+User     I'm parent: 9
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 9 to process 5!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=10 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   3. Process with pid=11 and delayed time 0
+Kernel   4. Process with pid=6 and delayed time 0
+Kernel   5. Process with pid=12 and delayed time 0
+Kernel   6. Process with pid=1 and delayed time 0
+Kernel   7. Process with pid=13 and delayed time 0
+Kernel   8. Process with pid=7 and delayed time 0
+Kernel   9. Process with pid=14 and delayed time 0
+Kernel   10. Process with pid=4 and delayed time 0
+Kernel   11. Process with pid=15 and delayed time 0
+Kernel   12. Process with pid=8 and delayed time 0
+Kernel   13. Process with pid=16 and delayed time 0
+Kernel   14. Process with pid=2 and delayed time 0
+Kernel   15. Process with pid=17 and delayed time 0
+Kernel   16. Process with pid=9 and delayed time 0
+Kernel   Created a child with pid 18
+Kernel   ContexSwitch return 0
+User     I'm parent: 5
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 5 to process 10!
+Kernel   ContexSwitch return 0
+User     I'm child: 10
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=11 and delayed time 0
+Kernel   3. Process with pid=6 and delayed time 0
+Kernel   4. Process with pid=12 and delayed time 0
+Kernel   5. Process with pid=1 and delayed time 0
+Kernel   6. Process with pid=13 and delayed time 0
+Kernel   7. Process with pid=7 and delayed time 0
+Kernel   8. Process with pid=14 and delayed time 0
+Kernel   9. Process with pid=4 and delayed time 0
+Kernel   10. Process with pid=15 and delayed time 0
+Kernel   11. Process with pid=8 and delayed time 0
+Kernel   12. Process with pid=16 and delayed time 0
+Kernel   13. Process with pid=2 and delayed time 0
+Kernel   14. Process with pid=17 and delayed time 0
+Kernel   15. Process with pid=9 and delayed time 0
+Kernel   16. Process with pid=18 and delayed time 0
+Kernel   17. Process with pid=5 and delayed time 0
+Kernel   Created a child with pid 19
+Kernel   ContexSwitch return 0
+User     I'm parent: 10
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 10 to process 3!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=11 and delayed time 0
+Kernel   2. Process with pid=6 and delayed time 0
+Kernel   3. Process with pid=12 and delayed time 0
+Kernel   4. Process with pid=1 and delayed time 0
+Kernel   5. Process with pid=13 and delayed time 0
+Kernel   6. Process with pid=7 and delayed time 0
+Kernel   7. Process with pid=14 and delayed time 0
+Kernel   8. Process with pid=4 and delayed time 0
+Kernel   9. Process with pid=15 and delayed time 0
+Kernel   10. Process with pid=8 and delayed time 0
+Kernel   11. Process with pid=16 and delayed time 0
+Kernel   12. Process with pid=2 and delayed time 0
+Kernel   13. Process with pid=17 and delayed time 0
+Kernel   14. Process with pid=9 and delayed time 0
+Kernel   15. Process with pid=18 and delayed time 0
+Kernel   16. Process with pid=5 and delayed time 0
+Kernel   17. Process with pid=19 and delayed time 0
+Kernel   18. Process with pid=10 and delayed time 0
+Kernel   Created a child with pid 20
+Kernel   ContexSwitch return 0
+User     I'm parent: 3
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 3 to process 11!
+Kernel   ContexSwitch return 0
+User     I'm child: 11
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=6 and delayed time 0
+Kernel   2. Process with pid=12 and delayed time 0
+Kernel   3. Process with pid=1 and delayed time 0
+Kernel   4. Process with pid=13 and delayed time 0
+Kernel   5. Process with pid=7 and delayed time 0
+Kernel   6. Process with pid=14 and delayed time 0
+Kernel   7. Process with pid=4 and delayed time 0
+Kernel   8. Process with pid=15 and delayed time 0
+Kernel   9. Process with pid=8 and delayed time 0
+Kernel   10. Process with pid=16 and delayed time 0
+Kernel   11. Process with pid=2 and delayed time 0
+Kernel   12. Process with pid=17 and delayed time 0
+Kernel   13. Process with pid=9 and delayed time 0
+Kernel   14. Process with pid=18 and delayed time 0
+Kernel   15. Process with pid=5 and delayed time 0
+Kernel   16. Process with pid=19 and delayed time 0
+Kernel   17. Process with pid=10 and delayed time 0
+Kernel   18. Process with pid=20 and delayed time 0
+Kernel   19. Process with pid=3 and delayed time 0
+Kernel   Created a child with pid 21
+Kernel   ContexSwitch return 0
+User     I'm parent: 11
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 11 to process 6!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=12 and delayed time 0
+Kernel   2. Process with pid=1 and delayed time 0
+Kernel   3. Process with pid=13 and delayed time 0
+Kernel   4. Process with pid=7 and delayed time 0
+Kernel   5. Process with pid=14 and delayed time 0
+Kernel   6. Process with pid=4 and delayed time 0
+Kernel   7. Process with pid=15 and delayed time 0
+Kernel   8. Process with pid=8 and delayed time 0
+Kernel   9. Process with pid=16 and delayed time 0
+Kernel   10. Process with pid=2 and delayed time 0
+Kernel   11. Process with pid=17 and delayed time 0
+Kernel   12. Process with pid=9 and delayed time 0
+Kernel   13. Process with pid=18 and delayed time 0
+Kernel   14. Process with pid=5 and delayed time 0
+Kernel   15. Process with pid=19 and delayed time 0
+Kernel   16. Process with pid=10 and delayed time 0
+Kernel   17. Process with pid=20 and delayed time 0
+Kernel   18. Process with pid=3 and delayed time 0
+Kernel   19. Process with pid=21 and delayed time 0
+Kernel   20. Process with pid=11 and delayed time 0
+Kernel   Created a child with pid 22
+Kernel   ContexSwitch return 0
+User     I'm parent: 6
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 6 to process 12!
+Kernel   ContexSwitch return 0
+User     I'm child: 12
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=1 and delayed time 0
+Kernel   2. Process with pid=13 and delayed time 0
+Kernel   3. Process with pid=7 and delayed time 0
+Kernel   4. Process with pid=14 and delayed time 0
+Kernel   5. Process with pid=4 and delayed time 0
+Kernel   6. Process with pid=15 and delayed time 0
+Kernel   7. Process with pid=8 and delayed time 0
+Kernel   8. Process with pid=16 and delayed time 0
+Kernel   9. Process with pid=2 and delayed time 0
+Kernel   10. Process with pid=17 and delayed time 0
+Kernel   11. Process with pid=9 and delayed time 0
+Kernel   12. Process with pid=18 and delayed time 0
+Kernel   13. Process with pid=5 and delayed time 0
+Kernel   14. Process with pid=19 and delayed time 0
+Kernel   15. Process with pid=10 and delayed time 0
+Kernel   16. Process with pid=20 and delayed time 0
+Kernel   17. Process with pid=3 and delayed time 0
+Kernel   18. Process with pid=21 and delayed time 0
+Kernel   19. Process with pid=11 and delayed time 0
+Kernel   20. Process with pid=22 and delayed time 0
+Kernel   21. Process with pid=6 and delayed time 0
+Kernel   Created a child with pid 23
+Kernel   ContexSwitch return 0
+User     I'm parent: 12
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 12 to process 1!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=13 and delayed time 0
+Kernel   2. Process with pid=7 and delayed time 0
+Kernel   3. Process with pid=14 and delayed time 0
+Kernel   4. Process with pid=4 and delayed time 0
+Kernel   5. Process with pid=15 and delayed time 0
+Kernel   6. Process with pid=8 and delayed time 0
+Kernel   7. Process with pid=16 and delayed time 0
+Kernel   8. Process with pid=2 and delayed time 0
+Kernel   9. Process with pid=17 and delayed time 0
+Kernel   10. Process with pid=9 and delayed time 0
+Kernel   11. Process with pid=18 and delayed time 0
+Kernel   12. Process with pid=5 and delayed time 0
+Kernel   13. Process with pid=19 and delayed time 0
+Kernel   14. Process with pid=10 and delayed time 0
+Kernel   15. Process with pid=20 and delayed time 0
+Kernel   16. Process with pid=3 and delayed time 0
+Kernel   17. Process with pid=21 and delayed time 0
+Kernel   18. Process with pid=11 and delayed time 0
+Kernel   19. Process with pid=22 and delayed time 0
+Kernel   20. Process with pid=6 and delayed time 0
+Kernel   21. Process with pid=23 and delayed time 0
+Kernel   22. Process with pid=12 and delayed time 0
+Kernel   Created a child with pid 24
+Kernel   ContexSwitch return 0
+User     I'm parent: 1
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 1 to process 13!
+Kernel   ContexSwitch return 0
+User     I'm child: 13
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=14 and delayed time 0
+Kernel   3. Process with pid=4 and delayed time 0
+Kernel   4. Process with pid=15 and delayed time 0
+Kernel   5. Process with pid=8 and delayed time 0
+Kernel   6. Process with pid=16 and delayed time 0
+Kernel   7. Process with pid=2 and delayed time 0
+Kernel   8. Process with pid=17 and delayed time 0
+Kernel   9. Process with pid=9 and delayed time 0
+Kernel   10. Process with pid=18 and delayed time 0
+Kernel   11. Process with pid=5 and delayed time 0
+Kernel   12. Process with pid=19 and delayed time 0
+Kernel   13. Process with pid=10 and delayed time 0
+Kernel   14. Process with pid=20 and delayed time 0
+Kernel   15. Process with pid=3 and delayed time 0
+Kernel   16. Process with pid=21 and delayed time 0
+Kernel   17. Process with pid=11 and delayed time 0
+Kernel   18. Process with pid=22 and delayed time 0
+Kernel   19. Process with pid=6 and delayed time 0
+Kernel   20. Process with pid=23 and delayed time 0
+Kernel   21. Process with pid=12 and delayed time 0
+Kernel   22. Process with pid=24 and delayed time 0
+Kernel   23. Process with pid=1 and delayed time 0
+Kernel   Created a child with pid 25
+Kernel   ContexSwitch return 0
+User     I'm parent: 13
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 13 to process 7!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=14 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   3. Process with pid=15 and delayed time 0
+Kernel   4. Process with pid=8 and delayed time 0
+Kernel   5. Process with pid=16 and delayed time 0
+Kernel   6. Process with pid=2 and delayed time 0
+Kernel   7. Process with pid=17 and delayed time 0
+Kernel   8. Process with pid=9 and delayed time 0
+Kernel   9. Process with pid=18 and delayed time 0
+Kernel   10. Process with pid=5 and delayed time 0
+Kernel   11. Process with pid=19 and delayed time 0
+Kernel   12. Process with pid=10 and delayed time 0
+Kernel   13. Process with pid=20 and delayed time 0
+Kernel   14. Process with pid=3 and delayed time 0
+Kernel   15. Process with pid=21 and delayed time 0
+Kernel   16. Process with pid=11 and delayed time 0
+Kernel   17. Process with pid=22 and delayed time 0
+Kernel   18. Process with pid=6 and delayed time 0
+Kernel   19. Process with pid=23 and delayed time 0
+Kernel   20. Process with pid=12 and delayed time 0
+Kernel   21. Process with pid=24 and delayed time 0
+Kernel   22. Process with pid=1 and delayed time 0
+Kernel   23. Process with pid=25 and delayed time 0
+Kernel   24. Process with pid=13 and delayed time 0
+Kernel   Created a child with pid 26
+Kernel   ContexSwitch return 0
+User     I'm parent: 7
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 7 to process 14!
+Kernel   ContexSwitch return 0
+User     I'm child: 14
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=15 and delayed time 0
+Kernel   3. Process with pid=8 and delayed time 0
+Kernel   4. Process with pid=16 and delayed time 0
+Kernel   5. Process with pid=2 and delayed time 0
+Kernel   6. Process with pid=17 and delayed time 0
+Kernel   7. Process with pid=9 and delayed time 0
+Kernel   8. Process with pid=18 and delayed time 0
+Kernel   9. Process with pid=5 and delayed time 0
+Kernel   10. Process with pid=19 and delayed time 0
+Kernel   11. Process with pid=10 and delayed time 0
+Kernel   12. Process with pid=20 and delayed time 0
+Kernel   13. Process with pid=3 and delayed time 0
+Kernel   14. Process with pid=21 and delayed time 0
+Kernel   15. Process with pid=11 and delayed time 0
+Kernel   16. Process with pid=22 and delayed time 0
+Kernel   17. Process with pid=6 and delayed time 0
+Kernel   18. Process with pid=23 and delayed time 0
+Kernel   19. Process with pid=12 and delayed time 0
+Kernel   20. Process with pid=24 and delayed time 0
+Kernel   21. Process with pid=1 and delayed time 0
+Kernel   22. Process with pid=25 and delayed time 0
+Kernel   23. Process with pid=13 and delayed time 0
+Kernel   24. Process with pid=26 and delayed time 0
+Kernel   25. Process with pid=7 and delayed time 0
+Kernel   Created a child with pid 27
+Kernel   ContexSwitch return 0
+User     I'm parent: 14
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 14 to process 4!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=15 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+Kernel   3. Process with pid=16 and delayed time 0
+Kernel   4. Process with pid=2 and delayed time 0
+Kernel   5. Process with pid=17 and delayed time 0
+Kernel   6. Process with pid=9 and delayed time 0
+Kernel   7. Process with pid=18 and delayed time 0
+Kernel   8. Process with pid=5 and delayed time 0
+Kernel   9. Process with pid=19 and delayed time 0
+Kernel   10. Process with pid=10 and delayed time 0
+Kernel   11. Process with pid=20 and delayed time 0
+Kernel   12. Process with pid=3 and delayed time 0
+Kernel   13. Process with pid=21 and delayed time 0
+Kernel   14. Process with pid=11 and delayed time 0
+Kernel   15. Process with pid=22 and delayed time 0
+Kernel   16. Process with pid=6 and delayed time 0
+Kernel   17. Process with pid=23 and delayed time 0
+Kernel   18. Process with pid=12 and delayed time 0
+Kernel   19. Process with pid=24 and delayed time 0
+Kernel   20. Process with pid=1 and delayed time 0
+Kernel   21. Process with pid=25 and delayed time 0
+Kernel   22. Process with pid=13 and delayed time 0
+Kernel   23. Process with pid=26 and delayed time 0
+Kernel   24. Process with pid=7 and delayed time 0
+Kernel   25. Process with pid=27 and delayed time 0
+Kernel   26. Process with pid=14 and delayed time 0
+Kernel   Created a child with pid 28
+Kernel   ContexSwitch return 0
+User     I'm parent: 4
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 4 to process 15!
+Kernel   ContexSwitch return 0
+User     I'm child: 15
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=8 and delayed time 0
+Kernel   2. Process with pid=16 and delayed time 0
+Kernel   3. Process with pid=2 and delayed time 0
+Kernel   4. Process with pid=17 and delayed time 0
+Kernel   5. Process with pid=9 and delayed time 0
+Kernel   6. Process with pid=18 and delayed time 0
+Kernel   7. Process with pid=5 and delayed time 0
+Kernel   8. Process with pid=19 and delayed time 0
+Kernel   9. Process with pid=10 and delayed time 0
+Kernel   10. Process with pid=20 and delayed time 0
+Kernel   11. Process with pid=3 and delayed time 0
+Kernel   12. Process with pid=21 and delayed time 0
+Kernel   13. Process with pid=11 and delayed time 0
+Kernel   14. Process with pid=22 and delayed time 0
+Kernel   15. Process with pid=6 and delayed time 0
+Kernel   16. Process with pid=23 and delayed time 0
+Kernel   17. Process with pid=12 and delayed time 0
+Kernel   18. Process with pid=24 and delayed time 0
+Kernel   19. Process with pid=1 and delayed time 0
+Kernel   20. Process with pid=25 and delayed time 0
+Kernel   21. Process with pid=13 and delayed time 0
+Kernel   22. Process with pid=26 and delayed time 0
+Kernel   23. Process with pid=7 and delayed time 0
+Kernel   24. Process with pid=27 and delayed time 0
+Kernel   25. Process with pid=14 and delayed time 0
+Kernel   26. Process with pid=28 and delayed time 0
+Kernel   27. Process with pid=4 and delayed time 0
+Kernel   Created a child with pid 29
+Kernel   ContexSwitch return 0
+User     I'm parent: 15
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 15 to process 8!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=16 and delayed time 0
+Kernel   2. Process with pid=2 and delayed time 0
+Kernel   3. Process with pid=17 and delayed time 0
+Kernel   4. Process with pid=9 and delayed time 0
+Kernel   5. Process with pid=18 and delayed time 0
+Kernel   6. Process with pid=5 and delayed time 0
+Kernel   7. Process with pid=19 and delayed time 0
+Kernel   8. Process with pid=10 and delayed time 0
+Kernel   9. Process with pid=20 and delayed time 0
+Kernel   10. Process with pid=3 and delayed time 0
+Kernel   11. Process with pid=21 and delayed time 0
+Kernel   12. Process with pid=11 and delayed time 0
+Kernel   13. Process with pid=22 and delayed time 0
+Kernel   14. Process with pid=6 and delayed time 0
+Kernel   15. Process with pid=23 and delayed time 0
+Kernel   16. Process with pid=12 and delayed time 0
+Kernel   17. Process with pid=24 and delayed time 0
+Kernel   18. Process with pid=1 and delayed time 0
+Kernel   19. Process with pid=25 and delayed time 0
+Kernel   20. Process with pid=13 and delayed time 0
+Kernel   21. Process with pid=26 and delayed time 0
+Kernel   22. Process with pid=7 and delayed time 0
+Kernel   23. Process with pid=27 and delayed time 0
+Kernel   24. Process with pid=14 and delayed time 0
+Kernel   25. Process with pid=28 and delayed time 0
+Kernel   26. Process with pid=4 and delayed time 0
+Kernel   27. Process with pid=29 and delayed time 0
+Kernel   28. Process with pid=15 and delayed time 0
+Kernel   Created a child with pid 30
+Kernel   ContexSwitch return 0
+User     I'm parent: 8
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 8 to process 16!
+Kernel   ContexSwitch return 0
+User     I'm child: 16
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=17 and delayed time 0
+Kernel   3. Process with pid=9 and delayed time 0
+Kernel   4. Process with pid=18 and delayed time 0
+Kernel   5. Process with pid=5 and delayed time 0
+Kernel   6. Process with pid=19 and delayed time 0
+Kernel   7. Process with pid=10 and delayed time 0
+Kernel   8. Process with pid=20 and delayed time 0
+Kernel   9. Process with pid=3 and delayed time 0
+Kernel   10. Process with pid=21 and delayed time 0
+Kernel   11. Process with pid=11 and delayed time 0
+Kernel   12. Process with pid=22 and delayed time 0
+Kernel   13. Process with pid=6 and delayed time 0
+Kernel   14. Process with pid=23 and delayed time 0
+Kernel   15. Process with pid=12 and delayed time 0
+Kernel   16. Process with pid=24 and delayed time 0
+Kernel   17. Process with pid=1 and delayed time 0
+Kernel   18. Process with pid=25 and delayed time 0
+Kernel   19. Process with pid=13 and delayed time 0
+Kernel   20. Process with pid=26 and delayed time 0
+Kernel   21. Process with pid=7 and delayed time 0
+Kernel   22. Process with pid=27 and delayed time 0
+Kernel   23. Process with pid=14 and delayed time 0
+Kernel   24. Process with pid=28 and delayed time 0
+Kernel   25. Process with pid=4 and delayed time 0
+Kernel   26. Process with pid=29 and delayed time 0
+Kernel   27. Process with pid=15 and delayed time 0
+Kernel   28. Process with pid=30 and delayed time 0
+Kernel   29. Process with pid=8 and delayed time 0
+Kernel   Created a child with pid 31
+Kernel   ContexSwitch return 0
+User     I'm parent: 16
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 16 to process 2!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=17 and delayed time 0
+Kernel   2. Process with pid=9 and delayed time 0
+Kernel   3. Process with pid=18 and delayed time 0
+Kernel   4. Process with pid=5 and delayed time 0
+Kernel   5. Process with pid=19 and delayed time 0
+Kernel   6. Process with pid=10 and delayed time 0
+Kernel   7. Process with pid=20 and delayed time 0
+Kernel   8. Process with pid=3 and delayed time 0
+Kernel   9. Process with pid=21 and delayed time 0
+Kernel   10. Process with pid=11 and delayed time 0
+Kernel   11. Process with pid=22 and delayed time 0
+Kernel   12. Process with pid=6 and delayed time 0
+Kernel   13. Process with pid=23 and delayed time 0
+Kernel   14. Process with pid=12 and delayed time 0
+Kernel   15. Process with pid=24 and delayed time 0
+Kernel   16. Process with pid=1 and delayed time 0
+Kernel   17. Process with pid=25 and delayed time 0
+Kernel   18. Process with pid=13 and delayed time 0
+Kernel   19. Process with pid=26 and delayed time 0
+Kernel   20. Process with pid=7 and delayed time 0
+Kernel   21. Process with pid=27 and delayed time 0
+Kernel   22. Process with pid=14 and delayed time 0
+Kernel   23. Process with pid=28 and delayed time 0
+Kernel   24. Process with pid=4 and delayed time 0
+Kernel   25. Process with pid=29 and delayed time 0
+Kernel   26. Process with pid=15 and delayed time 0
+Kernel   27. Process with pid=30 and delayed time 0
+Kernel   28. Process with pid=8 and delayed time 0
+Kernel   29. Process with pid=31 and delayed time 0
+Kernel   30. Process with pid=16 and delayed time 0
+Kernel   Created a child with pid 32
+Kernel   ContexSwitch return 0
+User     I'm parent: 2
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 2 to process 17!
+Kernel   ContexSwitch return 0
+User     I'm child: 17
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=9 and delayed time 0
+Kernel   2. Process with pid=18 and delayed time 0
+Kernel   3. Process with pid=5 and delayed time 0
+Kernel   4. Process with pid=19 and delayed time 0
+Kernel   5. Process with pid=10 and delayed time 0
+Kernel   6. Process with pid=20 and delayed time 0
+Kernel   7. Process with pid=3 and delayed time 0
+Kernel   8. Process with pid=21 and delayed time 0
+Kernel   9. Process with pid=11 and delayed time 0
+Kernel   10. Process with pid=22 and delayed time 0
+Kernel   11. Process with pid=6 and delayed time 0
+Kernel   12. Process with pid=23 and delayed time 0
+Kernel   13. Process with pid=12 and delayed time 0
+Kernel   14. Process with pid=24 and delayed time 0
+Kernel   15. Process with pid=1 and delayed time 0
+Kernel   16. Process with pid=25 and delayed time 0
+Kernel   17. Process with pid=13 and delayed time 0
+Kernel   18. Process with pid=26 and delayed time 0
+Kernel   19. Process with pid=7 and delayed time 0
+Kernel   20. Process with pid=27 and delayed time 0
+Kernel   21. Process with pid=14 and delayed time 0
+Kernel   22. Process with pid=28 and delayed time 0
+Kernel   23. Process with pid=4 and delayed time 0
+Kernel   24. Process with pid=29 and delayed time 0
+Kernel   25. Process with pid=15 and delayed time 0
+Kernel   26. Process with pid=30 and delayed time 0
+Kernel   27. Process with pid=8 and delayed time 0
+Kernel   28. Process with pid=31 and delayed time 0
+Kernel   29. Process with pid=16 and delayed time 0
+Kernel   30. Process with pid=32 and delayed time 0
+Kernel   31. Process with pid=2 and delayed time 0
+Kernel   Created a child with pid 33
+Kernel   ContexSwitch return 0
+User     I'm parent: 17
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 17 to process 9!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=18 and delayed time 0
+Kernel   2. Process with pid=5 and delayed time 0
+Kernel   3. Process with pid=19 and delayed time 0
+Kernel   4. Process with pid=10 and delayed time 0
+Kernel   5. Process with pid=20 and delayed time 0
+Kernel   6. Process with pid=3 and delayed time 0
+Kernel   7. Process with pid=21 and delayed time 0
+Kernel   8. Process with pid=11 and delayed time 0
+Kernel   9. Process with pid=22 and delayed time 0
+Kernel   10. Process with pid=6 and delayed time 0
+Kernel   11. Process with pid=23 and delayed time 0
+Kernel   12. Process with pid=12 and delayed time 0
+Kernel   13. Process with pid=24 and delayed time 0
+Kernel   14. Process with pid=1 and delayed time 0
+Kernel   15. Process with pid=25 and delayed time 0
+Kernel   16. Process with pid=13 and delayed time 0
+Kernel   17. Process with pid=26 and delayed time 0
+Kernel   18. Process with pid=7 and delayed time 0
+Kernel   19. Process with pid=27 and delayed time 0
+Kernel   20. Process with pid=14 and delayed time 0
+Kernel   21. Process with pid=28 and delayed time 0
+Kernel   22. Process with pid=4 and delayed time 0
+Kernel   23. Process with pid=29 and delayed time 0
+Kernel   24. Process with pid=15 and delayed time 0
+Kernel   25. Process with pid=30 and delayed time 0
+Kernel   26. Process with pid=8 and delayed time 0
+Kernel   27. Process with pid=31 and delayed time 0
+Kernel   28. Process with pid=16 and delayed time 0
+Kernel   29. Process with pid=32 and delayed time 0
+Kernel   30. Process with pid=2 and delayed time 0
+Kernel   31. Process with pid=33 and delayed time 0
+Kernel   32. Process with pid=17 and delayed time 0
+Kernel   Created a child with pid 34
+Kernel   ContexSwitch return 0
+User     I'm parent: 9
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 9 to process 18!
+Kernel   ContexSwitch return 0
+User     I'm child: 18
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=5 and delayed time 0
+Kernel   2. Process with pid=19 and delayed time 0
+Kernel   3. Process with pid=10 and delayed time 0
+Kernel   4. Process with pid=20 and delayed time 0
+Kernel   5. Process with pid=3 and delayed time 0
+Kernel   6. Process with pid=21 and delayed time 0
+Kernel   7. Process with pid=11 and delayed time 0
+Kernel   8. Process with pid=22 and delayed time 0
+Kernel   9. Process with pid=6 and delayed time 0
+Kernel   10. Process with pid=23 and delayed time 0
+Kernel   11. Process with pid=12 and delayed time 0
+Kernel   12. Process with pid=24 and delayed time 0
+Kernel   13. Process with pid=1 and delayed time 0
+Kernel   14. Process with pid=25 and delayed time 0
+Kernel   15. Process with pid=13 and delayed time 0
+Kernel   16. Process with pid=26 and delayed time 0
+Kernel   17. Process with pid=7 and delayed time 0
+Kernel   18. Process with pid=27 and delayed time 0
+Kernel   19. Process with pid=14 and delayed time 0
+Kernel   20. Process with pid=28 and delayed time 0
+Kernel   21. Process with pid=4 and delayed time 0
+Kernel   22. Process with pid=29 and delayed time 0
+Kernel   23. Process with pid=15 and delayed time 0
+Kernel   24. Process with pid=30 and delayed time 0
+Kernel   25. Process with pid=8 and delayed time 0
+Kernel   26. Process with pid=31 and delayed time 0
+Kernel   27. Process with pid=16 and delayed time 0
+Kernel   28. Process with pid=32 and delayed time 0
+Kernel   29. Process with pid=2 and delayed time 0
+Kernel   30. Process with pid=33 and delayed time 0
+Kernel   31. Process with pid=17 and delayed time 0
+Kernel   32. Process with pid=34 and delayed time 0
+Kernel   33. Process with pid=9 and delayed time 0
+Kernel   Created a child with pid 35
+Kernel   ContexSwitch return 0
+User     I'm parent: 18
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 18 to process 5!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=19 and delayed time 0
+Kernel   2. Process with pid=10 and delayed time 0
+Kernel   3. Process with pid=20 and delayed time 0
+Kernel   4. Process with pid=3 and delayed time 0
+Kernel   5. Process with pid=21 and delayed time 0
+Kernel   6. Process with pid=11 and delayed time 0
+Kernel   7. Process with pid=22 and delayed time 0
+Kernel   8. Process with pid=6 and delayed time 0
+Kernel   9. Process with pid=23 and delayed time 0
+Kernel   10. Process with pid=12 and delayed time 0
+Kernel   11. Process with pid=24 and delayed time 0
+Kernel   12. Process with pid=1 and delayed time 0
+Kernel   13. Process with pid=25 and delayed time 0
+Kernel   14. Process with pid=13 and delayed time 0
+Kernel   15. Process with pid=26 and delayed time 0
+Kernel   16. Process with pid=7 and delayed time 0
+Kernel   17. Process with pid=27 and delayed time 0
+Kernel   18. Process with pid=14 and delayed time 0
+Kernel   19. Process with pid=28 and delayed time 0
+Kernel   20. Process with pid=4 and delayed time 0
+Kernel   21. Process with pid=29 and delayed time 0
+Kernel   22. Process with pid=15 and delayed time 0
+Kernel   23. Process with pid=30 and delayed time 0
+Kernel   24. Process with pid=8 and delayed time 0
+Kernel   25. Process with pid=31 and delayed time 0
+Kernel   26. Process with pid=16 and delayed time 0
+Kernel   27. Process with pid=32 and delayed time 0
+Kernel   28. Process with pid=2 and delayed time 0
+Kernel   29. Process with pid=33 and delayed time 0
+Kernel   30. Process with pid=17 and delayed time 0
+Kernel   31. Process with pid=34 and delayed time 0
+Kernel   32. Process with pid=9 and delayed time 0
+Kernel   33. Process with pid=35 and delayed time 0
+Kernel   34. Process with pid=18 and delayed time 0
+Kernel   Created a child with pid 36
+Kernel   ContexSwitch return 0
+User     I'm parent: 5
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 5 to process 19!
+Kernel   ContexSwitch return 0
+User     I'm child: 19
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=10 and delayed time 0
+Kernel   2. Process with pid=20 and delayed time 0
+Kernel   3. Process with pid=3 and delayed time 0
+Kernel   4. Process with pid=21 and delayed time 0
+Kernel   5. Process with pid=11 and delayed time 0
+Kernel   6. Process with pid=22 and delayed time 0
+Kernel   7. Process with pid=6 and delayed time 0
+Kernel   8. Process with pid=23 and delayed time 0
+Kernel   9. Process with pid=12 and delayed time 0
+Kernel   10. Process with pid=24 and delayed time 0
+Kernel   11. Process with pid=1 and delayed time 0
+Kernel   12. Process with pid=25 and delayed time 0
+Kernel   13. Process with pid=13 and delayed time 0
+Kernel   14. Process with pid=26 and delayed time 0
+Kernel   15. Process with pid=7 and delayed time 0
+Kernel   16. Process with pid=27 and delayed time 0
+Kernel   17. Process with pid=14 and delayed time 0
+Kernel   18. Process with pid=28 and delayed time 0
+Kernel   19. Process with pid=4 and delayed time 0
+Kernel   20. Process with pid=29 and delayed time 0
+Kernel   21. Process with pid=15 and delayed time 0
+Kernel   22. Process with pid=30 and delayed time 0
+Kernel   23. Process with pid=8 and delayed time 0
+Kernel   24. Process with pid=31 and delayed time 0
+Kernel   25. Process with pid=16 and delayed time 0
+Kernel   26. Process with pid=32 and delayed time 0
+Kernel   27. Process with pid=2 and delayed time 0
+Kernel   28. Process with pid=33 and delayed time 0
+Kernel   29. Process with pid=17 and delayed time 0
+Kernel   30. Process with pid=34 and delayed time 0
+Kernel   31. Process with pid=9 and delayed time 0
+Kernel   32. Process with pid=35 and delayed time 0
+Kernel   33. Process with pid=18 and delayed time 0
+Kernel   34. Process with pid=36 and delayed time 0
+Kernel   35. Process with pid=5 and delayed time 0
+Kernel   Created a child with pid 37
+Kernel   ContexSwitch return 0
+User     I'm parent: 19
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 19 to process 10!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=20 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   3. Process with pid=21 and delayed time 0
+Kernel   4. Process with pid=11 and delayed time 0
+Kernel   5. Process with pid=22 and delayed time 0
+Kernel   6. Process with pid=6 and delayed time 0
+Kernel   7. Process with pid=23 and delayed time 0
+Kernel   8. Process with pid=12 and delayed time 0
+Kernel   9. Process with pid=24 and delayed time 0
+Kernel   10. Process with pid=1 and delayed time 0
+Kernel   11. Process with pid=25 and delayed time 0
+Kernel   12. Process with pid=13 and delayed time 0
+Kernel   13. Process with pid=26 and delayed time 0
+Kernel   14. Process with pid=7 and delayed time 0
+Kernel   15. Process with pid=27 and delayed time 0
+Kernel   16. Process with pid=14 and delayed time 0
+Kernel   17. Process with pid=28 and delayed time 0
+Kernel   18. Process with pid=4 and delayed time 0
+Kernel   19. Process with pid=29 and delayed time 0
+Kernel   20. Process with pid=15 and delayed time 0
+Kernel   21. Process with pid=30 and delayed time 0
+Kernel   22. Process with pid=8 and delayed time 0
+Kernel   23. Process with pid=31 and delayed time 0
+Kernel   24. Process with pid=16 and delayed time 0
+Kernel   25. Process with pid=32 and delayed time 0
+Kernel   26. Process with pid=2 and delayed time 0
+Kernel   27. Process with pid=33 and delayed time 0
+Kernel   28. Process with pid=17 and delayed time 0
+Kernel   29. Process with pid=34 and delayed time 0
+Kernel   30. Process with pid=9 and delayed time 0
+Kernel   31. Process with pid=35 and delayed time 0
+Kernel   32. Process with pid=18 and delayed time 0
+Kernel   33. Process with pid=36 and delayed time 0
+Kernel   34. Process with pid=5 and delayed time 0
+Kernel   35. Process with pid=37 and delayed time 0
+Kernel   36. Process with pid=19 and delayed time 0
+Kernel   Created a child with pid 38
+Kernel   ContexSwitch return 0
+User     I'm parent: 10
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 10 to process 20!
+Kernel   ContexSwitch return 0
+User     I'm child: 20
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=21 and delayed time 0
+Kernel   3. Process with pid=11 and delayed time 0
+Kernel   4. Process with pid=22 and delayed time 0
+Kernel   5. Process with pid=6 and delayed time 0
+Kernel   6. Process with pid=23 and delayed time 0
+Kernel   7. Process with pid=12 and delayed time 0
+Kernel   8. Process with pid=24 and delayed time 0
+Kernel   9. Process with pid=1 and delayed time 0
+Kernel   10. Process with pid=25 and delayed time 0
+Kernel   11. Process with pid=13 and delayed time 0
+Kernel   12. Process with pid=26 and delayed time 0
+Kernel   13. Process with pid=7 and delayed time 0
+Kernel   14. Process with pid=27 and delayed time 0
+Kernel   15. Process with pid=14 and delayed time 0
+Kernel   16. Process with pid=28 and delayed time 0
+Kernel   17. Process with pid=4 and delayed time 0
+Kernel   18. Process with pid=29 and delayed time 0
+Kernel   19. Process with pid=15 and delayed time 0
+Kernel   20. Process with pid=30 and delayed time 0
+Kernel   21. Process with pid=8 and delayed time 0
+Kernel   22. Process with pid=31 and delayed time 0
+Kernel   23. Process with pid=16 and delayed time 0
+Kernel   24. Process with pid=32 and delayed time 0
+Kernel   25. Process with pid=2 and delayed time 0
+Kernel   26. Process with pid=33 and delayed time 0
+Kernel   27. Process with pid=17 and delayed time 0
+Kernel   28. Process with pid=34 and delayed time 0
+Kernel   29. Process with pid=9 and delayed time 0
+Kernel   30. Process with pid=35 and delayed time 0
+Kernel   31. Process with pid=18 and delayed time 0
+Kernel   32. Process with pid=36 and delayed time 0
+Kernel   33. Process with pid=5 and delayed time 0
+Kernel   34. Process with pid=37 and delayed time 0
+Kernel   35. Process with pid=19 and delayed time 0
+Kernel   36. Process with pid=38 and delayed time 0
+Kernel   37. Process with pid=10 and delayed time 0
+Kernel   Created a child with pid 39
+Kernel   ContexSwitch return 0
+User     I'm parent: 20
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 20 to process 3!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=21 and delayed time 0
+Kernel   2. Process with pid=11 and delayed time 0
+Kernel   3. Process with pid=22 and delayed time 0
+Kernel   4. Process with pid=6 and delayed time 0
+Kernel   5. Process with pid=23 and delayed time 0
+Kernel   6. Process with pid=12 and delayed time 0
+Kernel   7. Process with pid=24 and delayed time 0
+Kernel   8. Process with pid=1 and delayed time 0
+Kernel   9. Process with pid=25 and delayed time 0
+Kernel   10. Process with pid=13 and delayed time 0
+Kernel   11. Process with pid=26 and delayed time 0
+Kernel   12. Process with pid=7 and delayed time 0
+Kernel   13. Process with pid=27 and delayed time 0
+Kernel   14. Process with pid=14 and delayed time 0
+Kernel   15. Process with pid=28 and delayed time 0
+Kernel   16. Process with pid=4 and delayed time 0
+Kernel   17. Process with pid=29 and delayed time 0
+Kernel   18. Process with pid=15 and delayed time 0
+Kernel   19. Process with pid=30 and delayed time 0
+Kernel   20. Process with pid=8 and delayed time 0
+Kernel   21. Process with pid=31 and delayed time 0
+Kernel   22. Process with pid=16 and delayed time 0
+Kernel   23. Process with pid=32 and delayed time 0
+Kernel   24. Process with pid=2 and delayed time 0
+Kernel   25. Process with pid=33 and delayed time 0
+Kernel   26. Process with pid=17 and delayed time 0
+Kernel   27. Process with pid=34 and delayed time 0
+Kernel   28. Process with pid=9 and delayed time 0
+Kernel   29. Process with pid=35 and delayed time 0
+Kernel   30. Process with pid=18 and delayed time 0
+Kernel   31. Process with pid=36 and delayed time 0
+Kernel   32. Process with pid=5 and delayed time 0
+Kernel   33. Process with pid=37 and delayed time 0
+Kernel   34. Process with pid=19 and delayed time 0
+Kernel   35. Process with pid=38 and delayed time 0
+Kernel   36. Process with pid=10 and delayed time 0
+Kernel   37. Process with pid=39 and delayed time 0
+Kernel   38. Process with pid=20 and delayed time 0
+Kernel   Created a child with pid 40
+Kernel   ContexSwitch return 0
+User     I'm parent: 3
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 3 to process 21!
+Kernel   ContexSwitch return 0
+User     I'm child: 21
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=11 and delayed time 0
+Kernel   2. Process with pid=22 and delayed time 0
+Kernel   3. Process with pid=6 and delayed time 0
+Kernel   4. Process with pid=23 and delayed time 0
+Kernel   5. Process with pid=12 and delayed time 0
+Kernel   6. Process with pid=24 and delayed time 0
+Kernel   7. Process with pid=1 and delayed time 0
+Kernel   8. Process with pid=25 and delayed time 0
+Kernel   9. Process with pid=13 and delayed time 0
+Kernel   10. Process with pid=26 and delayed time 0
+Kernel   11. Process with pid=7 and delayed time 0
+Kernel   12. Process with pid=27 and delayed time 0
+Kernel   13. Process with pid=14 and delayed time 0
+Kernel   14. Process with pid=28 and delayed time 0
+Kernel   15. Process with pid=4 and delayed time 0
+Kernel   16. Process with pid=29 and delayed time 0
+Kernel   17. Process with pid=15 and delayed time 0
+Kernel   18. Process with pid=30 and delayed time 0
+Kernel   19. Process with pid=8 and delayed time 0
+Kernel   20. Process with pid=31 and delayed time 0
+Kernel   21. Process with pid=16 and delayed time 0
+Kernel   22. Process with pid=32 and delayed time 0
+Kernel   23. Process with pid=2 and delayed time 0
+Kernel   24. Process with pid=33 and delayed time 0
+Kernel   25. Process with pid=17 and delayed time 0
+Kernel   26. Process with pid=34 and delayed time 0
+Kernel   27. Process with pid=9 and delayed time 0
+Kernel   28. Process with pid=35 and delayed time 0
+Kernel   29. Process with pid=18 and delayed time 0
+Kernel   30. Process with pid=36 and delayed time 0
+Kernel   31. Process with pid=5 and delayed time 0
+Kernel   32. Process with pid=37 and delayed time 0
+Kernel   33. Process with pid=19 and delayed time 0
+Kernel   34. Process with pid=38 and delayed time 0
+Kernel   35. Process with pid=10 and delayed time 0
+Kernel   36. Process with pid=39 and delayed time 0
+Kernel   37. Process with pid=20 and delayed time 0
+Kernel   38. Process with pid=40 and delayed time 0
+Kernel   39. Process with pid=3 and delayed time 0
+Kernel   Created a child with pid 41
+Kernel   ContexSwitch return 0
+User     I'm parent: 21
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 21 to process 11!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=22 and delayed time 0
+Kernel   2. Process with pid=6 and delayed time 0
+Kernel   3. Process with pid=23 and delayed time 0
+Kernel   4. Process with pid=12 and delayed time 0
+Kernel   5. Process with pid=24 and delayed time 0
+Kernel   6. Process with pid=1 and delayed time 0
+Kernel   7. Process with pid=25 and delayed time 0
+Kernel   8. Process with pid=13 and delayed time 0
+Kernel   9. Process with pid=26 and delayed time 0
+Kernel   10. Process with pid=7 and delayed time 0
+Kernel   11. Process with pid=27 and delayed time 0
+Kernel   12. Process with pid=14 and delayed time 0
+Kernel   13. Process with pid=28 and delayed time 0
+Kernel   14. Process with pid=4 and delayed time 0
+Kernel   15. Process with pid=29 and delayed time 0
+Kernel   16. Process with pid=15 and delayed time 0
+Kernel   17. Process with pid=30 and delayed time 0
+Kernel   18. Process with pid=8 and delayed time 0
+Kernel   19. Process with pid=31 and delayed time 0
+Kernel   20. Process with pid=16 and delayed time 0
+Kernel   21. Process with pid=32 and delayed time 0
+Kernel   22. Process with pid=2 and delayed time 0
+Kernel   23. Process with pid=33 and delayed time 0
+Kernel   24. Process with pid=17 and delayed time 0
+Kernel   25. Process with pid=34 and delayed time 0
+Kernel   26. Process with pid=9 and delayed time 0
+Kernel   27. Process with pid=35 and delayed time 0
+Kernel   28. Process with pid=18 and delayed time 0
+Kernel   29. Process with pid=36 and delayed time 0
+Kernel   30. Process with pid=5 and delayed time 0
+Kernel   31. Process with pid=37 and delayed time 0
+Kernel   32. Process with pid=19 and delayed time 0
+Kernel   33. Process with pid=38 and delayed time 0
+Kernel   34. Process with pid=10 and delayed time 0
+Kernel   35. Process with pid=39 and delayed time 0
+Kernel   36. Process with pid=20 and delayed time 0
+Kernel   37. Process with pid=40 and delayed time 0
+Kernel   38. Process with pid=3 and delayed time 0
+Kernel   39. Process with pid=41 and delayed time 0
+Kernel   40. Process with pid=21 and delayed time 0
+Kernel   Created a child with pid 42
+Kernel   ContexSwitch return 0
+User     I'm parent: 11
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 11 to process 22!
+Kernel   ContexSwitch return 0
+User     I'm child: 22
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=6 and delayed time 0
+Kernel   2. Process with pid=23 and delayed time 0
+Kernel   3. Process with pid=12 and delayed time 0
+Kernel   4. Process with pid=24 and delayed time 0
+Kernel   5. Process with pid=1 and delayed time 0
+Kernel   6. Process with pid=25 and delayed time 0
+Kernel   7. Process with pid=13 and delayed time 0
+Kernel   8. Process with pid=26 and delayed time 0
+Kernel   9. Process with pid=7 and delayed time 0
+Kernel   10. Process with pid=27 and delayed time 0
+Kernel   11. Process with pid=14 and delayed time 0
+Kernel   12. Process with pid=28 and delayed time 0
+Kernel   13. Process with pid=4 and delayed time 0
+Kernel   14. Process with pid=29 and delayed time 0
+Kernel   15. Process with pid=15 and delayed time 0
+Kernel   16. Process with pid=30 and delayed time 0
+Kernel   17. Process with pid=8 and delayed time 0
+Kernel   18. Process with pid=31 and delayed time 0
+Kernel   19. Process with pid=16 and delayed time 0
+Kernel   20. Process with pid=32 and delayed time 0
+Kernel   21. Process with pid=2 and delayed time 0
+Kernel   22. Process with pid=33 and delayed time 0
+Kernel   23. Process with pid=17 and delayed time 0
+Kernel   24. Process with pid=34 and delayed time 0
+Kernel   25. Process with pid=9 and delayed time 0
+Kernel   26. Process with pid=35 and delayed time 0
+Kernel   27. Process with pid=18 and delayed time 0
+Kernel   28. Process with pid=36 and delayed time 0
+Kernel   29. Process with pid=5 and delayed time 0
+Kernel   30. Process with pid=37 and delayed time 0
+Kernel   31. Process with pid=19 and delayed time 0
+Kernel   32. Process with pid=38 and delayed time 0
+Kernel   33. Process with pid=10 and delayed time 0
+Kernel   34. Process with pid=39 and delayed time 0
+Kernel   35. Process with pid=20 and delayed time 0
+Kernel   36. Process with pid=40 and delayed time 0
+Kernel   37. Process with pid=3 and delayed time 0
+Kernel   38. Process with pid=41 and delayed time 0
+Kernel   39. Process with pid=21 and delayed time 0
+Kernel   40. Process with pid=42 and delayed time 0
+Kernel   41. Process with pid=11 and delayed time 0
+Kernel   Created a child with pid 43
+Kernel   ContexSwitch return 0
+User     I'm parent: 22
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 22 to process 6!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=23 and delayed time 0
+Kernel   2. Process with pid=12 and delayed time 0
+Kernel   3. Process with pid=24 and delayed time 0
+Kernel   4. Process with pid=1 and delayed time 0
+Kernel   5. Process with pid=25 and delayed time 0
+Kernel   6. Process with pid=13 and delayed time 0
+Kernel   7. Process with pid=26 and delayed time 0
+Kernel   8. Process with pid=7 and delayed time 0
+Kernel   9. Process with pid=27 and delayed time 0
+Kernel   10. Process with pid=14 and delayed time 0
+Kernel   11. Process with pid=28 and delayed time 0
+Kernel   12. Process with pid=4 and delayed time 0
+Kernel   13. Process with pid=29 and delayed time 0
+Kernel   14. Process with pid=15 and delayed time 0
+Kernel   15. Process with pid=30 and delayed time 0
+Kernel   16. Process with pid=8 and delayed time 0
+Kernel   17. Process with pid=31 and delayed time 0
+Kernel   18. Process with pid=16 and delayed time 0
+Kernel   19. Process with pid=32 and delayed time 0
+Kernel   20. Process with pid=2 and delayed time 0
+Kernel   21. Process with pid=33 and delayed time 0
+Kernel   22. Process with pid=17 and delayed time 0
+Kernel   23. Process with pid=34 and delayed time 0
+Kernel   24. Process with pid=9 and delayed time 0
+Kernel   25. Process with pid=35 and delayed time 0
+Kernel   26. Process with pid=18 and delayed time 0
+Kernel   27. Process with pid=36 and delayed time 0
+Kernel   28. Process with pid=5 and delayed time 0
+Kernel   29. Process with pid=37 and delayed time 0
+Kernel   30. Process with pid=19 and delayed time 0
+Kernel   31. Process with pid=38 and delayed time 0
+Kernel   32. Process with pid=10 and delayed time 0
+Kernel   33. Process with pid=39 and delayed time 0
+Kernel   34. Process with pid=20 and delayed time 0
+Kernel   35. Process with pid=40 and delayed time 0
+Kernel   36. Process with pid=3 and delayed time 0
+Kernel   37. Process with pid=41 and delayed time 0
+Kernel   38. Process with pid=21 and delayed time 0
+Kernel   39. Process with pid=42 and delayed time 0
+Kernel   40. Process with pid=11 and delayed time 0
+Kernel   41. Process with pid=43 and delayed time 0
+Kernel   42. Process with pid=22 and delayed time 0
+Kernel   Created a child with pid 44
+Kernel   ContexSwitch return 0
+User     I'm parent: 6
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 6 to process 23!
+Kernel   ContexSwitch return 0
+User     I'm child: 23
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=12 and delayed time 0
+Kernel   2. Process with pid=24 and delayed time 0
+Kernel   3. Process with pid=1 and delayed time 0
+Kernel   4. Process with pid=25 and delayed time 0
+Kernel   5. Process with pid=13 and delayed time 0
+Kernel   6. Process with pid=26 and delayed time 0
+Kernel   7. Process with pid=7 and delayed time 0
+Kernel   8. Process with pid=27 and delayed time 0
+Kernel   9. Process with pid=14 and delayed time 0
+Kernel   10. Process with pid=28 and delayed time 0
+Kernel   11. Process with pid=4 and delayed time 0
+Kernel   12. Process with pid=29 and delayed time 0
+Kernel   13. Process with pid=15 and delayed time 0
+Kernel   14. Process with pid=30 and delayed time 0
+Kernel   15. Process with pid=8 and delayed time 0
+Kernel   16. Process with pid=31 and delayed time 0
+Kernel   17. Process with pid=16 and delayed time 0
+Kernel   18. Process with pid=32 and delayed time 0
+Kernel   19. Process with pid=2 and delayed time 0
+Kernel   20. Process with pid=33 and delayed time 0
+Kernel   21. Process with pid=17 and delayed time 0
+Kernel   22. Process with pid=34 and delayed time 0
+Kernel   23. Process with pid=9 and delayed time 0
+Kernel   24. Process with pid=35 and delayed time 0
+Kernel   25. Process with pid=18 and delayed time 0
+Kernel   26. Process with pid=36 and delayed time 0
+Kernel   27. Process with pid=5 and delayed time 0
+Kernel   28. Process with pid=37 and delayed time 0
+Kernel   29. Process with pid=19 and delayed time 0
+Kernel   30. Process with pid=38 and delayed time 0
+Kernel   31. Process with pid=10 and delayed time 0
+Kernel   32. Process with pid=39 and delayed time 0
+Kernel   33. Process with pid=20 and delayed time 0
+Kernel   34. Process with pid=40 and delayed time 0
+Kernel   35. Process with pid=3 and delayed time 0
+Kernel   36. Process with pid=41 and delayed time 0
+Kernel   37. Process with pid=21 and delayed time 0
+Kernel   38. Process with pid=42 and delayed time 0
+Kernel   39. Process with pid=11 and delayed time 0
+Kernel   40. Process with pid=43 and delayed time 0
+Kernel   41. Process with pid=22 and delayed time 0
+Kernel   42. Process with pid=44 and delayed time 0
+Kernel   43. Process with pid=6 and delayed time 0
+Kernel   Created a child with pid 45
+Kernel   ContexSwitch return 0
+User     I'm parent: 23
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 23 to process 12!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=24 and delayed time 0
+Kernel   2. Process with pid=1 and delayed time 0
+Kernel   3. Process with pid=25 and delayed time 0
+Kernel   4. Process with pid=13 and delayed time 0
+Kernel   5. Process with pid=26 and delayed time 0
+Kernel   6. Process with pid=7 and delayed time 0
+Kernel   7. Process with pid=27 and delayed time 0
+Kernel   8. Process with pid=14 and delayed time 0
+Kernel   9. Process with pid=28 and delayed time 0
+Kernel   10. Process with pid=4 and delayed time 0
+Kernel   11. Process with pid=29 and delayed time 0
+Kernel   12. Process with pid=15 and delayed time 0
+Kernel   13. Process with pid=30 and delayed time 0
+Kernel   14. Process with pid=8 and delayed time 0
+Kernel   15. Process with pid=31 and delayed time 0
+Kernel   16. Process with pid=16 and delayed time 0
+Kernel   17. Process with pid=32 and delayed time 0
+Kernel   18. Process with pid=2 and delayed time 0
+Kernel   19. Process with pid=33 and delayed time 0
+Kernel   20. Process with pid=17 and delayed time 0
+Kernel   21. Process with pid=34 and delayed time 0
+Kernel   22. Process with pid=9 and delayed time 0
+Kernel   23. Process with pid=35 and delayed time 0
+Kernel   24. Process with pid=18 and delayed time 0
+Kernel   25. Process with pid=36 and delayed time 0
+Kernel   26. Process with pid=5 and delayed time 0
+Kernel   27. Process with pid=37 and delayed time 0
+Kernel   28. Process with pid=19 and delayed time 0
+Kernel   29. Process with pid=38 and delayed time 0
+Kernel   30. Process with pid=10 and delayed time 0
+Kernel   31. Process with pid=39 and delayed time 0
+Kernel   32. Process with pid=20 and delayed time 0
+Kernel   33. Process with pid=40 and delayed time 0
+Kernel   34. Process with pid=3 and delayed time 0
+Kernel   35. Process with pid=41 and delayed time 0
+Kernel   36. Process with pid=21 and delayed time 0
+Kernel   37. Process with pid=42 and delayed time 0
+Kernel   38. Process with pid=11 and delayed time 0
+Kernel   39. Process with pid=43 and delayed time 0
+Kernel   40. Process with pid=22 and delayed time 0
+Kernel   41. Process with pid=44 and delayed time 0
+Kernel   42. Process with pid=6 and delayed time 0
+Kernel   43. Process with pid=45 and delayed time 0
+Kernel   44. Process with pid=23 and delayed time 0
+Kernel   Created a child with pid 46
+Kernel   ContexSwitch return 0
+User     I'm parent: 12
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 12 to process 24!
+Kernel   ContexSwitch return 0
+User     I'm child: 24
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=1 and delayed time 0
+Kernel   2. Process with pid=25 and delayed time 0
+Kernel   3. Process with pid=13 and delayed time 0
+Kernel   4. Process with pid=26 and delayed time 0
+Kernel   5. Process with pid=7 and delayed time 0
+Kernel   6. Process with pid=27 and delayed time 0
+Kernel   7. Process with pid=14 and delayed time 0
+Kernel   8. Process with pid=28 and delayed time 0
+Kernel   9. Process with pid=4 and delayed time 0
+Kernel   10. Process with pid=29 and delayed time 0
+Kernel   11. Process with pid=15 and delayed time 0
+Kernel   12. Process with pid=30 and delayed time 0
+Kernel   13. Process with pid=8 and delayed time 0
+Kernel   14. Process with pid=31 and delayed time 0
+Kernel   15. Process with pid=16 and delayed time 0
+Kernel   16. Process with pid=32 and delayed time 0
+Kernel   17. Process with pid=2 and delayed time 0
+Kernel   18. Process with pid=33 and delayed time 0
+Kernel   19. Process with pid=17 and delayed time 0
+Kernel   20. Process with pid=34 and delayed time 0
+Kernel   21. Process with pid=9 and delayed time 0
+Kernel   22. Process with pid=35 and delayed time 0
+Kernel   23. Process with pid=18 and delayed time 0
+Kernel   24. Process with pid=36 and delayed time 0
+Kernel   25. Process with pid=5 and delayed time 0
+Kernel   26. Process with pid=37 and delayed time 0
+Kernel   27. Process with pid=19 and delayed time 0
+Kernel   28. Process with pid=38 and delayed time 0
+Kernel   29. Process with pid=10 and delayed time 0
+Kernel   30. Process with pid=39 and delayed time 0
+Kernel   31. Process with pid=20 and delayed time 0
+Kernel   32. Process with pid=40 and delayed time 0
+Kernel   33. Process with pid=3 and delayed time 0
+Kernel   34. Process with pid=41 and delayed time 0
+Kernel   35. Process with pid=21 and delayed time 0
+Kernel   36. Process with pid=42 and delayed time 0
+Kernel   37. Process with pid=11 and delayed time 0
+Kernel   38. Process with pid=43 and delayed time 0
+Kernel   39. Process with pid=22 and delayed time 0
+Kernel   40. Process with pid=44 and delayed time 0
+Kernel   41. Process with pid=6 and delayed time 0
+Kernel   42. Process with pid=45 and delayed time 0
+Kernel   43. Process with pid=23 and delayed time 0
+Kernel   44. Process with pid=46 and delayed time 0
+Kernel   45. Process with pid=12 and delayed time 0
+Kernel   Created a child with pid 47
+Kernel   ContexSwitch return 0
+User     I'm parent: 24
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 24 to process 1!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=25 and delayed time 0
+Kernel   2. Process with pid=13 and delayed time 0
+Kernel   3. Process with pid=26 and delayed time 0
+Kernel   4. Process with pid=7 and delayed time 0
+Kernel   5. Process with pid=27 and delayed time 0
+Kernel   6. Process with pid=14 and delayed time 0
+Kernel   7. Process with pid=28 and delayed time 0
+Kernel   8. Process with pid=4 and delayed time 0
+Kernel   9. Process with pid=29 and delayed time 0
+Kernel   10. Process with pid=15 and delayed time 0
+Kernel   11. Process with pid=30 and delayed time 0
+Kernel   12. Process with pid=8 and delayed time 0
+Kernel   13. Process with pid=31 and delayed time 0
+Kernel   14. Process with pid=16 and delayed time 0
+Kernel   15. Process with pid=32 and delayed time 0
+Kernel   16. Process with pid=2 and delayed time 0
+Kernel   17. Process with pid=33 and delayed time 0
+Kernel   18. Process with pid=17 and delayed time 0
+Kernel   19. Process with pid=34 and delayed time 0
+Kernel   20. Process with pid=9 and delayed time 0
+Kernel   21. Process with pid=35 and delayed time 0
+Kernel   22. Process with pid=18 and delayed time 0
+Kernel   23. Process with pid=36 and delayed time 0
+Kernel   24. Process with pid=5 and delayed time 0
+Kernel   25. Process with pid=37 and delayed time 0
+Kernel   26. Process with pid=19 and delayed time 0
+Kernel   27. Process with pid=38 and delayed time 0
+Kernel   28. Process with pid=10 and delayed time 0
+Kernel   29. Process with pid=39 and delayed time 0
+Kernel   30. Process with pid=20 and delayed time 0
+Kernel   31. Process with pid=40 and delayed time 0
+Kernel   32. Process with pid=3 and delayed time 0
+Kernel   33. Process with pid=41 and delayed time 0
+Kernel   34. Process with pid=21 and delayed time 0
+Kernel   35. Process with pid=42 and delayed time 0
+Kernel   36. Process with pid=11 and delayed time 0
+Kernel   37. Process with pid=43 and delayed time 0
+Kernel   38. Process with pid=22 and delayed time 0
+Kernel   39. Process with pid=44 and delayed time 0
+Kernel   40. Process with pid=6 and delayed time 0
+Kernel   41. Process with pid=45 and delayed time 0
+Kernel   42. Process with pid=23 and delayed time 0
+Kernel   43. Process with pid=46 and delayed time 0
+Kernel   44. Process with pid=12 and delayed time 0
+Kernel   45. Process with pid=47 and delayed time 0
+Kernel   46. Process with pid=24 and delayed time 0
+Kernel   Created a child with pid 48
+Kernel   ContexSwitch return 0
+User     I'm parent: 1
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 1 to process 25!
+Kernel   ContexSwitch return 0
+User     I'm child: 25
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=13 and delayed time 0
+Kernel   2. Process with pid=26 and delayed time 0
+Kernel   3. Process with pid=7 and delayed time 0
+Kernel   4. Process with pid=27 and delayed time 0
+Kernel   5. Process with pid=14 and delayed time 0
+Kernel   6. Process with pid=28 and delayed time 0
+Kernel   7. Process with pid=4 and delayed time 0
+Kernel   8. Process with pid=29 and delayed time 0
+Kernel   9. Process with pid=15 and delayed time 0
+Kernel   10. Process with pid=30 and delayed time 0
+Kernel   11. Process with pid=8 and delayed time 0
+Kernel   12. Process with pid=31 and delayed time 0
+Kernel   13. Process with pid=16 and delayed time 0
+Kernel   14. Process with pid=32 and delayed time 0
+Kernel   15. Process with pid=2 and delayed time 0
+Kernel   16. Process with pid=33 and delayed time 0
+Kernel   17. Process with pid=17 and delayed time 0
+Kernel   18. Process with pid=34 and delayed time 0
+Kernel   19. Process with pid=9 and delayed time 0
+Kernel   20. Process with pid=35 and delayed time 0
+Kernel   21. Process with pid=18 and delayed time 0
+Kernel   22. Process with pid=36 and delayed time 0
+Kernel   23. Process with pid=5 and delayed time 0
+Kernel   24. Process with pid=37 and delayed time 0
+Kernel   25. Process with pid=19 and delayed time 0
+Kernel   26. Process with pid=38 and delayed time 0
+Kernel   27. Process with pid=10 and delayed time 0
+Kernel   28. Process with pid=39 and delayed time 0
+Kernel   29. Process with pid=20 and delayed time 0
+Kernel   30. Process with pid=40 and delayed time 0
+Kernel   31. Process with pid=3 and delayed time 0
+Kernel   32. Process with pid=41 and delayed time 0
+Kernel   33. Process with pid=21 and delayed time 0
+Kernel   34. Process with pid=42 and delayed time 0
+Kernel   35. Process with pid=11 and delayed time 0
+Kernel   36. Process with pid=43 and delayed time 0
+Kernel   37. Process with pid=22 and delayed time 0
+Kernel   38. Process with pid=44 and delayed time 0
+Kernel   39. Process with pid=6 and delayed time 0
+Kernel   40. Process with pid=45 and delayed time 0
+Kernel   41. Process with pid=23 and delayed time 0
+Kernel   42. Process with pid=46 and delayed time 0
+Kernel   43. Process with pid=12 and delayed time 0
+Kernel   44. Process with pid=47 and delayed time 0
+Kernel   45. Process with pid=24 and delayed time 0
+Kernel   46. Process with pid=48 and delayed time 0
+Kernel   47. Process with pid=1 and delayed time 0
+Kernel   Created a child with pid 49
+Kernel   ContexSwitch return 0
+User     I'm parent: 25
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 25 to process 13!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=26 and delayed time 0
+Kernel   2. Process with pid=7 and delayed time 0
+Kernel   3. Process with pid=27 and delayed time 0
+Kernel   4. Process with pid=14 and delayed time 0
+Kernel   5. Process with pid=28 and delayed time 0
+Kernel   6. Process with pid=4 and delayed time 0
+Kernel   7. Process with pid=29 and delayed time 0
+Kernel   8. Process with pid=15 and delayed time 0
+Kernel   9. Process with pid=30 and delayed time 0
+Kernel   10. Process with pid=8 and delayed time 0
+Kernel   11. Process with pid=31 and delayed time 0
+Kernel   12. Process with pid=16 and delayed time 0
+Kernel   13. Process with pid=32 and delayed time 0
+Kernel   14. Process with pid=2 and delayed time 0
+Kernel   15. Process with pid=33 and delayed time 0
+Kernel   16. Process with pid=17 and delayed time 0
+Kernel   17. Process with pid=34 and delayed time 0
+Kernel   18. Process with pid=9 and delayed time 0
+Kernel   19. Process with pid=35 and delayed time 0
+Kernel   20. Process with pid=18 and delayed time 0
+Kernel   21. Process with pid=36 and delayed time 0
+Kernel   22. Process with pid=5 and delayed time 0
+Kernel   23. Process with pid=37 and delayed time 0
+Kernel   24. Process with pid=19 and delayed time 0
+Kernel   25. Process with pid=38 and delayed time 0
+Kernel   26. Process with pid=10 and delayed time 0
+Kernel   27. Process with pid=39 and delayed time 0
+Kernel   28. Process with pid=20 and delayed time 0
+Kernel   29. Process with pid=40 and delayed time 0
+Kernel   30. Process with pid=3 and delayed time 0
+Kernel   31. Process with pid=41 and delayed time 0
+Kernel   32. Process with pid=21 and delayed time 0
+Kernel   33. Process with pid=42 and delayed time 0
+Kernel   34. Process with pid=11 and delayed time 0
+Kernel   35. Process with pid=43 and delayed time 0
+Kernel   36. Process with pid=22 and delayed time 0
+Kernel   37. Process with pid=44 and delayed time 0
+Kernel   38. Process with pid=6 and delayed time 0
+Kernel   39. Process with pid=45 and delayed time 0
+Kernel   40. Process with pid=23 and delayed time 0
+Kernel   41. Process with pid=46 and delayed time 0
+Kernel   42. Process with pid=12 and delayed time 0
+Kernel   43. Process with pid=47 and delayed time 0
+Kernel   44. Process with pid=24 and delayed time 0
+Kernel   45. Process with pid=48 and delayed time 0
+Kernel   46. Process with pid=1 and delayed time 0
+Kernel   47. Process with pid=49 and delayed time 0
+Kernel   48. Process with pid=25 and delayed time 0
+Kernel   Created a child with pid 50
+Kernel   ContexSwitch return 0
+User     I'm parent: 13
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 13 to process 26!
+Kernel   ContexSwitch return 0
+User     I'm child: 26
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=27 and delayed time 0
+Kernel   3. Process with pid=14 and delayed time 0
+Kernel   4. Process with pid=28 and delayed time 0
+Kernel   5. Process with pid=4 and delayed time 0
+Kernel   6. Process with pid=29 and delayed time 0
+Kernel   7. Process with pid=15 and delayed time 0
+Kernel   8. Process with pid=30 and delayed time 0
+Kernel   9. Process with pid=8 and delayed time 0
+Kernel   10. Process with pid=31 and delayed time 0
+Kernel   11. Process with pid=16 and delayed time 0
+Kernel   12. Process with pid=32 and delayed time 0
+Kernel   13. Process with pid=2 and delayed time 0
+Kernel   14. Process with pid=33 and delayed time 0
+Kernel   15. Process with pid=17 and delayed time 0
+Kernel   16. Process with pid=34 and delayed time 0
+Kernel   17. Process with pid=9 and delayed time 0
+Kernel   18. Process with pid=35 and delayed time 0
+Kernel   19. Process with pid=18 and delayed time 0
+Kernel   20. Process with pid=36 and delayed time 0
+Kernel   21. Process with pid=5 and delayed time 0
+Kernel   22. Process with pid=37 and delayed time 0
+Kernel   23. Process with pid=19 and delayed time 0
+Kernel   24. Process with pid=38 and delayed time 0
+Kernel   25. Process with pid=10 and delayed time 0
+Kernel   26. Process with pid=39 and delayed time 0
+Kernel   27. Process with pid=20 and delayed time 0
+Kernel   28. Process with pid=40 and delayed time 0
+Kernel   29. Process with pid=3 and delayed time 0
+Kernel   30. Process with pid=41 and delayed time 0
+Kernel   31. Process with pid=21 and delayed time 0
+Kernel   32. Process with pid=42 and delayed time 0
+Kernel   33. Process with pid=11 and delayed time 0
+Kernel   34. Process with pid=43 and delayed time 0
+Kernel   35. Process with pid=22 and delayed time 0
+Kernel   36. Process with pid=44 and delayed time 0
+Kernel   37. Process with pid=6 and delayed time 0
+Kernel   38. Process with pid=45 and delayed time 0
+Kernel   39. Process with pid=23 and delayed time 0
+Kernel   40. Process with pid=46 and delayed time 0
+Kernel   41. Process with pid=12 and delayed time 0
+Kernel   42. Process with pid=47 and delayed time 0
+Kernel   43. Process with pid=24 and delayed time 0
+Kernel   44. Process with pid=48 and delayed time 0
+Kernel   45. Process with pid=1 and delayed time 0
+Kernel   46. Process with pid=49 and delayed time 0
+Kernel   47. Process with pid=25 and delayed time 0
+Kernel   48. Process with pid=50 and delayed time 0
+Kernel   49. Process with pid=13 and delayed time 0
+Kernel   Created a child with pid 51
+Kernel   ContexSwitch return 0
+User     I'm parent: 26
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 26 to process 7!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=27 and delayed time 0
+Kernel   2. Process with pid=14 and delayed time 0
+Kernel   3. Process with pid=28 and delayed time 0
+Kernel   4. Process with pid=4 and delayed time 0
+Kernel   5. Process with pid=29 and delayed time 0
+Kernel   6. Process with pid=15 and delayed time 0
+Kernel   7. Process with pid=30 and delayed time 0
+Kernel   8. Process with pid=8 and delayed time 0
+Kernel   9. Process with pid=31 and delayed time 0
+Kernel   10. Process with pid=16 and delayed time 0
+Kernel   11. Process with pid=32 and delayed time 0
+Kernel   12. Process with pid=2 and delayed time 0
+Kernel   13. Process with pid=33 and delayed time 0
+Kernel   14. Process with pid=17 and delayed time 0
+Kernel   15. Process with pid=34 and delayed time 0
+Kernel   16. Process with pid=9 and delayed time 0
+Kernel   17. Process with pid=35 and delayed time 0
+Kernel   18. Process with pid=18 and delayed time 0
+Kernel   19. Process with pid=36 and delayed time 0
+Kernel   20. Process with pid=5 and delayed time 0
+Kernel   21. Process with pid=37 and delayed time 0
+Kernel   22. Process with pid=19 and delayed time 0
+Kernel   23. Process with pid=38 and delayed time 0
+Kernel   24. Process with pid=10 and delayed time 0
+Kernel   25. Process with pid=39 and delayed time 0
+Kernel   26. Process with pid=20 and delayed time 0
+Kernel   27. Process with pid=40 and delayed time 0
+Kernel   28. Process with pid=3 and delayed time 0
+Kernel   29. Process with pid=41 and delayed time 0
+Kernel   30. Process with pid=21 and delayed time 0
+Kernel   31. Process with pid=42 and delayed time 0
+Kernel   32. Process with pid=11 and delayed time 0
+Kernel   33. Process with pid=43 and delayed time 0
+Kernel   34. Process with pid=22 and delayed time 0
+Kernel   35. Process with pid=44 and delayed time 0
+Kernel   36. Process with pid=6 and delayed time 0
+Kernel   37. Process with pid=45 and delayed time 0
+Kernel   38. Process with pid=23 and delayed time 0
+Kernel   39. Process with pid=46 and delayed time 0
+Kernel   40. Process with pid=12 and delayed time 0
+Kernel   41. Process with pid=47 and delayed time 0
+Kernel   42. Process with pid=24 and delayed time 0
+Kernel   43. Process with pid=48 and delayed time 0
+Kernel   44. Process with pid=1 and delayed time 0
+Kernel   45. Process with pid=49 and delayed time 0
+Kernel   46. Process with pid=25 and delayed time 0
+Kernel   47. Process with pid=50 and delayed time 0
+Kernel   48. Process with pid=13 and delayed time 0
+Kernel   49. Process with pid=51 and delayed time 0
+Kernel   50. Process with pid=26 and delayed time 0
+Kernel   Created a child with pid 52
+Kernel   ContexSwitch return 0
+User     I'm parent: 7
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 7 to process 27!
+Kernel   ContexSwitch return 0
+User     I'm child: 27
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=14 and delayed time 0
+Kernel   2. Process with pid=28 and delayed time 0
+Kernel   3. Process with pid=4 and delayed time 0
+Kernel   4. Process with pid=29 and delayed time 0
+Kernel   5. Process with pid=15 and delayed time 0
+Kernel   6. Process with pid=30 and delayed time 0
+Kernel   7. Process with pid=8 and delayed time 0
+Kernel   8. Process with pid=31 and delayed time 0
+Kernel   9. Process with pid=16 and delayed time 0
+Kernel   10. Process with pid=32 and delayed time 0
+Kernel   11. Process with pid=2 and delayed time 0
+Kernel   12. Process with pid=33 and delayed time 0
+Kernel   13. Process with pid=17 and delayed time 0
+Kernel   14. Process with pid=34 and delayed time 0
+Kernel   15. Process with pid=9 and delayed time 0
+Kernel   16. Process with pid=35 and delayed time 0
+Kernel   17. Process with pid=18 and delayed time 0
+Kernel   18. Process with pid=36 and delayed time 0
+Kernel   19. Process with pid=5 and delayed time 0
+Kernel   20. Process with pid=37 and delayed time 0
+Kernel   21. Process with pid=19 and delayed time 0
+Kernel   22. Process with pid=38 and delayed time 0
+Kernel   23. Process with pid=10 and delayed time 0
+Kernel   24. Process with pid=39 and delayed time 0
+Kernel   25. Process with pid=20 and delayed time 0
+Kernel   26. Process with pid=40 and delayed time 0
+Kernel   27. Process with pid=3 and delayed time 0
+Kernel   28. Process with pid=41 and delayed time 0
+Kernel   29. Process with pid=21 and delayed time 0
+Kernel   30. Process with pid=42 and delayed time 0
+Kernel   31. Process with pid=11 and delayed time 0
+Kernel   32. Process with pid=43 and delayed time 0
+Kernel   33. Process with pid=22 and delayed time 0
+Kernel   34. Process with pid=44 and delayed time 0
+Kernel   35. Process with pid=6 and delayed time 0
+Kernel   36. Process with pid=45 and delayed time 0
+Kernel   37. Process with pid=23 and delayed time 0
+Kernel   38. Process with pid=46 and delayed time 0
+Kernel   39. Process with pid=12 and delayed time 0
+Kernel   40. Process with pid=47 and delayed time 0
+Kernel   41. Process with pid=24 and delayed time 0
+Kernel   42. Process with pid=48 and delayed time 0
+Kernel   43. Process with pid=1 and delayed time 0
+Kernel   44. Process with pid=49 and delayed time 0
+Kernel   45. Process with pid=25 and delayed time 0
+Kernel   46. Process with pid=50 and delayed time 0
+Kernel   47. Process with pid=13 and delayed time 0
+Kernel   48. Process with pid=51 and delayed time 0
+Kernel   49. Process with pid=26 and delayed time 0
+Kernel   50. Process with pid=52 and delayed time 0
+Kernel   51. Process with pid=7 and delayed time 0
+Kernel   Created a child with pid 53
+Kernel   ContexSwitch return 0
+User     I'm parent: 27
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 27 to process 14!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=28 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   3. Process with pid=29 and delayed time 0
+Kernel   4. Process with pid=15 and delayed time 0
+Kernel   5. Process with pid=30 and delayed time 0
+Kernel   6. Process with pid=8 and delayed time 0
+Kernel   7. Process with pid=31 and delayed time 0
+Kernel   8. Process with pid=16 and delayed time 0
+Kernel   9. Process with pid=32 and delayed time 0
+Kernel   10. Process with pid=2 and delayed time 0
+Kernel   11. Process with pid=33 and delayed time 0
+Kernel   12. Process with pid=17 and delayed time 0
+Kernel   13. Process with pid=34 and delayed time 0
+Kernel   14. Process with pid=9 and delayed time 0
+Kernel   15. Process with pid=35 and delayed time 0
+Kernel   16. Process with pid=18 and delayed time 0
+Kernel   17. Process with pid=36 and delayed time 0
+Kernel   18. Process with pid=5 and delayed time 0
+Kernel   19. Process with pid=37 and delayed time 0
+Kernel   20. Process with pid=19 and delayed time 0
+Kernel   21. Process with pid=38 and delayed time 0
+Kernel   22. Process with pid=10 and delayed time 0
+Kernel   23. Process with pid=39 and delayed time 0
+Kernel   24. Process with pid=20 and delayed time 0
+Kernel   25. Process with pid=40 and delayed time 0
+Kernel   26. Process with pid=3 and delayed time 0
+Kernel   27. Process with pid=41 and delayed time 0
+Kernel   28. Process with pid=21 and delayed time 0
+Kernel   29. Process with pid=42 and delayed time 0
+Kernel   30. Process with pid=11 and delayed time 0
+Kernel   31. Process with pid=43 and delayed time 0
+Kernel   32. Process with pid=22 and delayed time 0
+Kernel   33. Process with pid=44 and delayed time 0
+Kernel   34. Process with pid=6 and delayed time 0
+Kernel   35. Process with pid=45 and delayed time 0
+Kernel   36. Process with pid=23 and delayed time 0
+Kernel   37. Process with pid=46 and delayed time 0
+Kernel   38. Process with pid=12 and delayed time 0
+Kernel   39. Process with pid=47 and delayed time 0
+Kernel   40. Process with pid=24 and delayed time 0
+Kernel   41. Process with pid=48 and delayed time 0
+Kernel   42. Process with pid=1 and delayed time 0
+Kernel   43. Process with pid=49 and delayed time 0
+Kernel   44. Process with pid=25 and delayed time 0
+Kernel   45. Process with pid=50 and delayed time 0
+Kernel   46. Process with pid=13 and delayed time 0
+Kernel   47. Process with pid=51 and delayed time 0
+Kernel   48. Process with pid=26 and delayed time 0
+Kernel   49. Process with pid=52 and delayed time 0
+Kernel   50. Process with pid=7 and delayed time 0
+Kernel   51. Process with pid=53 and delayed time 0
+Kernel   52. Process with pid=27 and delayed time 0
+Kernel   Created a child with pid 54
+Kernel   ContexSwitch return 0
+User     I'm parent: 14
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 14 to process 28!
+Kernel   ContexSwitch return 0
+User     I'm child: 28
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=29 and delayed time 0
+Kernel   3. Process with pid=15 and delayed time 0
+Kernel   4. Process with pid=30 and delayed time 0
+Kernel   5. Process with pid=8 and delayed time 0
+Kernel   6. Process with pid=31 and delayed time 0
+Kernel   7. Process with pid=16 and delayed time 0
+Kernel   8. Process with pid=32 and delayed time 0
+Kernel   9. Process with pid=2 and delayed time 0
+Kernel   10. Process with pid=33 and delayed time 0
+Kernel   11. Process with pid=17 and delayed time 0
+Kernel   12. Process with pid=34 and delayed time 0
+Kernel   13. Process with pid=9 and delayed time 0
+Kernel   14. Process with pid=35 and delayed time 0
+Kernel   15. Process with pid=18 and delayed time 0
+Kernel   16. Process with pid=36 and delayed time 0
+Kernel   17. Process with pid=5 and delayed time 0
+Kernel   18. Process with pid=37 and delayed time 0
+Kernel   19. Process with pid=19 and delayed time 0
+Kernel   20. Process with pid=38 and delayed time 0
+Kernel   21. Process with pid=10 and delayed time 0
+Kernel   22. Process with pid=39 and delayed time 0
+Kernel   23. Process with pid=20 and delayed time 0
+Kernel   24. Process with pid=40 and delayed time 0
+Kernel   25. Process with pid=3 and delayed time 0
+Kernel   26. Process with pid=41 and delayed time 0
+Kernel   27. Process with pid=21 and delayed time 0
+Kernel   28. Process with pid=42 and delayed time 0
+Kernel   29. Process with pid=11 and delayed time 0
+Kernel   30. Process with pid=43 and delayed time 0
+Kernel   31. Process with pid=22 and delayed time 0
+Kernel   32. Process with pid=44 and delayed time 0
+Kernel   33. Process with pid=6 and delayed time 0
+Kernel   34. Process with pid=45 and delayed time 0
+Kernel   35. Process with pid=23 and delayed time 0
+Kernel   36. Process with pid=46 and delayed time 0
+Kernel   37. Process with pid=12 and delayed time 0
+Kernel   38. Process with pid=47 and delayed time 0
+Kernel   39. Process with pid=24 and delayed time 0
+Kernel   40. Process with pid=48 and delayed time 0
+Kernel   41. Process with pid=1 and delayed time 0
+Kernel   42. Process with pid=49 and delayed time 0
+Kernel   43. Process with pid=25 and delayed time 0
+Kernel   44. Process with pid=50 and delayed time 0
+Kernel   45. Process with pid=13 and delayed time 0
+Kernel   46. Process with pid=51 and delayed time 0
+Kernel   47. Process with pid=26 and delayed time 0
+Kernel   48. Process with pid=52 and delayed time 0
+Kernel   49. Process with pid=7 and delayed time 0
+Kernel   50. Process with pid=53 and delayed time 0
+Kernel   51. Process with pid=27 and delayed time 0
+Kernel   52. Process with pid=54 and delayed time 0
+Kernel   53. Process with pid=14 and delayed time 0
+Kernel   Created a child with pid 55
+Kernel   ContexSwitch return 0
+User     I'm parent: 28
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 28 to process 4!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=29 and delayed time 0
+Kernel   2. Process with pid=15 and delayed time 0
+Kernel   3. Process with pid=30 and delayed time 0
+Kernel   4. Process with pid=8 and delayed time 0
+Kernel   5. Process with pid=31 and delayed time 0
+Kernel   6. Process with pid=16 and delayed time 0
+Kernel   7. Process with pid=32 and delayed time 0
+Kernel   8. Process with pid=2 and delayed time 0
+Kernel   9. Process with pid=33 and delayed time 0
+Kernel   10. Process with pid=17 and delayed time 0
+Kernel   11. Process with pid=34 and delayed time 0
+Kernel   12. Process with pid=9 and delayed time 0
+Kernel   13. Process with pid=35 and delayed time 0
+Kernel   14. Process with pid=18 and delayed time 0
+Kernel   15. Process with pid=36 and delayed time 0
+Kernel   16. Process with pid=5 and delayed time 0
+Kernel   17. Process with pid=37 and delayed time 0
+Kernel   18. Process with pid=19 and delayed time 0
+Kernel   19. Process with pid=38 and delayed time 0
+Kernel   20. Process with pid=10 and delayed time 0
+Kernel   21. Process with pid=39 and delayed time 0
+Kernel   22. Process with pid=20 and delayed time 0
+Kernel   23. Process with pid=40 and delayed time 0
+Kernel   24. Process with pid=3 and delayed time 0
+Kernel   25. Process with pid=41 and delayed time 0
+Kernel   26. Process with pid=21 and delayed time 0
+Kernel   27. Process with pid=42 and delayed time 0
+Kernel   28. Process with pid=11 and delayed time 0
+Kernel   29. Process with pid=43 and delayed time 0
+Kernel   30. Process with pid=22 and delayed time 0
+Kernel   31. Process with pid=44 and delayed time 0
+Kernel   32. Process with pid=6 and delayed time 0
+Kernel   33. Process with pid=45 and delayed time 0
+Kernel   34. Process with pid=23 and delayed time 0
+Kernel   35. Process with pid=46 and delayed time 0
+Kernel   36. Process with pid=12 and delayed time 0
+Kernel   37. Process with pid=47 and delayed time 0
+Kernel   38. Process with pid=24 and delayed time 0
+Kernel   39. Process with pid=48 and delayed time 0
+Kernel   40. Process with pid=1 and delayed time 0
+Kernel   41. Process with pid=49 and delayed time 0
+Kernel   42. Process with pid=25 and delayed time 0
+Kernel   43. Process with pid=50 and delayed time 0
+Kernel   44. Process with pid=13 and delayed time 0
+Kernel   45. Process with pid=51 and delayed time 0
+Kernel   46. Process with pid=26 and delayed time 0
+Kernel   47. Process with pid=52 and delayed time 0
+Kernel   48. Process with pid=7 and delayed time 0
+Kernel   49. Process with pid=53 and delayed time 0
+Kernel   50. Process with pid=27 and delayed time 0
+Kernel   51. Process with pid=54 and delayed time 0
+Kernel   52. Process with pid=14 and delayed time 0
+Kernel   53. Process with pid=55 and delayed time 0
+Kernel   54. Process with pid=28 and delayed time 0
+Kernel   Created a child with pid 56
+Kernel   ContexSwitch return 0
+User     I'm parent: 4
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 4 to process 29!
+Kernel   ContexSwitch return 0
+User     I'm child: 29
+Kernel   trap_clock_handler
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=15 and delayed time 0
+Kernel   2. Process with pid=30 and delayed time 0
+Kernel   3. Process with pid=8 and delayed time 0
+Kernel   4. Process with pid=31 and delayed time 0
+Kernel   5. Process with pid=16 and delayed time 0
+Kernel   6. Process with pid=32 and delayed time 0
+Kernel   7. Process with pid=2 and delayed time 0
+Kernel   8. Process with pid=33 and delayed time 0
+Kernel   9. Process with pid=17 and delayed time 0
+Kernel   10. Process with pid=34 and delayed time 0
+Kernel   11. Process with pid=9 and delayed time 0
+Kernel   12. Process with pid=35 and delayed time 0
+Kernel   13. Process with pid=18 and delayed time 0
+Kernel   14. Process with pid=36 and delayed time 0
+Kernel   15. Process with pid=5 and delayed time 0
+Kernel   16. Process with pid=37 and delayed time 0
+Kernel   17. Process with pid=19 and delayed time 0
+Kernel   18. Process with pid=38 and delayed time 0
+Kernel   19. Process with pid=10 and delayed time 0
+Kernel   20. Process with pid=39 and delayed time 0
+Kernel   21. Process with pid=20 and delayed time 0
+Kernel   22. Process with pid=40 and delayed time 0
+Kernel   23. Process with pid=3 and delayed time 0
+Kernel   24. Process with pid=41 and delayed time 0
+Kernel   25. Process with pid=21 and delayed time 0
+Kernel   26. Process with pid=42 and delayed time 0
+Kernel   27. Process with pid=11 and delayed time 0
+Kernel   28. Process with pid=43 and delayed time 0
+Kernel   29. Process with pid=22 and delayed time 0
+Kernel   30. Process with pid=44 and delayed time 0
+Kernel   31. Process with pid=6 and delayed time 0
+Kernel   32. Process with pid=45 and delayed time 0
+Kernel   33. Process with pid=23 and delayed time 0
+Kernel   34. Process with pid=46 and delayed time 0
+Kernel   35. Process with pid=12 and delayed time 0
+Kernel   36. Process with pid=47 and delayed time 0
+Kernel   37. Process with pid=24 and delayed time 0
+Kernel   38. Process with pid=48 and delayed time 0
+Kernel   39. Process with pid=1 and delayed time 0
+Kernel   40. Process with pid=49 and delayed time 0
+Kernel   41. Process with pid=25 and delayed time 0
+Kernel   42. Process with pid=50 and delayed time 0
+Kernel   43. Process with pid=13 and delayed time 0
+Kernel   44. Process with pid=51 and delayed time 0
+Kernel   45. Process with pid=26 and delayed time 0
+Kernel   46. Process with pid=52 and delayed time 0
+Kernel   47. Process with pid=7 and delayed time 0
+Kernel   48. Process with pid=53 and delayed time 0
+Kernel   49. Process with pid=27 and delayed time 0
+Kernel   50. Process with pid=54 and delayed time 0
+Kernel   51. Process with pid=14 and delayed time 0
+Kernel   52. Process with pid=55 and delayed time 0
+Kernel   53. Process with pid=28 and delayed time 0
+Kernel   54. Process with pid=56 and delayed time 0
+Kernel   55. Process with pid=4 and delayed time 0
+Kernel   Created a child with pid 57
+Kernel   ContexSwitch return 0
+User     I'm parent: 29
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 29 to process 15!
+Kernel   Print a blocked queue:
+Kernel   Print a ready queue:
+Kernel   1. Process with pid=30 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+Kernel   3. Process with pid=31 and delayed time 0
+Kernel   4. Process with pid=16 and delayed time 0
+Kernel   5. Process with pid=32 and delayed time 0
+Kernel   6. Process with pid=2 and delayed time 0
+Kernel   7. Process with pid=33 and delayed time 0
+Kernel   8. Process with pid=17 and delayed time 0
+Kernel   9. Process with pid=34 and delayed time 0
+Kernel   10. Process with pid=9 and delayed time 0
+Kernel   11. Process with pid=35 and delayed time 0
+Kernel   12. Process with pid=18 and delayed time 0
+Kernel   13. Process with pid=36 and delayed time 0
+Kernel   14. Process with pid=5 and delayed time 0
+Kernel   15. Process with pid=37 and delayed time 0
+Kernel   16. Process with pid=19 and delayed time 0
+Kernel   17. Process with pid=38 and delayed time 0
+Kernel   18. Process with pid=10 and delayed time 0
+Kernel   19. Process with pid=39 and delayed time 0
+Kernel   20. Process with pid=20 and delayed time 0
+Kernel   21. Process with pid=40 and delayed time 0
+Kernel   22. Process with pid=3 and delayed time 0
+Kernel   23. Process with pid=41 and delayed time 0
+Kernel   24. Process with pid=21 and delayed time 0
+Kernel   25. Process with pid=42 and delayed time 0
+Kernel   26. Process with pid=11 and delayed time 0
+Kernel   27. Process with pid=43 and delayed time 0
+Kernel   28. Process with pid=22 and delayed time 0
+Kernel   29. Process with pid=44 and delayed time 0
+Kernel   30. Process with pid=6 and delayed time 0
+Kernel   31. Process with pid=45 and delayed time 0
+Kernel   32. Process with pid=23 and delayed time 0
+Kernel   33. Process with pid=46 and delayed time 0
+Kernel   34. Process with pid=12 and delayed time 0
+Kernel   35. Process with pid=47 and delayed time 0
+Kernel   36. Process with pid=24 and delayed time 0
+Kernel   37. Process with pid=48 and delayed time 0
+Kernel   38. Process with pid=1 and delayed time 0
+Kernel   39. Process with pid=49 and delayed time 0
+Kernel   40. Process with pid=25 and delayed time 0
+Kernel   41. Process with pid=50 and delayed time 0
+Kernel   42. Process with pid=13 and delayed time 0
+Kernel   43. Process with pid=51 and delayed time 0
+Kernel   44. Process with pid=26 and delayed time 0
+Kernel   45. Process with pid=52 and delayed time 0
+Kernel   46. Process with pid=7 and delayed time 0
+Kernel   47. Process with pid=53 and delayed time 0
+Kernel   48. Process with pid=27 and delayed time 0
+Kernel   49. Process with pid=54 and delayed time 0
+Kernel   50. Process with pid=14 and delayed time 0
+Kernel   51. Process with pid=55 and delayed time 0
+Kernel   52. Process with pid=28 and delayed time 0
+Kernel   53. Process with pid=56 and delayed time 0
+Kernel   54. Process with pid=4 and delayed time 0
+Kernel   55. Process with pid=57 and delayed time 0
+Kernel   56. Process with pid=29 and delayed time 0
+Kernel   Created a child with pid 58
+Kernel   No enough free physical memory to complete operation
+Kernel   No enough free physical memory to complete operation
