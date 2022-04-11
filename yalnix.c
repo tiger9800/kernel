@@ -42,6 +42,7 @@ void trap_memory_handler(ExceptionInfo *info);
 void trap_math_handler(ExceptionInfo *info);
 void trap_tty_transmit_handler(ExceptionInfo *info);
 void trap_tty_receive_handler(ExceptionInfo *info);
+
 // Routines for pages manipulation.
 static void initPageTables();
 static void initFreePages(int start_addr, int end_addr);
@@ -50,6 +51,8 @@ static void unReservePage();
 void addPage(int pfn);
 void addInvalidPages();
 static struct pte *getNewPageTable();
+static int copyPTE(struct pte* dest, struct pte* src, int curr_page);
+
 // MySwitch functions.
 SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2);
 SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2);
@@ -68,9 +71,6 @@ static int KernelGetPid();
 static int KernelDelay(int clock_ticks);
 static int KernelUserBrk(ExceptionInfo *info);
 static int KernelFork();
-
-
-static int copyPTE(struct pte* dest, struct pte* src, int curr_page);
 
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
     (void)cmd_args;
@@ -128,23 +128,23 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
 
     // Create a page table for this process.
     struct pte *initPt0 = getNewPageTable();
+    if (initPCB == NULL || initPt0 == NULL) {
+        TracePrintf(0, "No enough physical or virtual memory to create a process\n");
+        Halt();
+    }
     // Init some PCB values for this process.
     initPCB->pid = currPID++;
     initPCB->page_table0 = initPt0;
-    TracePrintf(0, "Clone context from idle to init in KernelStart (active pid=%i)\n", active->pid);
+
     // Save current context to the saved context of process to be run after KernelStart()
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
     // Switch from idle process to init.
     if (active->pid == idle_PCB.pid) {
         // Where the idle process will resume after cloneContext.
-        TracePrintf(0, "Where the idle process will resume after cloneContext\n", active->pid);
-        TracePrintf(0, "The idle process performs ContextSwitch with init (active pid=%i)\n", active->pid);
         // Idle process performs switch with init process.
         ContextSwitch(switchProcesses, &idle_PCB.ctx, (void *)&idle_PCB, (void *)initPCB);
     } else {
         // Where init process will resume after switchProcesses.
-        TracePrintf(0, "Where the init process will resume after switchProcesses\n", active->pid);
-        TracePrintf(0, "Init loads its program from file (active pid=%i)\n", active->pid);
         // Init loads its code.
         if (cmd_args[0] == NULL) {
             LoadProgram("init", cmd_args, info, initPt0, free_ll, initPCB);
@@ -227,37 +227,13 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
         }
        
         curr_page++;
-        // ((pcb*)p2)->page_table0[curr_page].valid = 1;
-        // ((pcb*)p2)->page_table0[curr_page].kprot = PROT_READ|PROT_WRITE;
-        // ((pcb*)p2)->page_table0[curr_page].uprot = PROT_NONE;
-        // // Get a free pfn for this page.
-        // unsigned int pfn = getFreePage();
-        // if ((int)pfn == -1) {
-        //     TracePrintf(0, "No enough free physical memory to complete operation\n");
-        //     // Call "terminate process" that will:
-        //     // 1) "unmap" page_table0 address
-        //     // 2) free a physical page for this process's page table0
-        //     // 3) add all valid pages in this page table to a free list.
-        //     // 4) save exit status and add process to the statusQueue of its parent.
-        //     // Return context of the 1st process since switch wasn't successful.
-        //     return &((pcb*)p2)->ctx;
-        // }
-        // ((pcb*)p2)->page_table0[curr_page].pfn = pfn;
-        // // Map pfn to some virtual address.
-        // uintptr_t addrToCopy = reservePage(pfn);
-        // // Copy contents of the whole page to a new physical page.
-        // memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
-        // // Unmap this pfn since we won't use it anymore.
-        // unReservePage();
-        // curr_page++;
     }
     return &((pcb*)p2)->ctx;
 }
 
 SavedContext  *cloneChild(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;  
-    // ASK: What to do with the ptes below kernel stack? 
-    // For now, set them all to 0.
+    // Set all invalid pages to 0.
     int curr_page = 0;
     while (curr_page < MEM_INVALID_PAGES) {
         ((pcb*)p2)->page_table0[curr_page].valid = 0;
@@ -265,7 +241,6 @@ SavedContext  *cloneChild(SavedContext *ctxp, void *p1, void *p2) {
     }
     // Make a "deep" copy of the kernel stack.
     while(curr_page < (UP_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT)) {
-        
         // Get a free pfn for this page.
         struct pte *dest = &((pcb*)p2)->page_table0[curr_page];
         struct pte *src = &((pcb*)p1)->page_table0[curr_page];
@@ -277,9 +252,8 @@ SavedContext  *cloneChild(SavedContext *ctxp, void *p1, void *p2) {
             // 3) add all valid pages in this page table to a free list.
             // 4) save exit status and add process to the statusQueue of its parent.
             // Return context of the 1st process since switch wasn't successful.
-            return NULL;
+            return &((pcb*)p2)->ctx;
         }
-       
         curr_page++;
     }
     return &((pcb*)p2)->ctx;
@@ -354,13 +328,14 @@ void trap_clock_handler(ExceptionInfo *info) {
     }
     // Put all processes whose delay is 0 to a ready queue.
     pcb *curr_process = blockedQ.head;
-    while(curr_process != NULL && curr_process->delay_offset == 0) {
+    while(curr_process != NULL && curr_process->delay_offset <= 0) {
         // Remove this process from the blocked queue.
         dequeue(&blockedQ);
+        pcb *next_process = curr_process->next;
         // Put this process to a ready queue.
         enqueue(curr_process, &readyQ);
         // Go to the next process in a blocked queue.
-        curr_process = curr_process->next;
+        curr_process = next_process;
     }
     
     if (active->pid == 0 || (prevActive != NULL && prevActive->pid == active->pid)) {
@@ -373,6 +348,11 @@ void trap_clock_handler(ExceptionInfo *info) {
             if (active->pid != 0) {
                 enqueue(active, &readyQ);
             }
+            prevActive = active;
+            TracePrintf(0, "Print a blocked queue before context switch:\n");
+            printQueue(blockedQ);
+            TracePrintf(0, "Print a ready queue before context switch:\n");
+            printQueue(readyQ);
             ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
         }
     }
@@ -519,7 +499,7 @@ void freePage(struct pte* newPte) {
     addPage(newPte->pfn);  
     newPte->valid = 0;
     // Do TLB flush for this specific pte.
-    int vpn = (uintptr_t)newPte & PAGEOFFSET;
+    int vpn = ((uintptr_t)newPte & PAGEOFFSET) / sizeof(struct pte);
     WriteRegister(REG_TLB_FLUSH, vpn << PAGESHIFT);
 }
 
@@ -599,10 +579,15 @@ static struct pte *getNewPageTable() {
     region1[vpn].uprot = PROT_NONE; 
 
     // We set every valid bit in the page table to 0 in MySwitchFunc for "consistency."
-    uintptr_t pt0_vrt_addr = (uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
+    struct pte *pt0_vrt_addr = (struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
     // "Clear" this chunk of memory to avoid weird bugs.
-    memset((void *)pt0_vrt_addr, '\0', PAGE_TABLE_LEN * sizeof(struct pte));
-    return (struct pte *)pt0_vrt_addr;
+    // memset((void *)pt0_vrt_addr, '\0', PAGE_TABLE_LEN * sizeof(struct pte));
+    int curr_page = 0;
+    while (curr_page < (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT)) {
+        pt0_vrt_addr[curr_page].valid = 0;
+        curr_page++;
+    }
+    return pt0_vrt_addr;
 }
 
 /**
@@ -612,6 +597,9 @@ static struct pte *getNewPageTable() {
  * @param queue queue to add the element to
  */
 static void enqueue(pcb* proc, queue* queue) {
+    if (proc->pid == 0) {
+        TracePrintf(0, "Adding idle somewhere!\n");
+    }
     proc->next = NULL;
     if(queue->count == 0) {
         // This is the first element in the queue.
@@ -653,9 +641,8 @@ static pcb *dequeue(queue* queue) {
  * @param delay clock_ticks to be delayed by.
  */
 static void delayProcess(pcb* proc, int delay) {
+    proc->delay_offset = delay;
     if(blockedQ.count == 0) {
-        // This is the first process in the blocked queue.
-        proc->delay_offset = delay;
         // No need to care about specific order.
         enqueue(proc, &blockedQ);
     } else {
@@ -671,8 +658,7 @@ static void delayProcess(pcb* proc, int delay) {
         if (curr_process == blockedQ.head) {
             // 1. Insert this process at the beginning of the queue.
             // Adjust delay offsets.
-            proc->delay_offset = delay;
-            curr_process -= delay;
+            curr_process->delay_offset -= delay;
             // Adjust pointers.
             proc->next = curr_process;
             blockedQ.head = proc;  
@@ -715,8 +701,14 @@ static void runNextProcess() {
 static void printQueue(queue q) {
     int i = 1;
     pcb *cur = q.head;
+    if (q.count == 0){
+        TracePrintf(0, "Queue is empty\n");
+    }
     while(cur != NULL) {
         TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
+        if (cur->pid == 0) {
+            TracePrintf(0, "Current number of elements: %i\n", q.count);
+        }
         cur = cur->next;
     }
 }
@@ -726,26 +718,33 @@ static void printQueue(queue q) {
  * 
  */
 static int KernelFork() {
-    //Create a new process: pcb, page table
-    //Make an exact copy of the page table of the currently active process's page table 0
-    //ContextSwitch will return 2 times and we should return 0 for child and child's pcb for parent
+    // Create a new process: pcb, page table
+    // Make an exact copy of the page table of the currently active process's page table 0
+    // ContextSwitch will return 2 times and we should return 0 for child and child's pcb for parent
     pcb *childPCB = malloc(sizeof(pcb));
-    if(childPCB == NULL) {
+    struct pte *childPt0 = getNewPageTable();
+    if(childPCB == NULL || childPt0 == NULL) {
         return ERROR;
     }
-    struct pte *childPt0 = getNewPageTable();
     // Init some PCB values for this process.
     childPCB->pid = currPID++;
     childPCB->page_table0 = childPt0;
     TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
-    TracePrintf(0, "ContexSwitch return %i\n", ContextSwitch(cloneChild, &childPCB->ctx, (void *)active, (void *)childPCB));
+    ContextSwitch(cloneChild, &childPCB->ctx, (void *)active, (void *)childPCB);
     if(active->pid == childPCB->pid) {
+        TracePrintf(0, "Print a blocked queue when a child is running (pid = %i):\n", active->pid);
+        printQueue(blockedQ);
+        TracePrintf(0, "Print a ready queue when a child is running (pid = %i):\n", active->pid);
+        printQueue(readyQ);
         return 0;
     } else {
         enqueue(childPCB, &readyQ);
+        TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
+        printQueue(blockedQ);
+        TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
+        printQueue(readyQ);
         return childPCB->pid;
     }
-    
 }
 
 
@@ -771,7 +770,6 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
         // Unmap this pfn since we won't use it anymore.
         unReservePage();
     }
-    
     return 0;
 }
 
@@ -780,19 +778,16 @@ static int KernelGetPid() {
 }
 
 static int KernelDelay(int clock_ticks) {
-    TracePrintf(0, "Inside KernelDelay: number of ticks is %i\n", clock_ticks);
     if (clock_ticks < 0) {
         return ERROR;
     } else if (clock_ticks == 0) {
         return 0;
     } else {
-        TracePrintf(0, "Call delayProcess\n");
+        active->delay_offset = clock_ticks;
         // Put the process in the blocked queue.
         delayProcess(active, clock_ticks);
-        TracePrintf(0, "Call runNextProcess\n");
         // Context switch to a ready process.
         runNextProcess();
-        TracePrintf(0, "KernelDelay is done\n");
         return 0;
     }
 }
