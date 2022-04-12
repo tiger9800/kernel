@@ -66,13 +66,15 @@ static void delayProcess(pcb* proc, int delay);
 static void runNextProcess();
 static void printQueue(queue q);
 static pcb *init_pcb();
-
+static int removeSpecificElem(queue* queue, pcb* elem);
 
 // Kernel call helpers.
 static int KernelGetPid();
 static int KernelDelay(int clock_ticks);
 static int KernelUserBrk(ExceptionInfo *info);
 static int KernelFork();
+static int KernelExec(ExceptionInfo *info);
+static void KernelExit(int status);
 
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
     (void)cmd_args;
@@ -168,6 +170,7 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
         if (copyPTE(dest, src, curr_page) == ERROR) {
             TracePrintf(0, "No enough free physical memory to complete operation\n");
             // Call "terminate process" that will:
+            
             // 1) "unmap" page_table0 address
             // 2) free a physical page for this process's page table0
             // 3) free PCB
@@ -221,8 +224,10 @@ void trap_kernel_handler(ExceptionInfo *info) {
             info->regs[0] = KernelFork();
             break;
         case YALNIX_EXEC:
+            info->regs[0] = KernelExec(info);
             break;
         case YALNIX_EXIT:
+            KernelExit(info->regs[1]);
             break;
         case YALNIX_WAIT:
             break;
@@ -298,7 +303,7 @@ void trap_illegal_handler(ExceptionInfo *info) {
     // kernel call should be the value ERROR; same as if child called Exit(ERROR)
     (void)info;
     TracePrintf(0, "trap_illegal_handler");
-    Halt();
+    KernelExit(ERROR);
 }
 
 void trap_memory_handler(ExceptionInfo *info) {
@@ -321,7 +326,6 @@ void trap_memory_handler(ExceptionInfo *info) {
         // Just set a stack pointer to this address.
         // info->sp = info->addr;
     } else if (info->addr == NULL || info->addr <= active->brk || info->addr >= active->min_sp) {
-        // TODO: terminate process (context switch to next ready process)
         TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
         switch (info->code) {
             case TRAP_MEMORY_MAPERR:
@@ -339,6 +343,7 @@ void trap_memory_handler(ExceptionInfo *info) {
             default:
                 TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
         }
+        KernelExit(ERROR);
     } else {
         // info->addr is between the process's break and stack pointer.
         // This is a request to enlarge process's stack to "cover" info->addr.
@@ -371,7 +376,7 @@ void trap_math_handler(ExceptionInfo *info) {
     // same as in trap_illegal (look at info->code for better description of error)
     (void)info;
     TracePrintf(0, "trap_math_handler");
-    Halt();
+    KernelExit(ERROR);
 }
 
 void trap_tty_transmit_handler(ExceptionInfo *info) {
@@ -399,7 +404,7 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
 int SetKernelBrk(void *addr) { 
     if(!vm_enabled) {
         if(addr > (void *)VMEM_LIMIT) {
-            return -1;
+           return -1;//before exiting kernelstart we request invalid memory
         }
         currentBrk = addr;
     } else {
@@ -482,12 +487,14 @@ static void initFreePages(int start_addr, int end_addr) {
 }
 
 // Frees the pte of the page table.
-void freePage(struct pte* newPte) {
+void freePage(struct pte* newPte, int region) {
+    
     addPage(newPte->pfn);  
     newPte->valid = 0;
     // Do TLB flush for this specific pte.
-    int vpn = ((uintptr_t)newPte & PAGEOFFSET) / sizeof(struct pte);
-    WriteRegister(REG_TLB_FLUSH, vpn << PAGESHIFT);
+    int vpn = (((uintptr_t)newPte & PAGEOFFSET) / sizeof(struct pte)) + region*PAGE_TABLE_LEN;
+    
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal) (vpn << PAGESHIFT));
 }
 
 // Adds all invalid pages to a free list of pages.
@@ -788,6 +795,9 @@ static int KernelUserBrk(ExceptionInfo *info) {
     } 
     int i;
     unsigned int curr_page = (UP_TO_PAGE(active->brk) >> PAGESHIFT) % PAGE_TABLE_LEN;
+    TracePrintf(0, "VPN1: %u\n", curr_page);
+    struct pte* newPte = active->page_table0 + curr_page;
+    TracePrintf(0, "VPN2: %u\n", ((uintptr_t)newPte & PAGEOFFSET) / sizeof(struct pte));
     for (i = 0; i < count; i++) {
         TracePrintf(0, "VPN we use for malloc: %i\n", curr_page);
         (active->page_table0)[curr_page].valid = 1;
@@ -814,9 +824,11 @@ static int KernelFork() {
     childPCB->min_sp = active->min_sp;
 
     // Update some values in parent's pcb.
-    active->n_child++;
     if (active->statusQ == NULL) {
         active->statusQ = malloc(sizeof(queue));
+    }
+    if(active->childrenQ == NULL) {
+        active->childrenQ = malloc(sizeof(queue));
     }
 
     TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
@@ -832,6 +844,7 @@ static int KernelFork() {
         return 0;
     } else {
         enqueue(childPCB, &readyQ);
+        enqueue(childPCB, active->childrenQ);
         TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
         printQueue(blockedQ);
         TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
@@ -851,7 +864,169 @@ static pcb *init_pcb() {
     newPCB->page_table0 = newPt0;
     newPCB->parent = NULL;
     newPCB->next = NULL;
-    newPCB->n_child = 0;
+    newPCB->childrenQ = NULL;
     newPCB->statusQ = NULL;
     return newPCB;
 }
+
+static int KernelExec(ExceptionInfo *info) {
+    //active already exists and has a page table and other stuff
+
+    //char *name, char **args, ExceptionInfo *info, struct pte *region0, struct free_pages free_pages, pcb *newPCB
+    int ret_val = LoadProgram((char *)info->regs[1], (char **)info->regs[2], info, active->page_table0, free_ll, active);
+    if (ret_val == -1) {
+        return ERROR;
+    } else if (ret_val == -2) {
+        // terminate process
+        KernelExit(ERROR);
+        return ERROR;
+    } else {
+        return 0;
+    }
+
+}
+
+SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
+    //Terminate p1 and switch to p2
+    (void)ctxp;
+    (void)p1;
+    TracePrintf(0, "Terminating %i and running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+    struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
+    if (((pcb*)p2)->pid == 0) {
+        // Idle is a special process. Its PT0 is not on the boundary!!!
+        // But we know for sure that it's virtual address == physical address.
+        // Thus we can just write a virtual address in the register.
+        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_virtual_addr);
+    } else {
+        // Otherwise, we need to find a physical address.
+        // Convert a virtual address of page table 0 to its vpn.
+        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
+        // Find a corresponding physical address of page table 0.
+        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
+        // Let hardware know a physical address of a new page table 0.
+        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
+    }
+
+    //do all the free memory stuff
+    int currPage;
+    for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
+        if(active->page_table0[currPage].valid) {
+            freePage(active->page_table0 + currPage, 0);
+        }
+    }
+    
+    struct pte* region0_addr = active->page_table0;
+    unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
+    freePage(&region1[idx], 1);
+    
+    //for(active->pcb)
+
+    // Flush TLB for an entire region 0.
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+    //free children that was not reaped by wait
+    if(active->statusQ != NULL && active->statusQ->count>0) {
+        pcb *currChild = dequeue(active->statusQ);
+        while(currChild != NULL) {
+            free(currChild);
+            currChild = dequeue(active->statusQ);
+        }
+        free(active->statusQ);
+    } else if(active->statusQ != NULL) {
+        free(active->statusQ);
+    }
+    //tell every child that the parent exited, so they can free their own pcb
+    if(active->childrenQ != NULL && active->childrenQ->count>0) {
+        pcb* currChild = dequeue(active->childrenQ);
+        while(currChild != NULL) {
+            currChild->parent = NULL;
+            currChild = dequeue(active->childrenQ);
+        }
+    } else if(active->childrenQ != NULL) {
+        free(active->childrenQ);
+    }
+
+    //if we do not have a parent, we can free our pcb
+    if(active->parent == NULL) {
+        free(active);
+    }
+
+    // Make process 2 active.
+    active = (pcb *)p2;
+
+    return &((pcb*)p2)->ctx;
+}
+
+static void KernelExit(int status) {
+    // Call "terminate process" that will:
+    // 1) add all valid pages in this page table to a free list.
+    // 2) "unmap" page_table0 address 
+    // 3) free a physical page for this process's page table0
+    // 4) if statusQ != NULL, iterate over all children in StatusQ and free their PCB's
+    // 5) save exit status to this process's PCB (don't free it yet!) 
+    // 6) Go to its parent pcb, and enqueue process's pcb to the statusQueue of its parent.
+    // 7) Context switch (use a terminateSwitch function) to the next ready process in ready queue or idle otherwise
+    // 8) check counts of all queues, if there are no processes left, halt the kernel!!!
+    //enqueuactive->parent->statu
+    active->status = status;
+    if (active->parent != NULL) {
+        enqueue(active, active->parent->statusQ);
+        removeSpecificElem(active->parent->childrenQ, active);
+    }
+    // Take the next process from the ready queue.
+    pcb *nextReady = dequeue(&readyQ);
+    // Context switch to this process.
+    if (nextReady != NULL) {
+        // Put a current non-idle process in the ready queue.
+        //There is a next active procees, so we can switch to it
+        TracePrintf(0, "Print a blocked queue before context switch:\n");
+        printQueue(blockedQ);
+        TracePrintf(0, "Print a ready queue before context switch:\n");
+        printQueue(readyQ);
+        ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)nextReady);
+    } else if (blockedQ.count != 0) {
+        ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)&idle_PCB);
+    } else {//there no more ready/blocked/ I/O processes waiting, so Halt()
+        TracePrintf(0, "Idle is the last process running. I am going to halt\n");
+        Halt();
+    }
+    //check queue for I/O!!!!!!!!!!
+
+    // for(curr_page = 0; curr_page < PAGE_TABLE_LEN; curr_page++) {
+    //     freePage(pageTable[curr_page]);
+    // }
+    
+}
+
+static int removeSpecificElem(queue* queue, pcb* elem) {
+    pcb* currElem = queue->head;
+    pcb* prevElem = NULL;
+    while(currElem != NULL && currElem->pid != elem->pid) {
+        prevElem = currElem;
+        currElem = currElem->next;
+    }
+    if(currElem == NULL) {
+        return -1;
+    }
+    else {
+        if(queue->count == 1) {
+            queue->head = NULL;
+            queue->tail = NULL;
+        }
+        else if (currElem == queue->head) {
+            queue->head = currElem->next;
+        }
+        else if(currElem == queue->tail) {
+            queue->tail = prevElem; 
+            prevElem->next = NULL;
+        } else {
+            prevElem->next = currElem->next;
+        }
+        
+        queue->count--;
+        
+        return 0;
+    }
+}
+
+

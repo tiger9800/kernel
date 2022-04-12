@@ -18,9 +18,9 @@ struct pcb {
     struct pcb *next;
     void *brk;
     void *min_sp;
-    int n_child;
     queue *statusQ;
     int status;
+    queue *childrenQ;
 };
 struct queue {
     pcb *head;
@@ -30,5 +30,5 @@ struct queue {
 
 
 int LoadProgram(char *name, char **args, ExceptionInfo *info, struct pte *region0, struct free_pages free_pages, pcb *newPCB);
-void freePage(struct pte *newPte);
+void freePage(struct pte *newPte, int region);
 int getFreePage(); 

@@ -14,7 +14,7 @@ foo(int depth)
     fprintf(stderr,"%d ",depth);
     fflush(stderr);
 
-    for (i = 0; i < sizeof(array); i++)
+    for (i = 0; i < (int) sizeof(array); i++)
 	array[i] = 'a';
 
     if (depth == 1) return;
@@ -25,6 +25,7 @@ foo(int depth)
 int
 main(int argc, char **argv)
 {
+    (void)argc;
     int num = atoi(argv[1]);
 
     TracePrintf(0, "blowstack initially calling foo depth %d", num);

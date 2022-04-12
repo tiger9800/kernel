@@ -188,7 +188,7 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
         if(region0[i].valid == 1) {
             // Add to the free list, by making it point to free list head.
             // Set a valid bit to 0.
-            freePage(&region0[i]);  
+            freePage(&region0[i], 0);  
         }
     }
 
