@@ -50,14 +50,14 @@ int main(int argc, char **argv) {
         } else {
             TracePrintf(0, "Fork2: I'm parent: %i\n", GetPid());
         }
-
-        if(Fork() == 0) {
-            TracePrintf(0, "Fork3: I'm child: %i\n", GetPid());
-            TracePrintf(0, "I'm starting a new program\n");
-            // Exec(argv[1], argv + 1);
-        } else {
-            TracePrintf(0, "Fork3: I'm parent: %i\n", GetPid());
-        }
+        // Won't work if uncomment this!!
+        // if(Fork() == 0) {
+        //     TracePrintf(0, "Fork3: I'm child: %i\n", GetPid());
+        //     TracePrintf(0, "I'm starting a new program\n");
+        //     // Exec(argv[1], argv + 1);
+        // } else {
+        //     TracePrintf(0, "Fork3: I'm parent: %i\n", GetPid());
+        // }
         TracePrintf(0, "process %i is about to exit\n", GetPid());
         // TracePrintf(0, "2nd delay return value is %i for pid=%i\n", Delay(2), GetPid());
         // Pause();
