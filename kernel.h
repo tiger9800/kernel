@@ -7,7 +7,7 @@ struct physical_frame {
     struct physical_frame *next;
 };
 
-typedef struct child child;
+// typedef struct child child;
 typedef struct queue queue;
 typedef struct pcb pcb;
 struct pcb {
@@ -17,20 +17,19 @@ struct pcb {
     int delay_offset;
     struct pcb *parent;
     struct pcb *next;
+    struct pcb *nextChild;
     void *brk;
     void *min_sp;
     queue *statusQ;
     int status;
-    // queue *childrenQ;
-    struct child *childHead;
-    struct child *myChildStruct;
+    queue *childrenQ;
 };
 
-struct child {
-    struct child *next;
-    struct child *prev;
-    pcb *pcb;
-};
+// struct child {
+//     struct child *next;
+//     struct child *prev;
+//     pcb *pcb;
+// };
 
 struct queue {
     pcb *head;

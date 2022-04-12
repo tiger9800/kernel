@@ -65,11 +65,11 @@ static pcb *dequeue(queue* queue);
 static void delayProcess(pcb* proc, int delay);
 static void runNextProcess();
 static void printQueue(queue q);
-static void printChildren(child *ch);
+static void printChildren(queue q);
 static pcb *init_pcb();
-static void addChild(pcb *parent,  pcb *childPCB);
-static int removeChild(pcb *parent, pcb *childPCB);
-// static int removeSpecificElem(queue* queue, pcb* elem);
+static void addChild(pcb* proc, queue* queue);
+// static int removeChild(pcb *parent, pcb *childPCB);
+static int removeSpecificElem(queue* queue, pcb* elem);
 
 // Kernel call helpers.
 static int KernelGetPid();
@@ -264,32 +264,25 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
         free(active->statusQ);
     }
 
-
-    // Working with a circular doubly linked list for children:
+    // Working with a children queue.
     // Tell every alive child that the parent exited, so they can free their own pcb.
-    child *currChild = active->childHead;
-    while (currChild != NULL) {
-        // TracePrintf(0, "Current child in list has pid = %i!\n", currChild->pcb->pid);
-        // Tell this child that parent exited.
-        currChild->pcb->parent = NULL;
-        // The next element in a doubly linked list.
-        child *nextChild;
-        if (currChild == currChild->next) {
-            nextChild = NULL;
-        } else {
-            nextChild = currChild->next;
+    if(active->childrenQ != NULL) {
+        while(active->childrenQ->head != NULL) {
+            active->childrenQ->head->parent = NULL;
+            removeSpecificElem(active->childrenQ, active->childrenQ->head);
         }
-        // Remove a child from doubly linked list.
-        removeChild(active, currChild->pcb);
-        currChild = nextChild;
-    } 
+    }
+    // Free a status queue.
+    if (active->childrenQ != NULL) {
+        free(active->childrenQ);
+    }
 
     if(active->parent == NULL) {
         // If process does not have a parent, process can free its pcb.
         free(active);
     } else {
         // If process has a parent, we should remove its pcb from parent's children queue.
-        if (removeChild(active->parent, active) == -1) {
+        if (removeSpecificElem(active->parent->childrenQ, active) == -1) {
             TracePrintf(0, "Parent doesn't have a child with pid=%i in its children queue!\n", active->pid);
         }
         // Now we should add its pcb to its parent's status queue.
@@ -728,9 +721,6 @@ static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
  * @param queue queue to add the element to
  */
 static void enqueue(pcb* proc, queue* queue) {
-    if (proc->pid == 0) {
-        TracePrintf(0, "Adding idle somewhere!\n");
-    }
     proc->next = NULL;
     if(queue->count == 0) {
         // This is the first element in the queue.
@@ -838,21 +828,33 @@ static void printQueue(queue q) {
     }
 }
 
-static void printChildren(child *ch) {
-    if (ch == NULL){
-        TracePrintf(0, "No children!\n");
-    } else if (ch->next == ch) {
-        TracePrintf(0, "1. Child with pid=%i!\n", ch->pcb->pid);
-    } else {
-        int i = 1;
-        child *cur = ch;
-        while(cur->next != ch) {
-            TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
-            cur = cur->next;
-        } 
-        TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
+static void printChildren(queue q) {
+    int i = 1;
+    pcb *cur = q.head;
+    if (q.count == 0){
+        TracePrintf(0, "Queue is empty\n");
+    }
+    while(cur != NULL) {
+        TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
+        cur = cur->nextChild;
     }
 }
+
+// static void printChildren(child *ch) {
+//     if (ch == NULL){
+//         TracePrintf(0, "No children!\n");
+//     } else if (ch->next == ch) {
+//         TracePrintf(0, "1. Child with pid=%i!\n", ch->pcb->pid);
+//     } else {
+//         int i = 1;
+//         child *cur = ch;
+//         while(cur->next != ch) {
+//             TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
+//             cur = cur->next;
+//         } 
+//         TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
+//     }
+// }
 
 static pcb *init_pcb() {
     pcb *newPCB = malloc(sizeof(pcb));
@@ -865,7 +867,8 @@ static pcb *init_pcb() {
     newPCB->page_table0 = newPt0;
     newPCB->parent = NULL;
     newPCB->next = NULL;
-    newPCB->childHead = NULL;
+    newPCB->nextChild = NULL;
+    newPCB->childrenQ = NULL;
     newPCB->statusQ = NULL;
     return newPCB;
 }
@@ -943,6 +946,11 @@ static int KernelFork() {
         active->statusQ = malloc(sizeof(queue));
     }
 
+    if (active->childrenQ == NULL) {
+        active->childrenQ = malloc(sizeof(queue));
+    }
+
+
     TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
     if (copyMemoryImage(childPCB, active) == -1) {
         return ERROR;
@@ -957,8 +965,9 @@ static int KernelFork() {
     } else {
         // Add a child to the ready queue.
         enqueue(childPCB, &readyQ);
-        // Add a child to the doubly-linked list of children.
-        addChild(active, childPCB);
+        // Add a child to the children queue
+        childPCB->parent = active;
+        addChild(childPCB, active->childrenQ);
         TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
         printQueue(blockedQ);
         TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
@@ -1017,87 +1026,106 @@ static void KernelExit(int status) {
     
 }
 
-static void addChild(pcb *parent,  pcb *childPCB) {
-    // Maintain a circular doubly-linked list of children.
-    childPCB->parent = parent;
-    child *child_ptr = malloc(sizeof(child));
-    child_ptr->pcb = childPCB;
-    childPCB->myChildStruct = child_ptr;
-    child *head = parent->childHead;
-    if (head == NULL) {
-        // TracePrintf(0, "childHead is null (parent's pid = %i):\n", active->pid);
-        // The first element to be added.
-        child_ptr->next = child_ptr;
-        child_ptr->prev = child_ptr;
-        parent->childHead = child_ptr;
-    } else {
-        // TracePrintf(0, "childHead is not null (parent's pid = %i):\n", active->pid);
-        // Add this ellement right after "head" of circular doubly-linked list.
-        child_ptr->prev = head;
-        child_ptr->next = head->next;
-        child_ptr->prev->next = child_ptr;
-        child_ptr->next->prev = child_ptr;
+static void addChild(pcb* proc, queue* queue) {
+    proc->nextChild = NULL;
+    if(queue->count == 0) {
+        // This is the first element in the queue.
+        queue->head = proc;
+        queue->tail = proc;
     }
-    TracePrintf(0, "Print all children after adding (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
-    printChildren(active->childHead);
-}
-
-static int removeChild(pcb *parent, pcb *childPCB) {
-    child *myStruct = childPCB->myChildStruct;
-    if (parent->childHead == NULL) {
-        return -1;
-    } else {
-        if (myStruct->next == myStruct) {
-            // This is the last child in the circular doubly linked list!
-            parent->childHead = NULL;
-        } else {
-            // There are some more elelments left in this list.
-            myStruct->prev->next = myStruct->next;
-            myStruct->next->prev = myStruct->prev;
-            if (parent->childHead == myStruct) {
-                // Change a head to this child's next element.
-                parent->childHead = myStruct->next;
-            }
-        }
-        // Now we can deallocate memory for myStruct (we won't use it anymore)
-        free(myStruct);
-        TracePrintf(0, "Print all children after removing (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
-        printChildren(active->childHead);
-        return 0;
+    else {
+        // This is not the first element in the queue.
+        queue->tail->nextChild = proc;
+        queue->tail = proc;
     }
+    queue->count++;
+    TracePrintf(0, "Print all children after adding (child pid = %i):\n", proc->pid);
+    printChildren(*(active->childrenQ));
 }
-
-
-
-// static int removeSpecificElem(queue* queue, pcb* elem) {
-//     pcb* currElem = queue->head;
-//     pcb* prevElem = NULL;
-//     while(currElem != NULL && currElem->pid != elem->pid) {
-//         prevElem = currElem;
-//         currElem = currElem->next;
+// static void addChild(pcb *parent,  pcb *childPCB) {
+//     // Maintain a circular doubly-linked list of children.
+//     childPCB->parent = parent;
+//     child *child_ptr = malloc(sizeof(child));
+//     child_ptr->pcb = childPCB;
+//     childPCB->myChildStruct = child_ptr;
+//     child *head = parent->childHead;
+//     if (head == NULL) {
+//         // TracePrintf(0, "childHead is null (parent's pid = %i):\n", active->pid);
+//         // The first element to be added.
+//         child_ptr->next = child_ptr;
+//         child_ptr->prev = child_ptr;
+//         parent->childHead = child_ptr;
+//     } else {
+//         // TracePrintf(0, "childHead is not null (parent's pid = %i):\n", active->pid);
+//         // Add this ellement right after "head" of circular doubly-linked list.
+//         child_ptr->prev = head;
+//         child_ptr->next = head->next;
+//         child_ptr->prev->next = child_ptr;
+//         child_ptr->next->prev = child_ptr;
 //     }
-//     if(currElem == NULL) {
+//     TracePrintf(0, "Print all children after adding (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
+//     printChildren(active->childHead);
+// }
+
+// static int removeChild(pcb *parent, pcb *childPCB) {
+//     child *myStruct = childPCB->myChildStruct;
+//     if (parent->childHead == NULL) {
 //         return -1;
-//     }
-//     else {
-//         if(queue->count == 1) {
-//             queue->head = NULL;
-//             queue->tail = NULL;
-//         }
-//         else if (currElem == queue->head) {
-//             queue->head = currElem->next;
-//         }
-//         else if(currElem == queue->tail) {
-//             queue->tail = prevElem; 
-//             prevElem->next = NULL;
+//     } else {
+//         if (myStruct->next == myStruct) {
+//             // This is the last child in the circular doubly linked list!
+//             parent->childHead = NULL;
 //         } else {
-//             prevElem->next = currElem->next;
+//             // There are some more elelments left in this list.
+//             myStruct->prev->next = myStruct->next;
+//             myStruct->next->prev = myStruct->prev;
+//             if (parent->childHead == myStruct) {
+//                 // Change a head to this child's next element.
+//                 parent->childHead = myStruct->next;
+//             }
 //         }
-        
-//         queue->count--;
-        
+//         // Now we can deallocate memory for myStruct (we won't use it anymore)
+//         free(myStruct);
+//         TracePrintf(0, "Print all children after removing (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
+//         if (active->childHead == NULL) {
+//             TracePrintf(0, "Pobleem! is null :(\n");
+//         }
+//         printChildren(active->childHead);
 //         return 0;
 //     }
 // }
+
+
+
+static int removeSpecificElem(queue* queue, pcb* elem) {
+    pcb* currElem = queue->head;
+    pcb* prevElem = NULL;
+    while(currElem != NULL && currElem->pid != elem->pid) {
+        prevElem = currElem;
+        currElem = currElem->nextChild;
+    }
+    if(currElem == NULL) {
+        return -1;
+    }
+    else {
+        if(queue->count == 1) {
+            queue->head = NULL;
+            queue->tail = NULL;
+        }
+        else if (currElem == queue->head) {
+            queue->head = currElem->nextChild;
+        }
+        else if(currElem == queue->tail) {
+            queue->tail = prevElem; 
+            prevElem->nextChild = NULL;
+        } else {
+            prevElem->nextChild = currElem->nextChild;
+        }
+        
+        queue->count--;
+        
+        return 0;
+    }
+}
 
 
