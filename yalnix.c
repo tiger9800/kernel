@@ -57,7 +57,7 @@ static int copyMemoryImage(pcb *destProc, pcb *srcProc);
 // MySwitch functions.
 SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2);
 SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2);
-SavedContext  *cloneChild(SavedContext *ctxp, void *p1, void *p2);
+SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2);
 
 // Functions for working with queues. 
 static void enqueue(pcb* proc, queue* queue);
@@ -65,8 +65,11 @@ static pcb *dequeue(queue* queue);
 static void delayProcess(pcb* proc, int delay);
 static void runNextProcess();
 static void printQueue(queue q);
+static void printChildren(child *ch);
 static pcb *init_pcb();
-static int removeSpecificElem(queue* queue, pcb* elem);
+static void addChild(pcb *parent,  pcb *childPCB);
+static int removeChild(pcb *parent, pcb *childPCB);
+// static int removeSpecificElem(queue* queue, pcb* elem);
 
 // Kernel call helpers.
 static int KernelGetPid();
@@ -205,6 +208,93 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     }
     // Flush TLB for an entire region 0.
     WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+    // Make process 2 active.
+    active = (pcb *)p2;
+
+    return &((pcb*)p2)->ctx;
+}
+
+SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
+    //Terminate p1 and switch to p2
+    (void)ctxp;
+    (void)p1;
+    TracePrintf(0, "Terminating %i and running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+    struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
+    if (((pcb*)p2)->pid == 0) {
+        // Idle is a special process. Its PT0 is not on the boundary!!!
+        // But we know for sure that it's virtual address == physical address.
+        // Thus we can just write a virtual address in the register.
+        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_virtual_addr);
+    } else {
+        // Otherwise, we need to find a physical address.
+        // Convert a virtual address of page table 0 to its vpn.
+        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
+        // Find a corresponding physical address of page table 0.
+        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
+        // Let hardware know a physical address of a new page table 0.
+        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
+    }
+    //do all the free memory stuff
+    int currPage;
+    for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
+        if(active->page_table0[currPage].valid) {
+            freePage(active->page_table0 + currPage, 0);
+        }
+    }
+    
+    struct pte *region0_addr = active->page_table0;
+    unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
+    freePage(&region1[idx], 1);
+
+    // Flush TLB for an entire region 0.
+    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+
+    // Working with status queue:
+    // Free pcbs of children that was not reaped by wait.
+    if(active->statusQ != NULL && active->statusQ->count>0) {
+        pcb *currChild = dequeue(active->statusQ);
+        while(currChild != NULL) {
+            free(currChild);
+            currChild = dequeue(active->statusQ);
+        }
+    }
+    // Free a status queue.
+    if (active->statusQ != NULL) {
+        free(active->statusQ);
+    }
+
+
+    // Working with a circular doubly linked list for children:
+    // Tell every alive child that the parent exited, so they can free their own pcb.
+    child *currChild = active->childHead;
+    while (currChild != NULL) {
+        // TracePrintf(0, "Current child in list has pid = %i!\n", currChild->pcb->pid);
+        // Tell this child that parent exited.
+        currChild->pcb->parent = NULL;
+        // The next element in a doubly linked list.
+        child *nextChild;
+        if (currChild == currChild->next) {
+            nextChild = NULL;
+        } else {
+            nextChild = currChild->next;
+        }
+        // Remove a child from doubly linked list.
+        removeChild(active, currChild->pcb);
+        currChild = nextChild;
+    } 
+
+    if(active->parent == NULL) {
+        // If process does not have a parent, process can free its pcb.
+        free(active);
+    } else {
+        // If process has a parent, we should remove its pcb from parent's children queue.
+        if (removeChild(active->parent, active) == -1) {
+            TracePrintf(0, "Parent doesn't have a child with pid=%i in its children queue!\n", active->pid);
+        }
+        // Now we should add its pcb to its parent's status queue.
+        enqueue(active, active->parent->statusQ);
+    }
 
     // Make process 2 active.
     active = (pcb *)p2;
@@ -744,11 +834,40 @@ static void printQueue(queue q) {
     }
     while(cur != NULL) {
         TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
-        if (cur->pid == 0) {
-            TracePrintf(0, "Current number of elements: %i\n", q.count);
-        }
         cur = cur->next;
     }
+}
+
+static void printChildren(child *ch) {
+    if (ch == NULL){
+        TracePrintf(0, "No children!\n");
+    } else if (ch->next == ch) {
+        TracePrintf(0, "1. Child with pid=%i!\n", ch->pcb->pid);
+    } else {
+        int i = 1;
+        child *cur = ch;
+        while(cur->next != ch) {
+            TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
+            cur = cur->next;
+        } 
+        TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
+    }
+}
+
+static pcb *init_pcb() {
+    pcb *newPCB = malloc(sizeof(pcb));
+    struct pte *newPt0 = getNewPageTable();
+    if(newPCB == NULL || newPt0 == NULL) {
+        return NULL;
+    }
+    // Init some PCB values for this process.
+    newPCB->pid = currPID++;
+    newPCB->page_table0 = newPt0;
+    newPCB->parent = NULL;
+    newPCB->next = NULL;
+    newPCB->childHead = NULL;
+    newPCB->statusQ = NULL;
+    return newPCB;
 }
 
 /*
@@ -795,9 +914,6 @@ static int KernelUserBrk(ExceptionInfo *info) {
     } 
     int i;
     unsigned int curr_page = (UP_TO_PAGE(active->brk) >> PAGESHIFT) % PAGE_TABLE_LEN;
-    TracePrintf(0, "VPN1: %u\n", curr_page);
-    struct pte* newPte = active->page_table0 + curr_page;
-    TracePrintf(0, "VPN2: %u\n", ((uintptr_t)newPte & PAGEOFFSET) / sizeof(struct pte));
     for (i = 0; i < count; i++) {
         TracePrintf(0, "VPN we use for malloc: %i\n", curr_page);
         (active->page_table0)[curr_page].valid = 1;
@@ -819,16 +935,12 @@ static int KernelFork() {
     // Make an exact copy of the page table of the currently active process's page table 0
     // ContextSwitch will return 2 times and we should return 0 for child and child's pcb for parent
     pcb *childPCB = init_pcb();
-    childPCB->parent = active;
     childPCB->brk = active->brk;
     childPCB->min_sp = active->min_sp;
 
     // Update some values in parent's pcb.
     if (active->statusQ == NULL) {
         active->statusQ = malloc(sizeof(queue));
-    }
-    if(active->childrenQ == NULL) {
-        active->childrenQ = malloc(sizeof(queue));
     }
 
     TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
@@ -843,8 +955,10 @@ static int KernelFork() {
         printQueue(readyQ);
         return 0;
     } else {
+        // Add a child to the ready queue.
         enqueue(childPCB, &readyQ);
-        enqueue(childPCB, active->childrenQ);
+        // Add a child to the doubly-linked list of children.
+        addChild(active, childPCB);
         TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
         printQueue(blockedQ);
         TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
@@ -853,26 +967,9 @@ static int KernelFork() {
     }
 }
 
-static pcb *init_pcb() {
-    pcb *newPCB = malloc(sizeof(pcb));
-    struct pte *newPt0 = getNewPageTable();
-    if(newPCB == NULL || newPt0 == NULL) {
-        return NULL;
-    }
-    // Init some PCB values for this process.
-    newPCB->pid = currPID++;
-    newPCB->page_table0 = newPt0;
-    newPCB->parent = NULL;
-    newPCB->next = NULL;
-    newPCB->childrenQ = NULL;
-    newPCB->statusQ = NULL;
-    return newPCB;
-}
-
 static int KernelExec(ExceptionInfo *info) {
-    //active already exists and has a page table and other stuff
+    // active already exists and has a page table and other stuff
 
-    //char *name, char **args, ExceptionInfo *info, struct pte *region0, struct free_pages free_pages, pcb *newPCB
     int ret_val = LoadProgram((char *)info->regs[1], (char **)info->regs[2], info, active->page_table0, free_ll, active);
     if (ret_val == -1) {
         return ERROR;
@@ -886,77 +983,6 @@ static int KernelExec(ExceptionInfo *info) {
 
 }
 
-SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
-    //Terminate p1 and switch to p2
-    (void)ctxp;
-    (void)p1;
-    TracePrintf(0, "Terminating %i and running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
-    struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
-    if (((pcb*)p2)->pid == 0) {
-        // Idle is a special process. Its PT0 is not on the boundary!!!
-        // But we know for sure that it's virtual address == physical address.
-        // Thus we can just write a virtual address in the register.
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_virtual_addr);
-    } else {
-        // Otherwise, we need to find a physical address.
-        // Convert a virtual address of page table 0 to its vpn.
-        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
-        // Find a corresponding physical address of page table 0.
-        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
-        // Let hardware know a physical address of a new page table 0.
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
-    }
-
-    //do all the free memory stuff
-    int currPage;
-    for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
-        if(active->page_table0[currPage].valid) {
-            freePage(active->page_table0 + currPage, 0);
-        }
-    }
-    
-    struct pte* region0_addr = active->page_table0;
-    unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
-    freePage(&region1[idx], 1);
-    
-    //for(active->pcb)
-
-    // Flush TLB for an entire region 0.
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-
-    //free children that was not reaped by wait
-    if(active->statusQ != NULL && active->statusQ->count>0) {
-        pcb *currChild = dequeue(active->statusQ);
-        while(currChild != NULL) {
-            free(currChild);
-            currChild = dequeue(active->statusQ);
-        }
-        free(active->statusQ);
-    } else if(active->statusQ != NULL) {
-        free(active->statusQ);
-    }
-    //tell every child that the parent exited, so they can free their own pcb
-    if(active->childrenQ != NULL && active->childrenQ->count>0) {
-        pcb* currChild = dequeue(active->childrenQ);
-        while(currChild != NULL) {
-            currChild->parent = NULL;
-            currChild = dequeue(active->childrenQ);
-        }
-    } else if(active->childrenQ != NULL) {
-        free(active->childrenQ);
-    }
-
-    //if we do not have a parent, we can free our pcb
-    if(active->parent == NULL) {
-        free(active);
-    }
-
-    // Make process 2 active.
-    active = (pcb *)p2;
-
-    return &((pcb*)p2)->ctx;
-}
-
 static void KernelExit(int status) {
     // Call "terminate process" that will:
     // 1) add all valid pages in this page table to a free list.
@@ -967,66 +993,111 @@ static void KernelExit(int status) {
     // 6) Go to its parent pcb, and enqueue process's pcb to the statusQueue of its parent.
     // 7) Context switch (use a terminateSwitch function) to the next ready process in ready queue or idle otherwise
     // 8) check counts of all queues, if there are no processes left, halt the kernel!!!
-    //enqueuactive->parent->statu
+
     active->status = status;
-    if (active->parent != NULL) {
-        enqueue(active, active->parent->statusQ);
-        removeSpecificElem(active->parent->childrenQ, active);
-    }
     // Take the next process from the ready queue.
     pcb *nextReady = dequeue(&readyQ);
     // Context switch to this process.
     if (nextReady != NULL) {
-        // Put a current non-idle process in the ready queue.
-        //There is a next active procees, so we can switch to it
+        // There is the next non-idle procees that we can switch to!
         TracePrintf(0, "Print a blocked queue before context switch:\n");
         printQueue(blockedQ);
         TracePrintf(0, "Print a ready queue before context switch:\n");
         printQueue(readyQ);
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)nextReady);
     } else if (blockedQ.count != 0) {
+        // If there are some blocked processes, switch to an idle process!
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)&idle_PCB);
-    } else {//there no more ready/blocked/ I/O processes waiting, so Halt()
+    } else {
+        // There no more ready/blocked/I/O processes waiting, so we can Halt() an entire kernel.
         TracePrintf(0, "Idle is the last process running. I am going to halt\n");
         Halt();
     }
-    //check queue for I/O!!!!!!!!!!
-
-    // for(curr_page = 0; curr_page < PAGE_TABLE_LEN; curr_page++) {
-    //     freePage(pageTable[curr_page]);
-    // }
+    // TODO: check queue for I/O and waiting for children!!!!!!!!!!!!!
     
 }
 
-static int removeSpecificElem(queue* queue, pcb* elem) {
-    pcb* currElem = queue->head;
-    pcb* prevElem = NULL;
-    while(currElem != NULL && currElem->pid != elem->pid) {
-        prevElem = currElem;
-        currElem = currElem->next;
+static void addChild(pcb *parent,  pcb *childPCB) {
+    // Maintain a circular doubly-linked list of children.
+    childPCB->parent = parent;
+    child *child_ptr = malloc(sizeof(child));
+    child_ptr->pcb = childPCB;
+    childPCB->myChildStruct = child_ptr;
+    child *head = parent->childHead;
+    if (head == NULL) {
+        // TracePrintf(0, "childHead is null (parent's pid = %i):\n", active->pid);
+        // The first element to be added.
+        child_ptr->next = child_ptr;
+        child_ptr->prev = child_ptr;
+        parent->childHead = child_ptr;
+    } else {
+        // TracePrintf(0, "childHead is not null (parent's pid = %i):\n", active->pid);
+        // Add this ellement right after "head" of circular doubly-linked list.
+        child_ptr->prev = head;
+        child_ptr->next = head->next;
+        child_ptr->prev->next = child_ptr;
+        child_ptr->next->prev = child_ptr;
     }
-    if(currElem == NULL) {
+    TracePrintf(0, "Print all children after adding (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
+    printChildren(active->childHead);
+}
+
+static int removeChild(pcb *parent, pcb *childPCB) {
+    child *myStruct = childPCB->myChildStruct;
+    if (parent->childHead == NULL) {
         return -1;
-    }
-    else {
-        if(queue->count == 1) {
-            queue->head = NULL;
-            queue->tail = NULL;
-        }
-        else if (currElem == queue->head) {
-            queue->head = currElem->next;
-        }
-        else if(currElem == queue->tail) {
-            queue->tail = prevElem; 
-            prevElem->next = NULL;
+    } else {
+        if (myStruct->next == myStruct) {
+            // This is the last child in the circular doubly linked list!
+            parent->childHead = NULL;
         } else {
-            prevElem->next = currElem->next;
+            // There are some more elelments left in this list.
+            myStruct->prev->next = myStruct->next;
+            myStruct->next->prev = myStruct->prev;
+            if (parent->childHead == myStruct) {
+                // Change a head to this child's next element.
+                parent->childHead = myStruct->next;
+            }
         }
-        
-        queue->count--;
-        
+        // Now we can deallocate memory for myStruct (we won't use it anymore)
+        free(myStruct);
+        TracePrintf(0, "Print all children after removing (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
+        printChildren(active->childHead);
         return 0;
     }
 }
+
+
+
+// static int removeSpecificElem(queue* queue, pcb* elem) {
+//     pcb* currElem = queue->head;
+//     pcb* prevElem = NULL;
+//     while(currElem != NULL && currElem->pid != elem->pid) {
+//         prevElem = currElem;
+//         currElem = currElem->next;
+//     }
+//     if(currElem == NULL) {
+//         return -1;
+//     }
+//     else {
+//         if(queue->count == 1) {
+//             queue->head = NULL;
+//             queue->tail = NULL;
+//         }
+//         else if (currElem == queue->head) {
+//             queue->head = currElem->next;
+//         }
+//         else if(currElem == queue->tail) {
+//             queue->tail = prevElem; 
+//             prevElem->next = NULL;
+//         } else {
+//             prevElem->next = currElem->next;
+//         }
+        
+//         queue->count--;
+        
+//         return 0;
+//     }
+// }
 
 

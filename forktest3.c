@@ -22,8 +22,10 @@ recurse(char *who, int i)
 	printf("Done with recursion\n");
 	return;
     }
-    else
-	recurse(who, i - 1);
+    else {
+        Fork();
+        recurse(who, i - 1);
+    }
 }
 
 int

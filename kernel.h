@@ -7,6 +7,7 @@ struct physical_frame {
     struct physical_frame *next;
 };
 
+typedef struct child child;
 typedef struct queue queue;
 typedef struct pcb pcb;
 struct pcb {
@@ -20,14 +21,22 @@ struct pcb {
     void *min_sp;
     queue *statusQ;
     int status;
-    queue *childrenQ;
+    // queue *childrenQ;
+    struct child *childHead;
+    struct child *myChildStruct;
 };
+
+struct child {
+    struct child *next;
+    struct child *prev;
+    pcb *pcb;
+};
+
 struct queue {
     pcb *head;
     pcb *tail;
     int count;
 };
-
 
 int LoadProgram(char *name, char **args, ExceptionInfo *info, struct pte *region0, struct free_pages free_pages, pcb *newPCB);
 void freePage(struct pte *newPte, int region);

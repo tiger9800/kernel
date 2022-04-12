@@ -1,6 +1,6 @@
 ** Kernel   level 1 tracing enabled **
 ** User     level 1 tracing enabled **
-Kernel   LoadProgram 'idle', args 0x1ff8b0
+Kernel   LoadProgram 'idle', args 0x1ff8f0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
@@ -8,45 +8,193 @@ Kernel   LoadProgram: size 0, argcount 0
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
 Kernel   Doing a context switch from process 0 to process 1!
-Kernel   LoadProgram 'delaytest', args 0x1fffc0
+Kernel   LoadProgram 'init', args 0x1fffe0
 Kernel   LoadProgram: LoadInfo status 0
-Kernel   text_size 0x7000, data_size 0x128, bss_size 0x3090
+Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
-Kernel   LoadProgram: size 12, argcount 2
+Kernel   LoadProgram: size 0, argcount 0
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
-Kernel   Printing the elements of blocked queue:
-Kernel   1. Process with pid=1 and delayed time 5
-Kernel   Doing a context switch from process 1 to process 0!
-User     Idle is working
-Kernel   trap_clock_handler
-Kernel   Print a blocked queue:
-Kernel   1. Process with pid=1 and delayed time 4
-Kernel   Print a ready queue:
+User     PID of the current process: 1
+Kernel   Created a child with pid 2
+Kernel   Print all children after adding (parent pid = 1, child pid = 2):
+Kernel   1. Child with pid=2!
+Kernel   Print a blocked queue when a parent is running (pid = 1):
 Kernel   Queue is empty
-User     Idle is working
-Kernel   trap_clock_handler
-Kernel   Print a blocked queue:
-Kernel   1. Process with pid=1 and delayed time 3
-Kernel   Print a ready queue:
+Kernel   Print a ready queue when a parent is running (pid = 1):
+Kernel   1. Process with pid=2 and delayed time 0
+User     Fork1: I'm parent: 1
+Kernel   Created a child with pid 3
+Kernel   Print all children after adding (parent pid = 1, child pid = 3):
+Kernel   1. Process with pid=2
+Kernel   2. Process with pid=3
+Kernel   Print a blocked queue when a parent is running (pid = 1):
 Kernel   Queue is empty
-User     Idle is working
-Kernel   trap_clock_handler
-Kernel   Print a blocked queue:
-Kernel   1. Process with pid=1 and delayed time 2
-Kernel   Print a ready queue:
+Kernel   Print a ready queue when a parent is running (pid = 1):
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+User     Fork2: I'm parent: 1
+Kernel   Created a child with pid 4
+Kernel   Print all children after adding (parent pid = 1, child pid = 4):
+Kernel   1. Process with pid=2
+Kernel   2. Process with pid=4
+Kernel   3. Process with pid=3
+Kernel   Print a blocked queue when a parent is running (pid = 1):
 Kernel   Queue is empty
-User     Idle is working
-Kernel   trap_clock_handler
-Kernel   Print a blocked queue:
-Kernel   1. Process with pid=1 and delayed time 1
-Kernel   Print a ready queue:
+Kernel   Print a ready queue when a parent is running (pid = 1):
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   3. Process with pid=4 and delayed time 0
+User     Fork3: I'm parent: 1
+User     process 1 is about to exit
+Kernel   Print a blocked queue before context switch:
 Kernel   Queue is empty
-User     Idle is working
-Kernel   trap_clock_handler
+Kernel   Print a ready queue before context switch:
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   Terminating 1 and running 2!
+Kernel   Print all children after removing (parent pid = 1, child pid = 2):
+Kernel   1. Process with pid=4
+Kernel   2. Process with pid=3
+Kernel   Print all children after removing (parent pid = 1, child pid = 4):
+Kernel   1. Child with pid=3!
+Kernel   Print all children after removing (parent pid = 1, child pid = 3):
+Kernel   No children!
+Kernel   Print a blocked queue when a child is running (pid = 2):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a child is running (pid = 2):
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+User     Fork1: I'm child: 2
+User     I'm starting a new program
+Kernel   Created a child with pid 5
+Kernel   Print all children after adding (parent pid = 2, child pid = 5):
+Kernel   1. Child with pid=5!
+Kernel   Print a blocked queue when a parent is running (pid = 2):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a parent is running (pid = 2):
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   3. Process with pid=5 and delayed time 0
+User     Fork2: I'm parent: 2
+Kernel   Created a child with pid 6
+Kernel   Print all children after adding (parent pid = 2, child pid = 6):
+Kernel   1. Process with pid=5
+Kernel   2. Process with pid=6
+Kernel   Print a blocked queue when a parent is running (pid = 2):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a parent is running (pid = 2):
+Kernel   1. Process with pid=3 and delayed time 0
+Kernel   2. Process with pid=4 and delayed time 0
+Kernel   3. Process with pid=5 and delayed time 0
+Kernel   4. Process with pid=6 and delayed time 0
+User     Fork3: I'm parent: 2
+User     process 2 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Queue is empty
+Kernel   Print a ready queue before context switch:
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=5 and delayed time 0
+Kernel   3. Process with pid=6 and delayed time 0
+Kernel   Terminating 2 and running 3!
+Kernel   Print all children after removing (parent pid = 2, child pid = 5):
+Kernel   1. Child with pid=6!
+Kernel   Print all children after removing (parent pid = 2, child pid = 6):
+Kernel   No children!
+Kernel   Print a blocked queue when a child is running (pid = 3):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a child is running (pid = 3):
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=5 and delayed time 0
+Kernel   3. Process with pid=6 and delayed time 0
+User     Fork2: I'm child: 3
+User     I'm starting a new program
+Kernel   Created a child with pid 7
+Kernel   Print all children after adding (parent pid = 3, child pid = 7):
+Kernel   1. Child with pid=7!
+Kernel   Print a blocked queue when a parent is running (pid = 3):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a parent is running (pid = 3):
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   2. Process with pid=5 and delayed time 0
+Kernel   3. Process with pid=6 and delayed time 0
+Kernel   4. Process with pid=7 and delayed time 0
+User     Fork3: I'm parent: 3
+User     process 3 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Queue is empty
+Kernel   Print a ready queue before context switch:
+Kernel   1. Process with pid=5 and delayed time 0
+Kernel   2. Process with pid=6 and delayed time 0
+Kernel   3. Process with pid=7 and delayed time 0
+Kernel   Terminating 3 and running 4!
+Kernel   Print all children after removing (parent pid = 3, child pid = 7):
+Kernel   No children!
+Kernel   Print a blocked queue when a child is running (pid = 4):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a child is running (pid = 4):
+Kernel   1. Process with pid=5 and delayed time 0
+Kernel   2. Process with pid=6 and delayed time 0
+Kernel   3. Process with pid=7 and delayed time 0
+User     Fork3: I'm child: 4
+User     I'm starting a new program
+User     process 4 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Queue is empty
+Kernel   Print a ready queue before context switch:
+Kernel   1. Process with pid=6 and delayed time 0
+Kernel   2. Process with pid=7 and delayed time 0
+Kernel   Terminating 4 and running 5!
+Kernel   Print a blocked queue when a child is running (pid = 5):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a child is running (pid = 5):
+Kernel   1. Process with pid=6 and delayed time 0
+Kernel   2. Process with pid=7 and delayed time 0
+User     Fork2: I'm child: 5
+User     I'm starting a new program
+Kernel   Created a child with pid 8
+Kernel   Print all children after adding (parent pid = 5, child pid = 8):
+Kernel   1. Child with pid=8!
+Kernel   Print a blocked queue when a parent is running (pid = 5):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a parent is running (pid = 5):
+Kernel   1. Process with pid=6 and delayed time 0
+Kernel   2. Process with pid=7 and delayed time 0
+Kernel   3. Process with pid=8 and delayed time 0
+User     Fork3: I'm parent: 5
+User     process 5 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Queue is empty
+Kernel   Print a ready queue before context switch:
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+Kernel   Terminating 5 and running 6!
+Kernel   Print all children after removing (parent pid = 5, child pid = 8):
+Kernel   No children!
+Kernel   Print a blocked queue when a child is running (pid = 6):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a child is running (pid = 6):
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+User     Fork3: I'm child: 6
+User     I'm starting a new program
+User     process 6 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Queue is empty
+Kernel   Print a ready queue before context switch:
+Kernel   1. Process with pid=8 and delayed time 0
+Kernel   Terminating 6 and running 7!
+Kernel   Print a blocked queue when a child is running (pid = 7):
+Kernel   Queue is empty
+Kernel   Print a ready queue when a child is running (pid = 7):
+Kernel   1. Process with pid=8 and delayed time 0
+User     Fork3: I'm child: 7
+User     I'm starting a new program
+User     process 7 is about to exit
 Kernel   Print a blocked queue before context switch:
 Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
 Kernel   Queue is empty
-Kernel   Doing a context switch from process 0 to process 1!
-Kernel   Idle is the last process running. I am going to halt
+Kernel   Terminating 7 and running 8!
+
+ABORT: FlushTLB: PTE for kernel stack vpn 508 addr 0x1fc000 is not valid
