@@ -14,7 +14,9 @@ main()
 
     TracePrintf(0, "Running ttyread1\n");
     fprintf(stderr, "Doing TtyRead...\n");
-    len = TtyRead(0, line, sizeof(line));
+    if(Fork() != 0) {
+        len = TtyRead(0, line, sizeof(line));
+    }
     fprintf(stderr, "Done with TtyRead: len %d\n", len);
     fprintf(stderr, "line '");
     fwrite(line, len, 1, stderr);

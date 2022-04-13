@@ -43,6 +43,7 @@ pcb *prevActive = NULL;
 
 
 
+static int io_queus_count();
 
 // Interrupt handler routines.
 void trap_kernel_handler(ExceptionInfo *info);
@@ -1080,7 +1081,7 @@ static void KernelExit(int status) {
         // TracePrintf(0, "Print a ready queue before context switch:\n");
         //printQueue(readyQ);
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)nextReady);
-    } else if (blockedQ.count != 0) {
+    } else if (blockedQ.count > 0 || io_queus_count() > 0) {
         // If there are some blocked processes, switch to an idle process!
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)&idle_PCB);
     } else {
@@ -1090,6 +1091,16 @@ static void KernelExit(int status) {
     }
     // TODO: check queue for I/O and waiting for children!!!!!!!!!!!!!
     
+}
+
+static int io_queus_count() {
+    int i;
+    int count = 0;
+    for(i = 0; i < NUM_TERMINALS; i++) {
+        count+= terminals[i].readQ.count;
+        count+= terminals[i].writeQ.count;
+    }
+    return count;
 }
 
 static void addChild(pcb* proc, queue* queue) {
