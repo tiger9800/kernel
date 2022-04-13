@@ -26,6 +26,7 @@ struct pcb {
     int status;
     queue *childrenQ;
     bool waiting;
+    int numToRead;
 };
 
 // struct child {
@@ -41,6 +42,7 @@ struct queue {
 };
 
 typedef struct line {
+    char *init_ptr;
     char *content;
     int len;
     struct line *next;

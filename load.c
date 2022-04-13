@@ -169,6 +169,7 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>> The value of cpp was initialized above.
     info->sp = (void *)cpp;
     newPCB->min_sp = info->sp;
+    //TracePrintf(0, "min_sp in load %p\n", newPCB->min_sp);
 
 
     /*

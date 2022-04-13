@@ -29,9 +29,9 @@ pcb *active;
 queue readyQ = {NULL, NULL, 0};
 queue blockedQ = {NULL, NULL, 0};
 // Structs containing reading/writing queues and linked lists of data.
-term terminals[NUM_TERMINALS];
+term* terminals;
 // Create input buffer (for more efficiency).
-char input_buf[TERMINAL_MAX_LINE];
+char* input_buf;
 
 // PID of the next process to be created.
 int currPID = 1;
@@ -106,7 +106,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     interruptHandlers[TRAP_MEMORY] = trap_memory_handler;
     interruptHandlers[TRAP_MATH] = trap_math_handler;
     interruptHandlers[TRAP_TTY_TRANSMIT] = trap_tty_transmit_handler;
-    interruptHandlers[TRAP_TTY_RECEIVE] = trap_tty_transmit_handler;
+    interruptHandlers[TRAP_TTY_RECEIVE] = trap_tty_receive_handler;
     // Init all other handlers to NULL.
     int i;
     for (i = 7; i < TRAP_VECTOR_SIZE; i++) {
@@ -145,6 +145,20 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
     idle_PCB.page_table0 = idle_region0;
     active = &idle_PCB;
     // Load an idle process.
+    terminals = malloc(NUM_TERMINALS * sizeof(term));
+    for(i = 0; i < NUM_TERMINALS; i++) {
+        terminals[i].read_data = NULL;
+        terminals[i].write_data = NULL;
+        terminals[i].readQ.count = 0;
+        terminals[i].readQ.head = NULL;
+        terminals[i].writeQ.tail = NULL;
+    }
+    
+    
+
+
+    input_buf = malloc(TERMINAL_MAX_LINE * sizeof(char));
+
     LoadProgram("idle", arg, info, idle_region0, free_ll, &idle_PCB);
 
     //Initialize a PCB of init process (first process to run).
@@ -183,7 +197,7 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
     (void)p1;
     int curr_page;
     // Make a "deep" copy of the kernel stack.
-    for (curr_page = (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page < (UP_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT); curr_page++) {
+    for (curr_page = (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page < (DOWN_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT); curr_page++) {
         // Get a free pfn for this page.
         struct pte *dest = &((pcb*)p2)->page_table0[curr_page];
         struct pte *src = &((pcb*)p1)->page_table0[curr_page];
@@ -216,6 +230,7 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
     // Make process 2 active.
     active = (pcb *)p2;
+    TracePrintf(0, "Completed a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     return &((pcb*)p2)->ctx;
 }
 
@@ -394,7 +409,7 @@ void trap_illegal_handler(ExceptionInfo *info) {
 void trap_memory_handler(ExceptionInfo *info) {
     TracePrintf(0, "trap_memory_handler!\n");
     TracePrintf(0, "Requested address: %p\n", info->addr);
-    TracePrintf(0, "Current lowest sp: %p\n", active->min_sp);
+    TracePrintf(0, "Current min_sp: %p\n", active->min_sp);
     TracePrintf(0, "Current break: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
     TracePrintf(0, "Requested vpn: %u\n", (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
     TracePrintf(0, "Current min_sp vpn: %u\n", (uintptr_t)(active->min_sp) >> PAGESHIFT);
@@ -465,7 +480,7 @@ void trap_math_handler(ExceptionInfo *info) {
 }
 
 void trap_tty_transmit_handler(ExceptionInfo *info) {
-    TracePrintf(0, "trap_tty_transmit_handler");
+    TracePrintf(0, "trap_tty_transmit_handler\n");
     // The previous TtyTransmit hardware operation on info->code terminal has completed
     int term = info->code;
     // Unblock the blocked process that started this TtyWrite kernel call that started this output (head of writeQ)
@@ -481,16 +496,26 @@ void trap_tty_transmit_handler(ExceptionInfo *info) {
 }
 
 void trap_tty_receive_handler(ExceptionInfo *info) {
-    TracePrintf(0, "trap_tty_receive_handler");
+    TracePrintf(0, "trap_tty_receive_handler\n");
     // a new line of input is available from the terminal of number info->code
     int term = info->code;
     int len = TtyReceive(term, input_buf, TERMINAL_MAX_LINE);
+    TracePrintf(0, "Called TtyReceive and got len %i\n", len);
     line *nextLine = malloc(sizeof(line));
-    nextLine->content = malloc(sizeof(char)*len);
+    nextLine->init_ptr = malloc(sizeof(char)*len);
+    nextLine->content = nextLine->init_ptr;
     memcpy(nextLine->content, input_buf, len);
     nextLine->len = len;
     terminals[term].read_data = addData(nextLine, terminals[term].read_data);
-}   
+    //unblock all processes and let them read if they can
+    int total_len = 0;
+    while(terminals[term].readQ.count > 0 && total_len < len) {
+        pcb* newProc = dequeue(&terminals[term].readQ);
+        TracePrintf(0, "Process %i is put on ready q\n", newProc->pid);
+        enqueue(newProc, &readyQ);
+        total_len += newProc->numToRead;
+    }
+}  
 
 // Called when malloc is called by the kernel.
 int SetKernelBrk(void *addr) { 
@@ -904,6 +929,7 @@ static pcb *init_pcb() {
     newPCB->childrenQ = NULL;
     newPCB->statusQ = NULL;
     newPCB->waiting = false;
+    newPCB->numToRead = 0;
     return newPCB;
 }
 
@@ -1148,37 +1174,78 @@ static int KernelWait(int *status) {
 
 static int KernelRead(ExceptionInfo *info) {
     // Check all params (create separate function)
+    TracePrintf(0, "I'm in Kernel Read\n");
     int term = info->regs[1];
     if (term < 0 || term >= NUM_TERMINALS) {
         return ERROR;
     }
-    // Check buf!!!
     void *buf = (void *)info->regs[2];
     int len = info->regs[3];
     if (len < 0) return ERROR;
     if (len == 0) return 0;
-    if (terminals[term].read_data->contents != NULL) {
-        int ret_len = len;
-        memcpy(buf, terminals[term].read_data->contents, len);
-        int ret_len = MIN(len, terminals[term].read_data->len);
-        if (ret_len == terminals[term].read_data->len) {
-            // Can free this line struct
-            free(removeReadData(&terminals[term]));
+    // Check buf!!!
+    int ret_len = 0;
+    while(true) {
+        if (terminals[term].read_data != NULL) {     
+            TracePrintf(0, "Start copying\n");
+            ret_len = MIN(len, terminals[term].read_data->len);
+            TracePrintf(0, "1192\n");
+            memcpy(buf, terminals[term].read_data->content, ret_len);
+            TracePrintf(0, "1194\n");
+            TracePrintf(0,"len %i\n", terminals[term].read_data->len);
+            TracePrintf(0,"ret_len %i\n", ret_len);
+            if (ret_len == terminals[term].read_data->len) {
+                // Can free this line struct
+                 TracePrintf(0,"About to free\n");
+                free(removeReadData(&terminals[term]));
+                TracePrintf(0, "1197\n");
+            } else {
+                // Move the pointer for contents
+                terminals[term].read_data->content += ret_len;
+                TracePrintf(0, "1201\n");
+                
+                // Decrement available length
+                terminals[term].read_data->len -= ret_len;
+                TracePrintf(0, "1202\n");
+            }
+            break;
         } else {
-            // Move the pointer for contents
-            terminals[term].read_data->contents += ret_len;
-            // Decrement available length
-            terminals[term].read_data->len -= ret_len;
+            TracePrintf(0, "I'm blocking\n");
+            active->numToRead = len;
+            // Block a reader until TtyReceive interrupt happens.
+            enqueue(active, &terminals[term].readQ);
+            runNextProcess();
+            TracePrintf(0, "Process %i returned to KernelRead\n", active->pid);
         }
-    } else {
-        // Block a reader until TtyReceive interrupt happens.
-        
     }
-    return 0;
+    return ret_len;
 }
 
 static int KernelWrite(ExceptionInfo *info) {
-    (void)info;
+     // Check all params (create separate function)
+    int term = info->regs[1];
+    if (term < 0 || term >= NUM_TERMINALS) {
+        return ERROR;
+    }
+    void *buf = (void *)info->regs[2];
+    int len = info->regs[3];
+    if (len < 0) return ERROR;
+    if (len == 0) return 0;
+     TracePrintf(0, "In kernek write!!\n");
+    line *nextLine = malloc(sizeof(line));
+    TracePrintf(0, "malloced!!\n");
+    nextLine->init_ptr = malloc(sizeof(char)*len);
+    TracePrintf(0, "malloced2!!\n");
+    nextLine->content = nextLine->init_ptr;
+    memcpy(nextLine->content, buf, len);
+    TracePrintf(0, "Copied\n");
+    nextLine->len = len;
+    terminals[term].write_data = addData(nextLine, terminals[term].write_data);
+    TracePrintf(0, "After addData!!\n");
+    TtyTransmit(term, nextLine->content, len);
+    TracePrintf(0, "After transmit!!\n");
+    enqueue(active, &terminals[term].writeQ);
+    runNextProcess();
     return 0;
 }
 // Returns a new/old head.
@@ -1202,6 +1269,14 @@ static line *removeReadData(term *t) {
     }
     line *ret_val = t->read_data;
     t->read_data = t->read_data->next;
+    TracePrintf(0, "I'm about to free the init_prt\n");
+    if (ret_val->init_ptr == NULL) {
+        TracePrintf(0, "NULLLLL\n");
+    } else {
+
+    }
+    free(ret_val->init_ptr);
+    TracePrintf(0, "Free success in removeReadData\n");
     return ret_val;
 }
 // Return the write data.
