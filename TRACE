@@ -1,6 +1,6 @@
 ** Kernel   level 1 tracing enabled **
 ** User     level 1 tracing enabled **
-Kernel   LoadProgram 'idle', args 0x1ff8f0
+Kernel   LoadProgram 'idle', args 0x1ff8b0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
@@ -14,309 +14,68 @@ Kernel   Src: 508 is valid
 Kernel   Des: 508 is valid
 Kernel   Doing a context switch from process 0 to process 1!
 Kernel   Completed a context switch from process 0 to process 1!
-Kernel   LoadProgram 'test1', args 0x1fffd0
+Kernel   LoadProgram 'blowstack', args 0x1fffc0
 Kernel   LoadProgram: LoadInfo status 0
-Kernel   text_size 0x9000, data_size 0x240, bss_size 0x3498
+Kernel   text_size 0x7000, data_size 0x128, bss_size 0x3090
 Kernel   entry 0x10100
-Kernel   LoadProgram: size 6, argcount 1
-Kernel   LoadProgram: text_npg 9, data_bss_npg 4, stack_npg 1
+Kernel   LoadProgram: size 12, argcount 2
+Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
-Kernel   I'm in Kernel Read
-Kernel   I'm blocking
-Kernel   Doing a context switch from process 1 to process 0!
-Kernel   Completed a context switch from process 1 to process 0!
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
-Kernel   trap_clock_handler
-User     Idle is working
+Kernel   I'm done with load and aboue to exit Kernel startUser     blowstack initially calling foo depth 5
+Kernel   trap_memory_handler!
+Kernel   Requested address: 0x1eadec
+Kernel   Current min_sp: 0x1fafc0
+Kernel   Current break: 27
+Kernel   Requested vpn: 490
+Kernel   Current min_sp vpn: 506
+Kernel   Current brk vpn: 27
+Kernel   Process's stack was expanded.
+User     blowstack foo: depth 5
+User     5 ========================
+User     5 ======================== done!
+Kernel   trap_memory_handler!
+Kernel   Requested address: 0x1dadcc
+Kernel   Current min_sp: 0x1ea000
+Kernel   Current break: 27
+Kernel   Requested vpn: 474
+Kernel   Current min_sp vpn: 490
+Kernel   Current brk vpn: 27
+Kernel   Process's stack was expanded.
+User     blowstack foo: depth 4
+User     4 ========================
+User     4 ======================== done!
+Kernel   trap_memory_handler!
+Kernel   Requested address: 0x1cadac
+Kernel   Current min_sp: 0x1da000
+Kernel   Current break: 27
+Kernel   Requested vpn: 458
+Kernel   Current min_sp vpn: 474
+Kernel   Current brk vpn: 27
+Kernel   Process's stack was expanded.
+User     blowstack foo: depth 3
+User     3 ========================
+User     3 ======================== done!
+Kernel   trap_memory_handler!
+Kernel   Requested address: 0x1bad8c
+Kernel   Current min_sp: 0x1ca000
+Kernel   Current break: 27
+Kernel   Requested vpn: 442
+Kernel   Current min_sp vpn: 458
+Kernel   Current brk vpn: 27
+Kernel   Process's stack was expanded.
+User     blowstack foo: depth 2
+User     2 ========================
+User     2 ======================== done!
+Kernel   trap_memory_handler!
+Kernel   Requested address: 0x1aad6c
+Kernel   Current min_sp: 0x1ba000
+Kernel   Current break: 27
+Kernel   Requested vpn: 426
+Kernel   Current min_sp vpn: 442
+Kernel   Current brk vpn: 27
+Kernel   Process's stack was expanded.
+User     blowstack foo: depth 1
+User     1 ========================
+User     1 ======================== done!
+User     About to exit!
+Kernel   Idle is the last process running. I am going to halt
