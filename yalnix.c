@@ -80,7 +80,7 @@ static void printChildren(queue q);
 static pcb *init_pcb();
 static void addChild(pcb* proc, queue* queue);
 // static int removeChild(pcb *parent, pcb *childPCB);
-static int removeSpecificElem(queue* queue, pcb* elem);
+static int removeChild(queue* queue, pcb* elem);
 static line *addData(line *elem, line *head);
 static line *removeReadData(term *t);
 static line *removeWriteData(term *t);
@@ -93,6 +93,8 @@ static int KernelFork();
 static int KernelExec(ExceptionInfo *info);
 static void KernelExit(int status);
 static int KernelWait(int *status);
+static int KernelRead(ExceptionInfo *info);
+static int KernelWrite(ExceptionInfo *info);
 
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
     (void)cmd_args;
@@ -257,7 +259,7 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     if(active->childrenQ != NULL) {
         while(active->childrenQ->head != NULL) {
             active->childrenQ->head->parent = NULL;
-            removeSpecificElem(active->childrenQ, active->childrenQ->head);
+            removeChild(active->childrenQ, active->childrenQ->head);
         }
     }
     // Free a children queue.
@@ -270,7 +272,7 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
         free(active);
     } else {
         // If process has a parent, we should remove its pcb from parent's children queue.
-        if (removeSpecificElem(active->parent->childrenQ, active) == -1) {
+        if (removeChild(active->parent->childrenQ, active) == -1) {
             TracePrintf(0, "Parent doesn't have a child with pid=%i in its children queue!\n", active->pid);
         }
         // Now we should add its pcb to its parent's status queue.
@@ -320,8 +322,10 @@ void trap_kernel_handler(ExceptionInfo *info) {
             info->regs[0] = KernelDelay(info->regs[1]);
             break;
         case YALNIX_TTY_READ:
+            info->regs[0] = KernelRead(info);
             break;
         case YALNIX_TTY_WRITE:
+            info->regs[0] = KernelWrite(info);
             break;
         default:
             TracePrintf(0, "Invalid code in the trap_kernel_handler\n");
@@ -1078,62 +1082,9 @@ static void addChild(pcb* proc, queue* queue) {
     TracePrintf(0, "Print all children after adding (child pid = %i):\n", proc->pid);
     printChildren(*(active->childrenQ));
 }
-// static void addChild(pcb *parent,  pcb *childPCB) {
-//     // Maintain a circular doubly-linked list of children.
-//     childPCB->parent = parent;
-//     child *child_ptr = malloc(sizeof(child));
-//     child_ptr->pcb = childPCB;
-//     childPCB->myChildStruct = child_ptr;
-//     child *head = parent->childHead;
-//     if (head == NULL) {
-//         // TracePrintf(0, "childHead is null (parent's pid = %i):\n", active->pid);
-//         // The first element to be added.
-//         child_ptr->next = child_ptr;
-//         child_ptr->prev = child_ptr;
-//         parent->childHead = child_ptr;
-//     } else {
-//         // TracePrintf(0, "childHead is not null (parent's pid = %i):\n", active->pid);
-//         // Add this ellement right after "head" of circular doubly-linked list.
-//         child_ptr->prev = head;
-//         child_ptr->next = head->next;
-//         child_ptr->prev->next = child_ptr;
-//         child_ptr->next->prev = child_ptr;
-//     }
-//     TracePrintf(0, "Print all children after adding (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
-//     printChildren(active->childHead);
-// }
 
-// static int removeChild(pcb *parent, pcb *childPCB) {
-//     child *myStruct = childPCB->myChildStruct;
-//     if (parent->childHead == NULL) {
-//         return -1;
-//     } else {
-//         if (myStruct->next == myStruct) {
-//             // This is the last child in the circular doubly linked list!
-//             parent->childHead = NULL;
-//         } else {
-//             // There are some more elelments left in this list.
-//             myStruct->prev->next = myStruct->next;
-//             myStruct->next->prev = myStruct->prev;
-//             if (parent->childHead == myStruct) {
-//                 // Change a head to this child's next element.
-//                 parent->childHead = myStruct->next;
-//             }
-//         }
-//         // Now we can deallocate memory for myStruct (we won't use it anymore)
-//         free(myStruct);
-//         TracePrintf(0, "Print all children after removing (parent pid = %i, child pid = %i):\n", parent->pid, childPCB->pid);
-//         if (active->childHead == NULL) {
-//             TracePrintf(0, "Pobleem! is null :(\n");
-//         }
-//         printChildren(active->childHead);
-//         return 0;
-//     }
-// }
-
-
-
-static int removeSpecificElem(queue* queue, pcb* elem) {
+// Renamed for consistency.
+static int removeChild(queue* queue, pcb* elem) {
     pcb* currElem = queue->head;
     pcb* prevElem = NULL;
     while(currElem != NULL && currElem->pid != elem->pid) {
@@ -1193,6 +1144,29 @@ static int KernelWait(int *status) {
         return childPid;
     }
 
+}
+
+static int KernelRead(ExceptionInfo *info) {
+    // Check all params (create separate function)
+    int term = info->regs[1];
+    if (term < 0 || term >= NUM_TERMINALS) {
+        return ERROR;
+    }
+    // Check buf!!!
+    void *buf = (void *)info->regs[2];
+    int len = info->regs[3];
+    // if (len < 0) return ERROR;
+    // if (len == 0) return 0;
+    // if (terminals[term].read_data->contents != NULL) {
+    //     memcpy(buf, terminals[term].read_data->contents, len);
+    //     if (len < )
+    // }
+    return 0;
+}
+
+static int KernelWrite(ExceptionInfo *info) {
+    (void)info;
+    return 0;
 }
 // Returns a new/old head.
 static line *addData(line *elem, line *head) {
