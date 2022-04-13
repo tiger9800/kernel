@@ -76,7 +76,7 @@ static void enqueue(pcb* proc, queue* queue);
 static pcb *dequeue(queue* queue);
 static void delayProcess(pcb* proc, int delay);
 static void runNextProcess();
-//static void printQueue(queue q);
+static void printQueue(queue q);
 static void printChildren(queue q);
 static pcb *init_pcb();
 static void addChild(pcb* proc, queue* queue);
@@ -239,12 +239,15 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     //Terminate p1 and switch to p2
     (void)ctxp;
     (void)p1;
-    TracePrintf(0, "Terminating %i and running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+    TracePrintf(0, "Print a reading queue!!!\n");
+    printQueue(terminals[0].readQ);
+    TracePrintf(0, "Terminating %i and or running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     void *pt0_physical_addr = find_PT0_physical_addr((pcb *)p2);
     // Let hardware know a physical address of a new page table 0.
     WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
     // Flush TLB for an entire region 0.
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
+    TracePrintf(0, "Wrote new pt0 and flushed!\n");
     //do all the free memory stuff
     int currPage;
     for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
@@ -255,20 +258,38 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     struct pte *region0_addr = active->page_table0;
     unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
     freePage(&region1[idx], 1);
-
+    TracePrintf(0, "Free pages\n");
+    TracePrintf(0, "Free pages2\n");
     // Working with status queue:
     // Free pcbs of children that was not reaped by wait.
+    if (active == NULL) {
+        TracePrintf(0, "Active is null\n");
+    } else {
+        TracePrintf(0, "Active is %i\n", active->pid);
+    }
     if(active->statusQ != NULL && active->statusQ->count>0) {
+        TracePrintf(0, "In status\n");
         pcb *currChild = dequeue(active->statusQ);
+        if (currChild == NULL) TracePrintf(0, "first child is null\n");
+        else TracePrintf(0, "first child is not null\n");
+        TracePrintf(0, "Did first dequeue pid=%i\n", currChild->pid);
+        TracePrintf(0, "Heyyyy%i\n", currChild->pid);
         while(currChild != NULL) {
+            TracePrintf(0, "About to free a currChild%i\n", currChild->pid);
             free(currChild);
+            TracePrintf(0, "Freed\n");
             currChild = dequeue(active->statusQ);
         }
+        TracePrintf(0, "Exit loop\n");
+    } else {
+        TracePrintf(0, "Not in status\n");
     }
+    TracePrintf(0, "After letting know status\n");
     // Free a status queue.
     if (active->statusQ != NULL) {
         free(active->statusQ);
     }
+    TracePrintf(0, "Did active status!\n");
 
     // Working with a children queue.
     // Tell every alive child that the parent exited, so they can free their own pcb.
@@ -282,11 +303,14 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     if (active->childrenQ != NULL) {
         free(active->childrenQ);
     }
+    TracePrintf(0, "Did children!\n");
 
     if(active->parent == NULL) {
+        TracePrintf(0, "Parent null!\n");
         // If process does not have a parent, process can free its pcb.
         free(active);
     } else {
+        TracePrintf(0, "Parent not null!\n");
         // If process has a parent, we should remove its pcb from parent's children queue.
         if (removeChild(active->parent->childrenQ, active) == -1) {
             TracePrintf(0, "Parent doesn't have a child with pid=%i in its children queue!\n", active->pid);
@@ -507,13 +531,16 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
     nextLine->content = nextLine->init_ptr;
     memcpy(nextLine->content, input_buf, len);
     nextLine->len = len;
+    TracePrintf(0, "added data to the buffer\n");
     terminals[term].read_data = addData(nextLine, terminals[term].read_data);
     //unblock all processes and let them read if they can
     int total_len = 0;
     while(terminals[term].readQ.count > 0 && total_len < len) {
+        TracePrintf(0, "About to dequeue\n");
         pcb* newProc = dequeue(&terminals[term].readQ);
-        TracePrintf(0, "Process %i is put on ready q\n", newProc->pid);
+        TracePrintf(0, "Process %i is about to be put on ready q\n", newProc->pid);
         enqueue(newProc, &readyQ);
+        TracePrintf(0, "Process %i is put on ready q\n", newProc->pid);
         total_len += newProc->numToRead;
     }
 }  
@@ -891,17 +918,17 @@ static void runNextProcess() {
     ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
 }
 
-// static void printQueue(queue q) {
-//     int i = 1;
-//     pcb *cur = q.head;
-//     if (q.count == 0){
-//         TracePrintf(0, "Queue is empty\n");
-//     }
-//     while(cur != NULL) {
-//         TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
-//         cur = cur->next;
-//     }
-// }
+static void printQueue(queue q) {
+    int i = 1;
+    pcb *cur = q.head;
+    if (q.count == 0){
+        TracePrintf(0, "Queue is empty\n");
+    }
+    while(cur != NULL) {
+        TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
+        cur = cur->next;
+    }
+}
 
 static void printChildren(queue q) {
     int i = 1;
@@ -1005,10 +1032,16 @@ static int KernelFork() {
     // Update some values in parent's pcb.
     if (active->statusQ == NULL) {
         active->statusQ = malloc(sizeof(queue));
+        active->statusQ->head = NULL;
+        active->statusQ->tail = NULL;
+        active->statusQ->count = 0;
     }
 
     if (active->childrenQ == NULL) {
         active->childrenQ = malloc(sizeof(queue));
+        active->childrenQ->head = NULL;
+        active->childrenQ->tail = NULL;
+        active->childrenQ->count = 0;
     }
 
 
@@ -1185,7 +1218,7 @@ static int KernelWait(int *status) {
 
 static int KernelRead(ExceptionInfo *info) {
     // Check all params (create separate function)
-    TracePrintf(0, "I'm in Kernel Read\n");
+    TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
     int term = info->regs[1];
     if (term < 0 || term >= NUM_TERMINALS) {
         return ERROR;
@@ -1198,7 +1231,7 @@ static int KernelRead(ExceptionInfo *info) {
     int ret_len = 0;
     while(true) {
         if (terminals[term].read_data != NULL) {     
-            TracePrintf(0, "Start copying\n");
+            TracePrintf(0, "Start copying for process %i\n", active->pid);
             ret_len = MIN(len, terminals[term].read_data->len);
             TracePrintf(0, "1192\n");
             memcpy(buf, terminals[term].read_data->content, ret_len);
@@ -1221,7 +1254,7 @@ static int KernelRead(ExceptionInfo *info) {
             }
             break;
         } else {
-            TracePrintf(0, "I'm blocking\n");
+            TracePrintf(0, "I'm blocking for process %i\n", active->pid);
             active->numToRead = len;
             // Block a reader until TtyReceive interrupt happens.
             enqueue(active, &terminals[term].readQ);
