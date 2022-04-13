@@ -185,6 +185,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         } else {
             LoadProgram(cmd_args[0], cmd_args, info, initPCB->page_table0, free_ll, initPCB);
         }
+        TracePrintf(0, "I'm done with load and aboue to exit Kernel start");
     }
 }
 
@@ -430,19 +431,19 @@ void trap_memory_handler(ExceptionInfo *info) {
         TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
         switch (info->code) {
             case TRAP_MEMORY_MAPERR:
-                TracePrintf(0, "No mapping at addr %p\n", info->addr);
+                printf("No mapping at addr %p in process %i\n", info->addr, active->pid);
                 break;
             case TRAP_MEMORY_ACCERR:
-                TracePrintf(0, "Protection violation at addr %p\n", info->addr);
+                printf("Protection violation at addr %p in process %i\n", info->addr, active->pid);
                 break;
             case TRAP_MEMORY_KERNEL:
-                TracePrintf(0, "Linux kernel sent SIGSEGV at addr %p\n", info->addr);
+                printf("Linux kernel sent SIGSEGV at addr %p in process %i\n", info->addr, active->pid);
                 break;
             case TRAP_MEMORY_USER:
-                TracePrintf(0, "Received SIGSEGV from user at addr %p\n", info->addr);
+                printf("Received SIGSEGV from user at addr %p in proccess %i\n", info->addr, active->pid);
                 break;
             default:
-                TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
+                printf("Unidentified error type at address %p:\n", info->addr);
         }
         KernelExit(ERROR);
     } else {
@@ -475,8 +476,56 @@ void trap_memory_handler(ExceptionInfo *info) {
 
 void trap_math_handler(ExceptionInfo *info) {
     // same as in trap_illegal (look at info->code for better description of error)
-    (void)info;
-    TracePrintf(0, "trap_math_handler");
+    // (void)info;
+    // TracePrintf(0, "trap_math_handler");
+
+    switch (info->code) {
+            case TRAP_ILLEGAL_ILLOPC:
+                TracePrintf(0, "Illegal opcode in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ILLOPN:
+                TracePrintf(0, "Illegal operand in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ILLADR:
+                printf("Illegal addressing mode in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ILLTRP:
+                printf("Illegal software trap in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_PRVOPC:
+                printf("Privileged opcode in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_PRVREG:
+                printf("Privileged register in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_COPROC:
+                printf("Coprocessor error in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_BADSTK:
+                printf("Bad stack in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_KERNELI:
+                printf("Linux kernel sent SIGILL in process %i\n", active->pid);
+                break;  
+            case TRAP_ILLEGAL_USERIB:
+                printf("Received SIGILL or SIGBUS from user in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ADRALN:
+                printf("Invalid address alignment in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ADRERR:
+                printf("Non-existent physical address in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_OBJERR:
+                printf("Object-speciﬁc HW error in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_KERNELB:
+                printf("Linux kernel sent SIGBUS in process %i\n", active->pid);
+                break;
+            default:
+                TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
+    }
+    //this process should exit
     KernelExit(ERROR);
 }
 
