@@ -40,6 +40,19 @@ struct queue {
     int count;
 };
 
+typedef struct line {
+    char *content;
+    int len;
+    struct line *next;
+} line;
+
+typedef struct term {
+    queue readQ;
+    queue writeQ;
+    line *read_data;
+    line *write_data;
+} term;
+
 int LoadProgram(char *name, char **args, ExceptionInfo *info, struct pte *region0, struct free_pages free_pages, pcb *newPCB);
 void freePage(struct pte *newPte, int region);
 int getFreePage(); 

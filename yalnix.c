@@ -28,11 +28,21 @@ pcb *active;
 // FIFO queues of ready and blocked processes.
 queue readyQ = {NULL, NULL, 0};
 queue blockedQ = {NULL, NULL, 0};
+// Structs containing reading/writing queues and linked lists of data.
+term terminals[NUM_TERMINALS];
+// Create input buffer (for more efficiency).
+char input_buf[TERMINAL_MAX_LINE];
+
 // PID of the next process to be created.
 int currPID = 1;
 
 // Active process during the previous TRAP_CLOCK.
 pcb *prevActive = NULL;
+
+// Create queues of blocked readers and writers.
+
+
+
 
 // Interrupt handler routines.
 void trap_kernel_handler(ExceptionInfo *info);
@@ -53,6 +63,7 @@ void addInvalidPages();
 static struct pte *getNewPageTable();
 static int copyPTE(struct pte* dest, struct pte* src, int curr_page);
 static int copyMemoryImage(pcb *destProc, pcb *srcProc);
+void *find_PT0_physical_addr(pcb *proc);
 
 // MySwitch functions.
 SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2);
@@ -70,6 +81,9 @@ static pcb *init_pcb();
 static void addChild(pcb* proc, queue* queue);
 // static int removeChild(pcb *parent, pcb *childPCB);
 static int removeSpecificElem(queue* queue, pcb* elem);
+static line *addData(line *elem, line *head);
+static line *removeReadData(term *t);
+static line *removeWriteData(term *t);
 
 // Kernel call helpers.
 static int KernelGetPid();
@@ -193,27 +207,13 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;
     (void)p1;
     TracePrintf(0, "Doing a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
-    struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
-    if (((pcb*)p2)->pid == 0) {
-        // Idle is a special process. Its PT0 is not on the boundary!!!
-        // But we know for sure that it's virtual address == physical address.
-        // Thus we can just write a virtual address in the register.
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_virtual_addr);
-    } else {
-        // Otherwise, we need to find a physical address.
-        // Convert a virtual address of page table 0 to its vpn.
-        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
-        // Find a corresponding physical address of page table 0.
-        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
-        // Let hardware know a physical address of a new page table 0.
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
-    }
+    void *pt0_physical_addr = find_PT0_physical_addr((pcb *)p2);
+    // Let hardware know a physical address of a new page table 0.
+    WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
     // Flush TLB for an entire region 0.
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
-
     // Make process 2 active.
     active = (pcb *)p2;
-
     return &((pcb*)p2)->ctx;
 }
 
@@ -221,31 +221,11 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     //Terminate p1 and switch to p2
     (void)ctxp;
     (void)p1;
-    // Flush TLB for an entire region 0.
-    TracePrintf(0, "Flush in terminateSwitch1\n");
-    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
     TracePrintf(0, "Terminating %i and running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
-    struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
-    if (((pcb*)p2)->pid == 0) {
-        // Idle is a special process. Its PT0 is not on the boundary!!!
-        // But we know for sure that it's virtual address == physical address.
-        // Thus we can just write a virtual address in the register.
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_virtual_addr);
-    } else {
-        // Otherwise, we need to find a physical address.
-        // Convert a virtual address of page table 0 to its vpn.
-        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
-        // Find a corresponding physical address of page table 0.
-        if (region1[pt0_vpn].valid == 0) {
-            TracePrintf(0, "Not valid\n");
-        }
-        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
-        // Let hardware know a physical address of a new page table 0.
-        TracePrintf(0, "I'm about to change page table 0\n");
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
-    }
+    void *pt0_physical_addr = find_PT0_physical_addr((pcb *)p2);
+    // Let hardware know a physical address of a new page table 0.
+    WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
     // Flush TLB for an entire region 0.
-    TracePrintf(0, "Flush in terminateSwitch2\n");
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
     //do all the free memory stuff
     int currPage;
@@ -253,15 +233,10 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
         if(active->page_table0[currPage].valid) {
             freePage(active->page_table0 + currPage, 0);
         }
-    }
-    
+    } 
     struct pte *region0_addr = active->page_table0;
     unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
     freePage(&region1[idx], 1);
-
-    // Flush TLB for an entire region 0.
-    TracePrintf(0, "Flush in terminateSwitch3\n");
-    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
 
     // Working with status queue:
     // Free pcbs of children that was not reaped by wait.
@@ -301,7 +276,6 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
         // Now we should add its pcb to its parent's status queue.
         enqueue(active, active->parent->statusQ);
         
-
         // Print a status queue.
         TracePrintf(0, "Print a status queue of the parent after process %i exited:\n", active->pid);
         //printQueue(*(active->parent->statusQ));
@@ -487,24 +461,31 @@ void trap_math_handler(ExceptionInfo *info) {
 }
 
 void trap_tty_transmit_handler(ExceptionInfo *info) {
-    // the previous TtyTransmit hardware operation on info->code terminal has completed
-    // unblock the blocked process that started this TtyWrite kernel call that started this output
-    // if other TtyWrite calls are pending for info->code terminal, start the next one 
-    // by calling TtyTransmit(info->code, void *buf, int len)
-    // buf must ne in region 1
-    (void)info;
     TracePrintf(0, "trap_tty_transmit_handler");
-    Halt();
+    // The previous TtyTransmit hardware operation on info->code terminal has completed
+    int term = info->code;
+    // Unblock the blocked process that started this TtyWrite kernel call that started this output (head of writeQ)
+    pcb *proc = dequeue(&terminals[term].writeQ);
+    // Add this process to a ready queue.
+    enqueue(proc, &readyQ);
+    // Check if other TtyWrite calls are pending for this terminal
+    if (terminals[term].writeQ.count > 0) {
+        // Start the next TtyTransmit
+        line *nextLine = removeWriteData(&terminals[term]);
+        TtyTransmit(term, nextLine->content, nextLine->len);
+    }
 }
 
 void trap_tty_receive_handler(ExceptionInfo *info) {
-    // a new line of input is available from the terminal of number info->code
-    // "allocate" some memory for buf (should lie in Region1!)
-    // call TtyReceive(info->code, void *buf, TERMINAL_MAX_LINE)
-    // if necessary should buffer the input line for a subsequent TtyRead kernel call by some user process.
-    (void)info;
     TracePrintf(0, "trap_tty_receive_handler");
-    Halt();
+    // a new line of input is available from the terminal of number info->code
+    int term = info->code;
+    int len = TtyReceive(term, input_buf, TERMINAL_MAX_LINE);
+    line *nextLine = malloc(sizeof(line));
+    nextLine->content = malloc(sizeof(char)*len);
+    memcpy(nextLine->content, input_buf, len);
+    nextLine->len = len;
+    terminals[term].read_data = addData(nextLine, terminals[term].read_data);
 }   
 
 // Called when malloc is called by the kernel.
@@ -757,6 +738,24 @@ static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
     return 0;
 }
 
+
+void * find_PT0_physical_addr(pcb *proc) {
+    struct pte *pt0_virtual_addr = proc->page_table0;
+    if (proc->pid == 0) {
+        // Idle is a special process. Its PT0 is not on the boundary!!!
+        // But we know for sure that it's virtual address == physical address.
+        return pt0_virtual_addr;
+    } else {
+        // Otherwise, we need to find a physical address.
+        // Convert a virtual address of page table 0 to its vpn.
+        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
+        // Find a corresponding physical address of page table 0.
+        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
+        // Let hardware know a physical address of a new page table 0.
+        return pt0_physical_addr;
+    }
+}
+
 /*
  *  Queue functions.
  */
@@ -885,22 +884,6 @@ static void printChildren(queue q) {
         cur = cur->nextChild;
     }
 }
-
-// static void printChildren(child *ch) {
-//     if (ch == NULL){
-//         TracePrintf(0, "No children!\n");
-//     } else if (ch->next == ch) {
-//         TracePrintf(0, "1. Child with pid=%i!\n", ch->pcb->pid);
-//     } else {
-//         int i = 1;
-//         child *cur = ch;
-//         while(cur->next != ch) {
-//             TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
-//             cur = cur->next;
-//         } 
-//         TracePrintf(0, "%i. Process with pid=%i\n", i++, cur->pcb->pid);
-//     }
-// }
 
 static pcb *init_pcb() {
     pcb *newPCB = malloc(sizeof(pcb));
@@ -1210,6 +1193,38 @@ static int KernelWait(int *status) {
         return childPid;
     }
 
+}
+// Returns a new/old head.
+static line *addData(line *elem, line *head) {
+    elem->next = NULL;
+    if (head == NULL) {
+        return elem;
+    } else {
+        line *cur = head;
+        while (cur->next != NULL) {
+            cur = cur->next;
+        }
+        cur->next = elem;
+        return head;
+    }
+}
+// Return the read data.
+static line *removeReadData(term *t) {
+    if (t->read_data == NULL) {
+        return NULL;
+    }
+    line *ret_val = t->read_data;
+    t->read_data = t->read_data->next;
+    return ret_val;
+}
+// Return the write data.
+static line *removeWriteData(term *t) {
+    if (t->write_data == NULL) {
+        return NULL;
+    }
+    line *ret_val = t->write_data;
+    t->write_data = t->write_data->next;
+    return ret_val;
 }
 
 
