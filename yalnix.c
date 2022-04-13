@@ -1155,12 +1155,25 @@ static int KernelRead(ExceptionInfo *info) {
     // Check buf!!!
     void *buf = (void *)info->regs[2];
     int len = info->regs[3];
-    // if (len < 0) return ERROR;
-    // if (len == 0) return 0;
-    // if (terminals[term].read_data->contents != NULL) {
-    //     memcpy(buf, terminals[term].read_data->contents, len);
-    //     if (len < )
-    // }
+    if (len < 0) return ERROR;
+    if (len == 0) return 0;
+    if (terminals[term].read_data->contents != NULL) {
+        int ret_len = len;
+        memcpy(buf, terminals[term].read_data->contents, len);
+        int ret_len = MIN(len, terminals[term].read_data->len);
+        if (ret_len == terminals[term].read_data->len) {
+            // Can free this line struct
+            free(removeReadData(&terminals[term]));
+        } else {
+            // Move the pointer for contents
+            terminals[term].read_data->contents += ret_len;
+            // Decrement available length
+            terminals[term].read_data->len -= ret_len;
+        }
+    } else {
+        // Block a reader until TtyReceive interrupt happens.
+        
+    }
     return 0;
 }
 
