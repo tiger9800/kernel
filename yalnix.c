@@ -427,8 +427,53 @@ void trap_illegal_handler(ExceptionInfo *info) {
     // continue running other processes (context switch to the next runnable)
     // exit status reported to the parent process of the terminated process when the parent calls the Wait
     // kernel call should be the value ERROR; same as if child called Exit(ERROR)
-    (void)info;
-    TracePrintf(0, "trap_illegal_handler");
+    switch (info->code) {
+            case TRAP_ILLEGAL_ILLOPC:
+                TracePrintf(0, "Illegal opcode in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ILLOPN:
+                TracePrintf(0, "Illegal operand in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ILLADR:
+                printf("Illegal addressing mode in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ILLTRP:
+                printf("Illegal software trap in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_PRVOPC:
+                printf("Privileged opcode in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_PRVREG:
+                printf("Privileged register in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_COPROC:
+                printf("Coprocessor error in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_BADSTK:
+                printf("Bad stack in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_KERNELI:
+                printf("Linux kernel sent SIGILL in process %i\n", active->pid);
+                break;  
+            case TRAP_ILLEGAL_USERIB:
+                printf("Received SIGILL or SIGBUS from user in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ADRALN:
+                printf("Invalid address alignment in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_ADRERR:
+                printf("Non-existent physical address in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_OBJERR:
+                printf("Object-speciﬁc HW error in process %i\n", active->pid);
+                break;
+            case TRAP_ILLEGAL_KERNELB:
+                printf("Linux kernel sent SIGBUS in process %i\n", active->pid);
+                break;
+            default:
+                TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
+    }
+    //this process should exit
     KernelExit(ERROR);
 }
 
@@ -503,54 +548,7 @@ void trap_math_handler(ExceptionInfo *info) {
     // (void)info;
     // TracePrintf(0, "trap_math_handler");
 
-    switch (info->code) {
-            case TRAP_ILLEGAL_ILLOPC:
-                TracePrintf(0, "Illegal opcode in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_ILLOPN:
-                TracePrintf(0, "Illegal operand in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_ILLADR:
-                printf("Illegal addressing mode in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_ILLTRP:
-                printf("Illegal software trap in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_PRVOPC:
-                printf("Privileged opcode in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_PRVREG:
-                printf("Privileged register in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_COPROC:
-                printf("Coprocessor error in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_BADSTK:
-                printf("Bad stack in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_KERNELI:
-                printf("Linux kernel sent SIGILL in process %i\n", active->pid);
-                break;  
-            case TRAP_ILLEGAL_USERIB:
-                printf("Received SIGILL or SIGBUS from user in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_ADRALN:
-                printf("Invalid address alignment in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_ADRERR:
-                printf("Non-existent physical address in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_OBJERR:
-                printf("Object-speciﬁc HW error in process %i\n", active->pid);
-                break;
-            case TRAP_ILLEGAL_KERNELB:
-                printf("Linux kernel sent SIGBUS in process %i\n", active->pid);
-                break;
-            default:
-                TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
-    }
-    //this process should exit
-    KernelExit(ERROR);
+    
 }
 
 void trap_tty_transmit_handler(ExceptionInfo *info) {
