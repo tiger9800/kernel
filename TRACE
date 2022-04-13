@@ -7,194 +7,602 @@ Kernel   entry 0x10100
 Kernel   LoadProgram: size 0, argcount 0
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
+Kernel   Print vpn of new page table 510
+Kernel   Print pfn of new page table 2
+Kernel   Phys addr for new page table is 0x2000
 Kernel   Doing a context switch from process 0 to process 1!
-Kernel   LoadProgram 'init', args 0x1fffe0
+Kernel   LoadProgram 'init', args 0x1fffd0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
-Kernel   LoadProgram: size 0, argcount 0
+Kernel   LoadProgram: size 5, argcount 1
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
 User     PID of the current process: 1
+Kernel   vpn 510 is already used
+Kernel   Print vpn of new page table 509
+Kernel   Print pfn of new page table 1009
+Kernel   Phys addr for new page table is 0x3f1000
 Kernel   Created a child with pid 2
-Kernel   Print all children after adding (parent pid = 1, child pid = 2):
-Kernel   1. Child with pid=2!
-Kernel   Print a blocked queue when a parent is running (pid = 1):
-Kernel   Queue is empty
-Kernel   Print a ready queue when a parent is running (pid = 1):
+Kernel   Print all children after adding (child pid = 2):
 Kernel   1. Process with pid=2 and delayed time 0
-User     Fork1: I'm parent: 1
-Kernel   Created a child with pid 3
-Kernel   Print all children after adding (parent pid = 1, child pid = 3):
-Kernel   1. Process with pid=2
-Kernel   2. Process with pid=3
 Kernel   Print a blocked queue when a parent is running (pid = 1):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a parent is running (pid = 1):
+User     Fork1: I'm parent: 1
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   Print vpn of new page table 508
+Kernel   Print pfn of new page table 992
+Kernel   Phys addr for new page table is 0x3e0000
+Kernel   Created a child with pid 3
+Kernel   Print all children after adding (child pid = 3):
 Kernel   1. Process with pid=2 and delayed time 0
 Kernel   2. Process with pid=3 and delayed time 0
-User     Fork2: I'm parent: 1
-Kernel   Created a child with pid 4
-Kernel   Print all children after adding (parent pid = 1, child pid = 4):
-Kernel   1. Process with pid=2
-Kernel   2. Process with pid=4
-Kernel   3. Process with pid=3
 Kernel   Print a blocked queue when a parent is running (pid = 1):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a parent is running (pid = 1):
+User     Fork1: I'm parent: 1
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   Print vpn of new page table 507
+Kernel   Print pfn of new page table 975
+Kernel   Phys addr for new page table is 0x3cf000
+Kernel   Created a child with pid 4
+Kernel   Print all children after adding (child pid = 4):
 Kernel   1. Process with pid=2 and delayed time 0
 Kernel   2. Process with pid=3 and delayed time 0
 Kernel   3. Process with pid=4 and delayed time 0
-User     Fork3: I'm parent: 1
+Kernel   Print a blocked queue when a parent is running (pid = 1):
+Kernel   Print a ready queue when a parent is running (pid = 1):
+User     Fork1: I'm parent: 1
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   Print vpn of new page table 506
+Kernel   Print pfn of new page table 957
+Kernel   Phys addr for new page table is 0x3bd000
+Kernel   Created a child with pid 5
+Kernel   Print all children after adding (child pid = 5):
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   3. Process with pid=4 and delayed time 0
+Kernel   4. Process with pid=5 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 1):
+Kernel   Print a ready queue when a parent is running (pid = 1):
+User     Fork1: I'm parent: 1
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   Print vpn of new page table 505
+Kernel   Print pfn of new page table 940
+Kernel   Phys addr for new page table is 0x3ac000
+Kernel   Created a child with pid 6
+Kernel   Print all children after adding (child pid = 6):
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   3. Process with pid=4 and delayed time 0
+Kernel   4. Process with pid=5 and delayed time 0
+Kernel   5. Process with pid=6 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 1):
+Kernel   Print a ready queue when a parent is running (pid = 1):
+User     Fork1: I'm parent: 1
 User     process 1 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   1. Process with pid=3 and delayed time 0
-Kernel   2. Process with pid=4 and delayed time 0
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 1 and running 2!
-Kernel   Print all children after removing (parent pid = 1, child pid = 2):
-Kernel   1. Process with pid=4
-Kernel   2. Process with pid=3
-Kernel   Print all children after removing (parent pid = 1, child pid = 4):
-Kernel   1. Child with pid=3!
-Kernel   Print all children after removing (parent pid = 1, child pid = 3):
-Kernel   No children!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 Kernel   Print a blocked queue when a child is running (pid = 2):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a child is running (pid = 2):
-Kernel   1. Process with pid=3 and delayed time 0
-Kernel   2. Process with pid=4 and delayed time 0
 User     Fork1: I'm child: 2
 User     I'm starting a new program
-Kernel   Created a child with pid 5
-Kernel   Print all children after adding (parent pid = 2, child pid = 5):
-Kernel   1. Child with pid=5!
+Kernel   Print vpn of new page table 510
+Kernel   Print pfn of new page table 2
+Kernel   Phys addr for new page table is 0x2000
+Kernel   Created a child with pid 7
+Kernel   Print all children after adding (child pid = 7):
+Kernel   1. Process with pid=7 and delayed time 0
 Kernel   Print a blocked queue when a parent is running (pid = 2):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a parent is running (pid = 2):
-Kernel   1. Process with pid=3 and delayed time 0
-Kernel   2. Process with pid=4 and delayed time 0
-Kernel   3. Process with pid=5 and delayed time 0
-User     Fork2: I'm parent: 2
-Kernel   Created a child with pid 6
-Kernel   Print all children after adding (parent pid = 2, child pid = 6):
-Kernel   1. Process with pid=5
-Kernel   2. Process with pid=6
+User     Fork1: I'm parent: 2
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   Print vpn of new page table 504
+Kernel   Print pfn of new page table 923
+Kernel   Phys addr for new page table is 0x39b000
+Kernel   Created a child with pid 8
+Kernel   Checking whether PT0 for process 8 is working
+Kernel   Print virtual addrees of page table for 8 - 0x3f8000
+Kernel   Print vpn of page table for 8 - 504
+Kernel   Print phys address of page table for 8 - 0x39b000
+Kernel   I'm about to change page table 0
+Kernel   Flush in cloneContext!!!!! (specifically for 8)
+Kernel   Validate was success
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch!!!!! (specifically for process 1 with pid=2)
+Kernel   Print all children after adding (child pid = 8):
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
 Kernel   Print a blocked queue when a parent is running (pid = 2):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a parent is running (pid = 2):
-Kernel   1. Process with pid=3 and delayed time 0
-Kernel   2. Process with pid=4 and delayed time 0
-Kernel   3. Process with pid=5 and delayed time 0
-Kernel   4. Process with pid=6 and delayed time 0
-User     Fork3: I'm parent: 2
+User     Fork1: I'm parent: 2
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   Print vpn of new page table 503
+Kernel   Print pfn of new page table 906
+Kernel   Phys addr for new page table is 0x38a000
+Kernel   Created a child with pid 9
+Kernel   Print all children after adding (child pid = 9):
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+Kernel   3. Process with pid=9 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 2):
+Kernel   Print a ready queue when a parent is running (pid = 2):
+User     Fork1: I'm parent: 2
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   Print vpn of new page table 502
+Kernel   Print pfn of new page table 888
+Kernel   Phys addr for new page table is 0x378000
+Kernel   Created a child with pid 10
+Kernel   Print all children after adding (child pid = 10):
+Kernel   1. Process with pid=7 and delayed time 0
+Kernel   2. Process with pid=8 and delayed time 0
+Kernel   3. Process with pid=9 and delayed time 0
+Kernel   4. Process with pid=10 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 2):
+Kernel   Print a ready queue when a parent is running (pid = 2):
+User     Fork1: I'm parent: 2
 User     process 2 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   1. Process with pid=4 and delayed time 0
-Kernel   2. Process with pid=5 and delayed time 0
-Kernel   3. Process with pid=6 and delayed time 0
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 2 and running 3!
-Kernel   Print all children after removing (parent pid = 2, child pid = 5):
-Kernel   1. Child with pid=6!
-Kernel   Print all children after removing (parent pid = 2, child pid = 6):
-Kernel   No children!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 Kernel   Print a blocked queue when a child is running (pid = 3):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a child is running (pid = 3):
-Kernel   1. Process with pid=4 and delayed time 0
-Kernel   2. Process with pid=5 and delayed time 0
-Kernel   3. Process with pid=6 and delayed time 0
-User     Fork2: I'm child: 3
+User     Fork1: I'm child: 3
 User     I'm starting a new program
-Kernel   Created a child with pid 7
-Kernel   Print all children after adding (parent pid = 3, child pid = 7):
-Kernel   1. Child with pid=7!
+Kernel   vpn 510 is already used
+Kernel   Print vpn of new page table 509
+Kernel   Print pfn of new page table 1009
+Kernel   Phys addr for new page table is 0x3f1000
+Kernel   Created a child with pid 11
+Kernel   Print all children after adding (child pid = 11):
+Kernel   1. Process with pid=11 and delayed time 0
 Kernel   Print a blocked queue when a parent is running (pid = 3):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a parent is running (pid = 3):
-Kernel   1. Process with pid=4 and delayed time 0
-Kernel   2. Process with pid=5 and delayed time 0
-Kernel   3. Process with pid=6 and delayed time 0
-Kernel   4. Process with pid=7 and delayed time 0
-User     Fork3: I'm parent: 3
+User     Fork1: I'm parent: 3
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   vpn 502 is already used
+Kernel   Print vpn of new page table 501
+Kernel   Print pfn of new page table 871
+Kernel   Phys addr for new page table is 0x367000
+Kernel   Created a child with pid 12
+Kernel   Print all children after adding (child pid = 12):
+Kernel   1. Process with pid=11 and delayed time 0
+Kernel   2. Process with pid=12 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 3):
+Kernel   Print a ready queue when a parent is running (pid = 3):
+User     Fork1: I'm parent: 3
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   vpn 502 is already used
+Kernel   vpn 501 is already used
+Kernel   Print vpn of new page table 500
+Kernel   Print pfn of new page table 854
+Kernel   Phys addr for new page table is 0x356000
+Kernel   Created a child with pid 13
+Kernel   Print all children after adding (child pid = 13):
+Kernel   1. Process with pid=11 and delayed time 0
+Kernel   2. Process with pid=12 and delayed time 0
+Kernel   3. Process with pid=13 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 3):
+Kernel   Print a ready queue when a parent is running (pid = 3):
+User     Fork1: I'm parent: 3
 User     process 3 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   1. Process with pid=5 and delayed time 0
-Kernel   2. Process with pid=6 and delayed time 0
-Kernel   3. Process with pid=7 and delayed time 0
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 3 and running 4!
-Kernel   Print all children after removing (parent pid = 3, child pid = 7):
-Kernel   No children!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 Kernel   Print a blocked queue when a child is running (pid = 4):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a child is running (pid = 4):
-Kernel   1. Process with pid=5 and delayed time 0
-Kernel   2. Process with pid=6 and delayed time 0
-Kernel   3. Process with pid=7 and delayed time 0
-User     Fork3: I'm child: 4
+User     Fork1: I'm child: 4
 User     I'm starting a new program
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   Print vpn of new page table 508
+Kernel   Print pfn of new page table 992
+Kernel   Phys addr for new page table is 0x3e0000
+Kernel   Created a child with pid 14
+Kernel   Print all children after adding (child pid = 14):
+Kernel   1. Process with pid=14 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 4):
+Kernel   Print a ready queue when a parent is running (pid = 4):
+User     Fork1: I'm parent: 4
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   vpn 502 is already used
+Kernel   vpn 501 is already used
+Kernel   vpn 500 is already used
+Kernel   Print vpn of new page table 499
+Kernel   Print pfn of new page table 837
+Kernel   Phys addr for new page table is 0x345000
+Kernel   Created a child with pid 15
+Kernel   Print all children after adding (child pid = 15):
+Kernel   1. Process with pid=14 and delayed time 0
+Kernel   2. Process with pid=15 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 4):
+Kernel   Print a ready queue when a parent is running (pid = 4):
+User     Fork1: I'm parent: 4
 User     process 4 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   1. Process with pid=6 and delayed time 0
-Kernel   2. Process with pid=7 and delayed time 0
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 4 and running 5!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 Kernel   Print a blocked queue when a child is running (pid = 5):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a child is running (pid = 5):
-Kernel   1. Process with pid=6 and delayed time 0
-Kernel   2. Process with pid=7 and delayed time 0
-User     Fork2: I'm child: 5
+User     Fork1: I'm child: 5
 User     I'm starting a new program
-Kernel   Created a child with pid 8
-Kernel   Print all children after adding (parent pid = 5, child pid = 8):
-Kernel   1. Child with pid=8!
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   Print vpn of new page table 507
+Kernel   Print pfn of new page table 975
+Kernel   Phys addr for new page table is 0x3cf000
+Kernel   Created a child with pid 16
+Kernel   Print all children after adding (child pid = 16):
+Kernel   1. Process with pid=16 and delayed time 0
 Kernel   Print a blocked queue when a parent is running (pid = 5):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a parent is running (pid = 5):
-Kernel   1. Process with pid=6 and delayed time 0
-Kernel   2. Process with pid=7 and delayed time 0
-Kernel   3. Process with pid=8 and delayed time 0
-User     Fork3: I'm parent: 5
+User     Fork1: I'm parent: 5
 User     process 5 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   1. Process with pid=7 and delayed time 0
-Kernel   2. Process with pid=8 and delayed time 0
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 5 and running 6!
-Kernel   Print all children after removing (parent pid = 5, child pid = 8):
-Kernel   No children!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 Kernel   Print a blocked queue when a child is running (pid = 6):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a child is running (pid = 6):
-Kernel   1. Process with pid=7 and delayed time 0
-Kernel   2. Process with pid=8 and delayed time 0
-User     Fork3: I'm child: 6
+User     Fork1: I'm child: 6
 User     I'm starting a new program
 User     process 6 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   1. Process with pid=8 and delayed time 0
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 6 and running 7!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 Kernel   Print a blocked queue when a child is running (pid = 7):
-Kernel   Queue is empty
 Kernel   Print a ready queue when a child is running (pid = 7):
-Kernel   1. Process with pid=8 and delayed time 0
-User     Fork3: I'm child: 7
+User     Fork1: I'm child: 7
 User     I'm starting a new program
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   Print vpn of new page table 506
+Kernel   Print pfn of new page table 940
+Kernel   Phys addr for new page table is 0x3ac000
+Kernel   Created a child with pid 17
+Kernel   Print all children after adding (child pid = 17):
+Kernel   1. Process with pid=17 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 7):
+Kernel   Print a ready queue when a parent is running (pid = 7):
+User     Fork1: I'm parent: 7
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   Print vpn of new page table 505
+Kernel   Print pfn of new page table 957
+Kernel   Phys addr for new page table is 0x3bd000
+Kernel   Created a child with pid 18
+Kernel   Print all children after adding (child pid = 18):
+Kernel   1. Process with pid=17 and delayed time 0
+Kernel   2. Process with pid=18 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 7):
+Kernel   Print a ready queue when a parent is running (pid = 7):
+User     Fork1: I'm parent: 7
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   vpn 502 is already used
+Kernel   vpn 501 is already used
+Kernel   vpn 500 is already used
+Kernel   vpn 499 is already used
+Kernel   Print vpn of new page table 498
+Kernel   Print pfn of new page table 820
+Kernel   Phys addr for new page table is 0x334000
+Kernel   Created a child with pid 19
+Kernel   Print all children after adding (child pid = 19):
+Kernel   1. Process with pid=17 and delayed time 0
+Kernel   2. Process with pid=18 and delayed time 0
+Kernel   3. Process with pid=19 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 7):
+Kernel   Print a ready queue when a parent is running (pid = 7):
+User     Fork1: I'm parent: 7
 User     process 7 is about to exit
 Kernel   Print a blocked queue before context switch:
-Kernel   Queue is empty
 Kernel   Print a ready queue before context switch:
-Kernel   Queue is empty
+Kernel   Flush in terminateSwitch1
 Kernel   Terminating 7 and running 8!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 8):
+Kernel   Print a ready queue when a child is running (pid = 8):
+User     Fork1: I'm child: 8
+User     I'm starting a new program
+Kernel   Print vpn of new page table 510
+Kernel   Print pfn of new page table 2
+Kernel   Phys addr for new page table is 0x2000
+Kernel   Created a child with pid 20
+Kernel   Print all children after adding (child pid = 20):
+Kernel   1. Process with pid=20 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 8):
+Kernel   Print a ready queue when a parent is running (pid = 8):
+User     Fork1: I'm parent: 8
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   vpn 502 is already used
+Kernel   vpn 501 is already used
+Kernel   vpn 500 is already used
+Kernel   vpn 499 is already used
+Kernel   vpn 498 is already used
+Kernel   Print vpn of new page table 497
+Kernel   Print pfn of new page table 802
+Kernel   Phys addr for new page table is 0x322000
+Kernel   Created a child with pid 21
+Kernel   Print all children after adding (child pid = 21):
+Kernel   1. Process with pid=20 and delayed time 0
+Kernel   2. Process with pid=21 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 8):
+Kernel   Print a ready queue when a parent is running (pid = 8):
+User     Fork1: I'm parent: 8
+User     process 8 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 8 and running 9!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 9):
+Kernel   Print a ready queue when a child is running (pid = 9):
+User     Fork1: I'm child: 9
+User     I'm starting a new program
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   Print vpn of new page table 504
+Kernel   Print pfn of new page table 923
+Kernel   Phys addr for new page table is 0x39b000
+Kernel   Created a child with pid 22
+Kernel   Print all children after adding (child pid = 22):
+Kernel   1. Process with pid=22 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 9):
+Kernel   Print a ready queue when a parent is running (pid = 9):
+User     Fork1: I'm parent: 9
+User     process 9 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 9 and running 10!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 10):
+Kernel   Print a ready queue when a child is running (pid = 10):
+User     Fork1: I'm child: 10
+User     I'm starting a new program
+User     process 10 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 10 and running 11!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 11):
+Kernel   Print a ready queue when a child is running (pid = 11):
+User     Fork1: I'm child: 11
+User     I'm starting a new program
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   Print vpn of new page table 503
+Kernel   Print pfn of new page table 888
+Kernel   Phys addr for new page table is 0x378000
+Kernel   Created a child with pid 23
+Kernel   Print all children after adding (child pid = 23):
+Kernel   1. Process with pid=23 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 11):
+Kernel   Print a ready queue when a parent is running (pid = 11):
+User     Fork1: I'm parent: 11
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   Print vpn of new page table 502
+Kernel   Print pfn of new page table 906
+Kernel   Phys addr for new page table is 0x38a000
+Kernel   Created a child with pid 24
+Kernel   Print all children after adding (child pid = 24):
+Kernel   1. Process with pid=23 and delayed time 0
+Kernel   2. Process with pid=24 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 11):
+Kernel   Print a ready queue when a parent is running (pid = 11):
+User     Fork1: I'm parent: 11
+User     process 11 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 11 and running 12!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 12):
+Kernel   Print a ready queue when a child is running (pid = 12):
+User     Fork1: I'm child: 12
+User     I'm starting a new program
+Kernel   vpn 510 is already used
+Kernel   Print vpn of new page table 509
+Kernel   Print pfn of new page table 1009
+Kernel   Phys addr for new page table is 0x3f1000
+Kernel   Created a child with pid 25
+Kernel   Print all children after adding (child pid = 25):
+Kernel   1. Process with pid=25 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 12):
+Kernel   Print a ready queue when a parent is running (pid = 12):
+User     Fork1: I'm parent: 12
+User     process 12 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 12 and running 13!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 13):
+Kernel   Print a ready queue when a child is running (pid = 13):
+User     Fork1: I'm child: 13
+User     I'm starting a new program
+User     process 13 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 13 and running 14!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 14):
+Kernel   Print a ready queue when a child is running (pid = 14):
+User     Fork1: I'm child: 14
+User     I'm starting a new program
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   vpn 507 is already used
+Kernel   vpn 506 is already used
+Kernel   vpn 505 is already used
+Kernel   vpn 504 is already used
+Kernel   vpn 503 is already used
+Kernel   vpn 502 is already used
+Kernel   Print vpn of new page table 501
+Kernel   Print pfn of new page table 854
+Kernel   Phys addr for new page table is 0x356000
+Kernel   Created a child with pid 26
+Kernel   Print all children after adding (child pid = 26):
+Kernel   1. Process with pid=26 and delayed time 0
+Kernel   Print a blocked queue when a parent is running (pid = 14):
+Kernel   Print a ready queue when a parent is running (pid = 14):
+User     Fork1: I'm parent: 14
+User     process 14 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 14 and running 15!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 15):
+Kernel   Print a ready queue when a child is running (pid = 15):
+User     Fork1: I'm child: 15
+User     I'm starting a new program
+User     process 15 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 15 and running 16!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
+Kernel   Print a blocked queue when a child is running (pid = 16):
+Kernel   Print a ready queue when a child is running (pid = 16):
+User     Fork1: I'm child: 16
+User     I'm starting a new program
+User     process 16 is about to exit
+Kernel   Print a blocked queue before context switch:
+Kernel   Print a ready queue before context switch:
+Kernel   Flush in terminateSwitch1
+Kernel   Terminating 16 and running 17!
+Kernel   I'm about to change page table 0
+Kernel   Flush in terminateSwitch2
+Kernel   Flush in terminateSwitch3
 
-ABORT: FlushTLB: PTE for kernel stack vpn 508 addr 0x1fc000 is not valid
+ABORT: ContextSwitch: kernel's switch function returned bad SavedContext
+(or with bad/mismatched kernel stack contents)

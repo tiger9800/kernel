@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 struct free_pages {
     int count;
     struct physical_frame *head;
@@ -23,6 +25,7 @@ struct pcb {
     queue *statusQ;
     int status;
     queue *childrenQ;
+    bool waiting;
 };
 
 // struct child {
