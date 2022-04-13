@@ -25,16 +25,16 @@ StartTerminal(int i)
     TracePrintf(0, "Pid %d got %d from Fork\n", GetPid(), pid);
 
     if (pid < 0) {
-	TtyPrintf(TTY_CONSOLE,
-	    "Cannot Fork control program for terminal %d.\n", i);
-	return (ERROR);
+		TtyPrintf(TTY_CONSOLE,
+			"Cannot Fork control program for terminal %d.\n", i);
+		return (ERROR);
     }
 
     if (pid == 0) {
-	Exec(cmd_argv[0], cmd_argv);
-	TtyPrintf(TTY_CONSOLE,
-	    "Cannot Exec control program for terminal %d.\n", i);
-	Exit(1);
+		Exec(cmd_argv[0], cmd_argv);
+		TtyPrintf(TTY_CONSOLE,
+			"Cannot Exec control program for terminal %d.\n", i);
+		Exit(1);
     }
 
     TtyPrintf(TTY_CONSOLE, "Started pid %d on terminal %d\n", pid, i);
@@ -47,41 +47,41 @@ main(int argc, char **argv)
 
 	(void)argc;
 	(void)argv;
-	
+
     int pids[NUM_TERMINALS];
     int i;
     int status;
     int pid;
 
     for (i = 0; i < NUM_TERMINALS; i++) {
-	pids[i] = StartTerminal(i);
-	if ((i == TTY_CONSOLE) && (pids[TTY_CONSOLE] < 0)) {
-	    TtyPrintf(TTY_CONSOLE, "Cannot start Console monitor!\n");
-	    Exit(1);
-	}
+		pids[i] = StartTerminal(i);
+		if ((i == TTY_CONSOLE) && (pids[TTY_CONSOLE] < 0)) {
+			TtyPrintf(TTY_CONSOLE, "Cannot start Console monitor!\n");
+			Exit(1);
+		}
     }
 
     while (1) {
-	pid = Wait(&status);
-	if (pid == pids[TTY_CONSOLE]) {
-	    TtyPrintf(TTY_CONSOLE, "Halting Yalnix\n");
-	    /*
-	     *  Halt should normally be a privileged instruction (and
-	     *  thus not usable from user mode), but the hardware
-	     *  has been set up to allow it for this project so that
-	     *  we can shut down Yalnix simply here.
-	     */
-	    Halt();
-	}
-	for (i = 1; i < NUM_TERMINALS; i++) {
-	    if (pid == pids[i]) break;
-	}
-	if (i < NUM_TERMINALS) {
-	    TtyPrintf(TTY_CONSOLE, "Pid %d exited on terminal %d.\n", pid, i);
-	    pids[i] = StartTerminal(i);
-	}
-	else {
-	    TtyPrintf(TTY_CONSOLE, "Mystery pid %d returned from Wait!\n", pid);
-	}
+		pid = Wait(&status);
+		if (pid == pids[TTY_CONSOLE]) {
+			TtyPrintf(TTY_CONSOLE, "Halting Yalnix\n");
+			/*
+			*  Halt should normally be a privileged instruction (and
+			*  thus not usable from user mode), but the hardware
+			*  has been set up to allow it for this project so that
+			*  we can shut down Yalnix simply here.
+			*/
+			Halt();
+		}
+		for (i = 1; i < NUM_TERMINALS; i++) {
+			if (pid == pids[i]) break;
+		}
+		if (i < NUM_TERMINALS) {
+			TtyPrintf(TTY_CONSOLE, "Pid %d exited on terminal %d.\n", pid, i);
+			pids[i] = StartTerminal(i);
+		}
+		else {
+			TtyPrintf(TTY_CONSOLE, "Mystery pid %d returned from Wait!\n", pid);
+		}
     }
 }

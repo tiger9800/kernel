@@ -549,7 +549,7 @@ int SetKernelBrk(void *addr) {
 
 static void initPageTables() {
     // Map pages for the kernel text (in region 1).
-    unsigned int curr_page = PAGE_TABLE_LEN;
+    unsigned int curr_page = VMEM_1_BASE >> PAGESHIFT;
     while(curr_page < (uintptr_t)(&_etext) >> PAGESHIFT) {
         int ind = curr_page % PAGE_TABLE_LEN;
         region1[ind].pfn = curr_page;
@@ -1231,19 +1231,13 @@ static int KernelWrite(ExceptionInfo *info) {
     int len = info->regs[3];
     if (len < 0) return ERROR;
     if (len == 0) return 0;
-     TracePrintf(0, "In kernek write!!\n");
     line *nextLine = malloc(sizeof(line));
-    TracePrintf(0, "malloced!!\n");
     nextLine->init_ptr = malloc(sizeof(char)*len);
-    TracePrintf(0, "malloced2!!\n");
     nextLine->content = nextLine->init_ptr;
     memcpy(nextLine->content, buf, len);
-    TracePrintf(0, "Copied\n");
     nextLine->len = len;
     terminals[term].write_data = addData(nextLine, terminals[term].write_data);
-    TracePrintf(0, "After addData!!\n");
     TtyTransmit(term, nextLine->content, len);
-    TracePrintf(0, "After transmit!!\n");
     enqueue(active, &terminals[term].writeQ);
     runNextProcess();
     return 0;
