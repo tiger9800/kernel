@@ -184,39 +184,6 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
             return &((pcb*)p2)->ctx;
         }
     }
-    if (((pcb *)p2)->pid == 8) {
-        TracePrintf(0, "Checking whether PT0 for process 8 is working\n");
-        struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
-        TracePrintf(0, "Print virtual addrees of page table for 8 - %p\n", pt0_virtual_addr);
-        // Otherwise, we need to find a physical address.
-        // Convert a virtual address of page table 0 to its vpn.
-        unsigned int pt0_vpn = (((uintptr_t)pt0_virtual_addr) >> PAGESHIFT) % PAGE_TABLE_LEN;
-        TracePrintf(0, "Print vpn of page table for 8 - %i\n", pt0_vpn);
-        void* pt0_physical_addr = (void *)((uintptr_t)region1[pt0_vpn].pfn << PAGESHIFT);
-        TracePrintf(0, "Print phys address of page table for 8 - %p\n", pt0_physical_addr);
-        // Let hardware know a physical address of a new page table 0.
-        TracePrintf(0, "I'm about to change page table 0\n");
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
-        // Flush TLB for an entire region 0.
-        TracePrintf(0, "Flush in cloneContext!!!!! (specifically for 8)\n");
-        WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-        TracePrintf(0, "Validate was success\n");
-        struct pte *pt0_virtual_addr2 = ((pcb *)p1)->page_table0;
-        // Otherwise, we need to find a physical address.
-        // Convert a virtual address of page table 0 to its vpn.
-        unsigned int pt0_vpn2 = (((uintptr_t)pt0_virtual_addr2) >> PAGESHIFT) % PAGE_TABLE_LEN;
-        // Find a corresponding physical address of page table 0.
-        void* pt0_physical_addr2 = (void *)((uintptr_t)region1[pt0_vpn2].pfn << PAGESHIFT);
-        // Let hardware know a physical address of a new page table 0.
-        TracePrintf(0, "I'm about to change page table 0\n");
-        WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr2);
-        // Flush TLB for an entire region 0.
-        TracePrintf(0, "Flush in terminateSwitch!!!!! (specifically for process 1 with pid=%i)\n", ((pcb *)p1)->pid);
-        WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
-    }
-
-
-
 
     return &((pcb*)p2)->ctx;
 }
@@ -242,7 +209,7 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
         WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
     }
     // Flush TLB for an entire region 0.
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
 
     // Make process 2 active.
     active = (pcb *)p2;
@@ -256,7 +223,7 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     (void)p1;
     // Flush TLB for an entire region 0.
     TracePrintf(0, "Flush in terminateSwitch1\n");
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
     TracePrintf(0, "Terminating %i and running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     struct pte *pt0_virtual_addr = ((pcb *)p2)->page_table0;
     if (((pcb*)p2)->pid == 0) {
@@ -279,7 +246,7 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     }
     // Flush TLB for an entire region 0.
     TracePrintf(0, "Flush in terminateSwitch2\n");
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
     //do all the free memory stuff
     int currPage;
     for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
@@ -294,7 +261,7 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
 
     // Flush TLB for an entire region 0.
     TracePrintf(0, "Flush in terminateSwitch3\n");
-    WriteRegister(REG_TLB_FLUSH, TLB_FLUSH_0);
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
 
     // Working with status queue:
     // Free pcbs of children that was not reaped by wait.
@@ -418,17 +385,17 @@ void trap_clock_handler(ExceptionInfo *info) {
                 enqueue(active, &readyQ);
             }
             prevActive = active;
-            TracePrintf(0, "Print a blocked queue before context switch:\n");
+            // TracePrintf(0, "Print a blocked queue before context switch:\n");
             //printQueue(blockedQ);
-            TracePrintf(0, "Print a ready queue before context switch:\n");
+            // TracePrintf(0, "Print a ready queue before context switch:\n");
             //printQueue(readyQ);
             ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
         }
     } else {
         prevActive = active;
-        TracePrintf(0, "Print a blocked queue:\n");
+        // TracePrintf(0, "Print a blocked queue:\n");
         //printQueue(blockedQ);
-        TracePrintf(0, "Print a ready queue:\n");
+        // TracePrintf(0, "Print a ready queue:\n");
         //printQueue(readyQ);
     }
 }
@@ -719,6 +686,8 @@ static struct pte *getNewPageTable() {
 
     // We set every valid bit in the page table to 0 in MySwitchFunc for "consistency."
     struct pte *pt0_vrt_addr = (struct pte *)(uintptr_t)(VMEM_1_BASE + (vpn << PAGESHIFT));
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)pt0_vrt_addr);
+
     // "Clear" this chunk of memory to avoid weird bugs.
     // memset((void *)pt0_vrt_addr, '\0', PAGE_TABLE_LEN * sizeof(struct pte));
     int curr_page = 0;
@@ -730,6 +699,14 @@ static struct pte *getNewPageTable() {
 }
 
 static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
+    
+    if (curr_page == 508) {
+        if (src->valid == 0) {
+            TracePrintf(0, "Src: 508 is invalid\n");
+        } else {
+            TracePrintf(0, "Src: 508 is valid\n");
+        }
+    }
     if(!src->valid) {
         dest->valid = 0;
     } else {
@@ -748,6 +725,13 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
         memcpy((void *)addrToCopy, (void*)(uintptr_t)(curr_page << PAGESHIFT), PAGESIZE);
         // Unmap this pfn since we won't use it anymore.
         unReservePage();
+    }
+    if (curr_page == 508) {
+        if (dest->valid == 0) {
+            TracePrintf(0, "Des: 508 is invalid\n");
+        } else {
+            TracePrintf(0, "Des: 508 is valid\n");
+        }
     }
     return 0;
 }
@@ -1021,9 +1005,9 @@ static int KernelFork() {
     }
     ContextSwitch(cloneContext, &childPCB->ctx, (void *)active, (void *)childPCB);
     if(active->pid == childPCB->pid) {
-        TracePrintf(0, "Print a blocked queue when a child is running (pid = %i):\n", active->pid);
+        // TracePrintf(0, "Print a blocked queue when a child is running (pid = %i):\n", active->pid);
         //printQueue(blockedQ);
-        TracePrintf(0, "Print a ready queue when a child is running (pid = %i):\n", active->pid);
+        // TracePrintf(0, "Print a ready queue when a child is running (pid = %i):\n", active->pid);
         //printQueue(readyQ);
         return 0;
     } else {
@@ -1032,9 +1016,9 @@ static int KernelFork() {
         // Add a child to the children queue
         childPCB->parent = active;
         addChild(childPCB, active->childrenQ);
-        TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
-        //printQueue(blockedQ);
-        TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
+        // TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
+        // //printQueue(blockedQ);
+        // TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
         //printQueue(readyQ);
         return childPCB->pid;
     }
@@ -1078,9 +1062,9 @@ static void KernelExit(int status) {
     // Context switch to this process.
     if (nextReady != NULL) {
         // There is the next non-idle procees that we can switch to!
-        TracePrintf(0, "Print a blocked queue before context switch:\n");
+        // TracePrintf(0, "Print a blocked queue before context switch:\n");
         //printQueue(blockedQ);
-        TracePrintf(0, "Print a ready queue before context switch:\n");
+        // TracePrintf(0, "Print a ready queue before context switch:\n");
         //printQueue(readyQ);
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)nextReady);
     } else if (blockedQ.count != 0) {
