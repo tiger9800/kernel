@@ -1,0 +1,22 @@
+0>1. Process 1 line (it's a parent)
+1>1. Process 2 line (it's a child)
+0>1. Process 1 line (it's a parent)
+1>1. Process 2 line (it's a child)
+0>1. Process 1 line (it's a parent)
+1>1. Process 2 line (it's a child)
+1>2. Process 1 line (it's a parent)
+1>2. Process 2 line (it's a parent)
+3>2. Process 3 line (it's a child)
+1>2. Process 1 line (it's a parent)
+3>2. Process 4 line (it's a child)
+1>2. Process 2 line (it's a parent)
+3>2. Process 3 line (it's a child)
+1>2. Process 1 line (it's a parent)
+3>2. Process 4 line (it's a child)
+1>2. Process 2 line (it's a parent)
+3>2. Process 3 line (it's a child)
+0>Process 1 is about to exit!!!
+3>2. Process 4 line (it's a child)
+0>Process 2 is about to exit!!!
+0>Process 3 is about to exit!!!
+0>Process 4 is about to exit!!!

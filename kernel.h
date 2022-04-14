@@ -56,5 +56,5 @@ typedef struct term {
 } term;
 
 int LoadProgram(char *name, char **args, ExceptionInfo *info, struct pte *region0, struct free_pages free_pages, pcb *newPCB);
-void freePage(struct pte *newPte, int region);
+void freePage(struct pte* newPte, void *vir_addr);
 int getFreePage(); 

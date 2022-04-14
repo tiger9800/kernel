@@ -99,6 +99,13 @@ static int KernelWait(int *status);
 static int KernelRead(ExceptionInfo *info);
 static int KernelWrite(ExceptionInfo *info);
 
+
+
+static int stringVerifyRead(char *str);
+static int checkWritePtr(int *statusPtr);
+static int checkBufKernelRead(int len, void* buf);
+static int checkBufKernelWrite(int len, void* buf);
+
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
     (void)cmd_args;
 
@@ -187,7 +194,6 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         } else {
             LoadProgram(cmd_args[0], cmd_args, info, initPCB->page_table0, free_ll, initPCB);
         }
-        TracePrintf(0, "I'm done with load and aboue to exit Kernel start");
     }
 }
 
@@ -349,13 +355,14 @@ void trap_kernel_handler(ExceptionInfo *info) {
             info->regs[0] = KernelFork();
             break;
         case YALNIX_EXEC:
+            //verify that exec has valid arguments
             info->regs[0] = KernelExec(info);
             break;
         case YALNIX_EXIT:
             KernelExit(info->regs[1]);
             break;
         case YALNIX_WAIT:
-            info->regs[0] = KernelWait((int*) info->regs[1]);
+            info->regs[0] = KernelWait((int*)info->regs[1]);
             break;
         case YALNIX_GETPID:
             info->regs[0] = KernelGetPid();
@@ -433,10 +440,10 @@ void trap_illegal_handler(ExceptionInfo *info) {
     // kernel call should be the value ERROR; same as if child called Exit(ERROR)
     switch (info->code) {
             case TRAP_ILLEGAL_ILLOPC:
-                TracePrintf(0, "Illegal opcode in process %i\n", active->pid);
+                printf("Illegal opcode in process %i\n", active->pid);
                 break;
             case TRAP_ILLEGAL_ILLOPN:
-                TracePrintf(0, "Illegal operand in process %i\n", active->pid);
+                printf("Illegal operand in process %i\n", active->pid);
                 break;
             case TRAP_ILLEGAL_ILLADR:
                 printf("Illegal addressing mode in process %i\n", active->pid);
@@ -475,7 +482,7 @@ void trap_illegal_handler(ExceptionInfo *info) {
                 printf("Linux kernel sent SIGBUS in process %i\n", active->pid);
                 break;
             default:
-                TracePrintf(0, "Unidentified error type at address %p:\n", info->addr);
+                printf("Unidentified error type at address %p:\n", info->addr);
     }
     //this process should exit
     KernelExit(ERROR);
@@ -551,7 +558,41 @@ void trap_math_handler(ExceptionInfo *info) {
     // same as in trap_illegal (look at info->code for better description of error)
     (void)info;
     // TracePrintf(0, "trap_math_handler");
-
+    switch (info->code) {
+            case TRAP_MATH_INTDIV:
+                printf("Integer divide by zero in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_INTOVF:
+                printf("Integer overﬂow in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_FLTDIV:
+                printf("Floating divide by zero in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_FLTOVF:
+                printf("Floating overﬂow in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_FLTUND:
+                printf("Floating underﬂow in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_FLTRES:
+                printf("Floating inexact result in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_FLTINV:
+                printf("Invalid ﬂoating operation in process %i\n", active->pid);
+                break;
+            case TRAP_MATH_FLTSUB:
+                printf("FP subscript out of range process %i\n", active->pid);
+                break;
+            case TRAP_MATH_KERNEL:
+                printf("Linux kernel sent SIGFPE in process %i\n", active->pid);
+                break;  
+            case TRAP_MATH_USER:
+                printf("Received SIGFPE from user in process %i\n", active->pid);
+                break;
+            default:
+                printf("Unidentified error type at address %p:\n", info->addr);
+    }
+    KernelExit(ERROR);
     
 }
 
@@ -1122,7 +1163,27 @@ static int KernelFork() {
 
 static int KernelExec(ExceptionInfo *info) {
     // active already exists and has a page table and other stuff
+    //check the name
 
+    TracePrintf(0, "About to verify name\n");
+    if(stringVerifyRead((char* )info->regs[1])==ERROR) {
+        printf("Name passed to execute is invalid\n");
+        return ERROR;
+    }
+
+    char **args = (char **)info->regs[2];
+    int i = 0;
+    TracePrintf(0, "About to verify arguments\n");
+    while(args[i]!=NULL){
+
+        if(stringVerifyRead(args[i])==ERROR) {
+            return ERROR;
+        }
+        i++;
+    }
+    
+    //check the arguments
+    
     int ret_val = LoadProgram((char *)info->regs[1], (char **)info->regs[2], info, active->page_table0, free_ll, active);
     if (ret_val == -1) {
         return ERROR;
@@ -1146,7 +1207,7 @@ static void KernelExit(int status) {
     // 6) Go to its parent pcb, and enqueue process's pcb to the statusQueue of its parent.
     // 7) Context switch (use a terminateSwitch function) to the next ready process in ready queue or idle otherwise
     // 8) check counts of all queues, if there are no processes left, halt the kernel!!!
-
+    
     active->status = status;
     if(active->parent != NULL && active->parent->waiting) {
             TracePrintf(0, "Parent is done waiting. It's on readyQ now\n");
@@ -1171,7 +1232,6 @@ static void KernelExit(int status) {
         TracePrintf(0, "Idle is the last process running. I am going to halt\n");
         Halt();
     }
-    // TODO: check queue for I/O and waiting for children!!!!!!!!!!!!!
     
 }
 
@@ -1246,6 +1306,10 @@ static int KernelWait(int *status) {
         TracePrintf(0, "No status queue initialized!\n");
         return ERROR;
     }
+    if(checkWritePtr(status)==ERROR) {
+        return ERROR;
+    }
+
     if(active->statusQ->count == 0 && active->childrenQ->count == 0) {
         TracePrintf(0, "Nothing to wait on\n");
         return ERROR;
@@ -1271,18 +1335,27 @@ static int KernelWait(int *status) {
 
 }
 
+
+
 static int KernelRead(ExceptionInfo *info) {
     // Check all params (create separate function)
-    TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
+
+    //TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
+    
+    
     int term = info->regs[1];
     if (term < 0 || term >= NUM_TERMINALS) {
         return ERROR;
     }
     void *buf = (void *)info->regs[2];
+    //we need to check the buf and see if both kernel and user can write in it
     int len = info->regs[3];
     if (len < 0) return ERROR;
     if (len == 0) return 0;
     // Check buf!!!
+    if(checkBufKernelRead(len, buf) == ERROR) {
+        return ERROR;
+    }
     int ret_len = 0;
     while(true) {
         if (terminals[term].read_data != NULL) {     
@@ -1330,6 +1403,11 @@ static int KernelWrite(ExceptionInfo *info) {
     int len = info->regs[3];
     if (len < 0) return ERROR;
     if (len == 0) return 0;
+
+    if(checkBufKernelWrite(len, buf) == ERROR) {
+        return ERROR;
+    }
+
     line *nextLine = malloc(sizeof(line));
     nextLine->init_ptr = malloc(sizeof(char)*len);
     nextLine->content = nextLine->init_ptr;
@@ -1380,6 +1458,110 @@ static line *removeWriteData(term *t) {
     line *ret_val = t->write_data;
     t->write_data = t->write_data->next;
     return ret_val;
+}
+
+static int stringVerifyRead(char *str) {
+    //verify that each 
+    char* curr_char = str;
+    //TracePrintf(0, "I'm verfying\n");
+    while(*curr_char != '\0') {
+        //TracePrintf(0, "Start verify iteration\n");
+        //check if in processes memory
+        if((uintptr_t)curr_char >= VMEM_0_LIMIT || (uintptr_t)curr_char < MEM_INVALID_SIZE) {
+            return ERROR;
+        }
+        //it's in valid memory check the prteictions
+        unsigned int vpn = (uintptr_t)curr_char >> PAGESHIFT;
+
+        if(active->page_table0[vpn].valid != 1) {
+            return ERROR;
+        } 
+        if((active->page_table0[vpn].kprot & PROT_READ) != PROT_READ || (active->page_table0[vpn].uprot & PROT_READ) != PROT_READ) {//check if kernel can read here
+            return ERROR;
+        }
+        curr_char++;
+    }
+    return 0;
+}
+
+static int checkWritePtr(int *statusPtr) {
+    //TracePrintf(0, "Start checking writePtr\n");
+    if((uintptr_t)statusPtr >= VMEM_0_LIMIT || (uintptr_t)statusPtr < MEM_INVALID_SIZE) {
+            TracePrintf(0, "Return ERROR not in region 0\n");
+            return ERROR;
+    }
+
+    unsigned int vpn = (uintptr_t)statusPtr >> PAGESHIFT;
+
+    if(active->page_table0[vpn].valid != 1) {
+            TracePrintf(0, "Return ERROR because statusPtr invalid\n");
+            return ERROR;
+    } 
+    //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+    if((active->page_table0[vpn].kprot & PROT_WRITE) != PROT_WRITE) {//check if kernel can read here
+            TracePrintf(0, "Return ERROR because wrong protection\n");
+            return ERROR;
+    }
+    return 0;
+
+}
+
+static int checkBufKernelRead(int len, void* buf) {
+    while(len > 0) {
+        void* curr_ptr = buf - len - 1;
+        if((uintptr_t)curr_ptr >= VMEM_0_LIMIT || (uintptr_t)curr_ptr < MEM_INVALID_SIZE) {
+            TracePrintf(0, "Return ERROR not in region 0\n");
+            return ERROR;
+        }   
+
+        unsigned int vpn = (uintptr_t)curr_ptr >> PAGESHIFT;
+
+        if(active->page_table0[vpn].valid != 1) {
+            TracePrintf(0, "Return ERROR because buf vpn invalid\n");
+            return ERROR;
+        } 
+        //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+        if((active->page_table0[vpn].kprot & PROT_WRITE) != PROT_WRITE) {//check if kernel can write into the buffer
+            TracePrintf(0, "Return ERROR because wrong protection for buf\n");
+            return ERROR;
+        }
+
+        if((active->page_table0[vpn].uprot & PROT_READ) != PROT_READ) {//check if user can read from the buffer.
+            TracePrintf(0, "Return ERROR because wrong protection for buf\n");
+            return ERROR;
+        }
+        len--;
+    }
+        
+    return 0;
+    
+}
+
+static int checkBufKernelWrite(int len, void* buf) { 
+
+    while(len > 0) {
+        void* curr_ptr = buf - len - 1;
+        if((uintptr_t)curr_ptr >= VMEM_0_LIMIT || (uintptr_t)curr_ptr < MEM_INVALID_SIZE) {
+            TracePrintf(0, "Return ERROR not in region 0\n");
+            return ERROR;
+        }   
+
+        unsigned int vpn = (uintptr_t)curr_ptr >> PAGESHIFT;
+
+        if(active->page_table0[vpn].valid != 1) {
+            TracePrintf(0, "Return ERROR because buf vpn invalid\n");
+            return ERROR;
+        } 
+        //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+        if((active->page_table0[vpn].kprot & PROT_READ) != PROT_READ) {//check if kernel can write from the buffer
+            TracePrintf(0, "Return ERROR because wrong protection for kprot\n");
+            return ERROR;
+        }
+
+        len--;
+    }
+        
+    return 0;
 }
 
 

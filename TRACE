@@ -1,6 +1,6 @@
 ** Kernel   level 1 tracing enabled **
 ** User     level 1 tracing enabled **
-Kernel   LoadProgram 'idle', args 0x1ff8b0
+Kernel   LoadProgram 'idle', args 0x1ff8f0
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x130, bss_size 0x3098
 Kernel   entry 0x10100
@@ -14,68 +14,155 @@ Kernel   Src: 508 is valid
 Kernel   Des: 508 is valid
 Kernel   Doing a context switch from process 0 to process 1!
 Kernel   Completed a context switch from process 0 to process 1!
-Kernel   LoadProgram 'blowstack', args 0x1fffc0
+Kernel   LoadProgram 'test5', args 0x1fffd0
 Kernel   LoadProgram: LoadInfo status 0
-Kernel   text_size 0x7000, data_size 0x128, bss_size 0x3090
+Kernel   text_size 0x7000, data_size 0x128, bss_size 0x3490
 Kernel   entry 0x10100
-Kernel   LoadProgram: size 12, argcount 2
+Kernel   LoadProgram: size 6, argcount 1
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
-Kernel   I'm done with load and aboue to exit Kernel startUser     blowstack initially calling foo depth 5
-Kernel   trap_memory_handler!
-Kernel   Requested address: 0x1eadec
-Kernel   Current min_sp: 0x1fafc0
-Kernel   Current break: 27
-Kernel   Requested vpn: 490
-Kernel   Current min_sp vpn: 506
-Kernel   Current brk vpn: 27
-Kernel   Process's stack was expanded.
-User     blowstack foo: depth 5
-User     5 ========================
-User     5 ======================== done!
-Kernel   trap_memory_handler!
-Kernel   Requested address: 0x1dadcc
-Kernel   Current min_sp: 0x1ea000
-Kernel   Current break: 27
-Kernel   Requested vpn: 474
-Kernel   Current min_sp vpn: 490
-Kernel   Current brk vpn: 27
-Kernel   Process's stack was expanded.
-User     blowstack foo: depth 4
-User     4 ========================
-User     4 ======================== done!
-Kernel   trap_memory_handler!
-Kernel   Requested address: 0x1cadac
-Kernel   Current min_sp: 0x1da000
-Kernel   Current break: 27
-Kernel   Requested vpn: 458
-Kernel   Current min_sp vpn: 474
-Kernel   Current brk vpn: 27
-Kernel   Process's stack was expanded.
-User     blowstack foo: depth 3
-User     3 ========================
-User     3 ======================== done!
-Kernel   trap_memory_handler!
-Kernel   Requested address: 0x1bad8c
-Kernel   Current min_sp: 0x1ca000
-Kernel   Current break: 27
-Kernel   Requested vpn: 442
-Kernel   Current min_sp vpn: 458
-Kernel   Current brk vpn: 27
-Kernel   Process's stack was expanded.
-User     blowstack foo: depth 2
-User     2 ========================
-User     2 ======================== done!
-Kernel   trap_memory_handler!
-Kernel   Requested address: 0x1aad6c
-Kernel   Current min_sp: 0x1ba000
-Kernel   Current break: 27
-Kernel   Requested vpn: 426
-Kernel   Current min_sp vpn: 442
-Kernel   Current brk vpn: 27
-Kernel   Process's stack was expanded.
-User     blowstack foo: depth 1
-User     1 ========================
-User     1 ======================== done!
-User     About to exit!
+Kernel   vpn 510 is already used
+Kernel   Print vpn of new page table 509
+Kernel   Print pfn of new page table 1009
+Kernel   Phys addr for new page table is 0x3f1000
+Kernel   Created a child with pid 2
+Kernel   Src: 508 is valid
+Kernel   Des: 508 is valid
+Kernel   Print all children after adding (child pid = 2):
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   Doing a context switch from process 1 to process 2!
+Kernel   Completed a context switch from process 1 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 2 to process 1!
+Kernel   Completed a context switch from process 2 to process 1!
+Kernel   Doing a context switch from process 1 to process 0!
+Kernel   Completed a context switch from process 1 to process 0!
+User     Idle is working
+Kernel   trap_tty_transmit_handler
+Kernel   trap_tty_transmit_handler
+User     Idle is working
+Kernel   trap_clock_handler
+Kernel   Doing a context switch from process 0 to process 2!
+Kernel   Completed a context switch from process 0 to process 2!
+Kernel   Doing a context switch from process 2 to process 1!
+Kernel   Completed a context switch from process 2 to process 1!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 1 to process 2!
+Kernel   Completed a context switch from process 1 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 2 to process 1!
+Kernel   Completed a context switch from process 2 to process 1!
+Kernel   trap_tty_transmit_handler
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   Print vpn of new page table 508
+Kernel   Print pfn of new page table 991
+Kernel   Phys addr for new page table is 0x3df000
+Kernel   Created a child with pid 3
+Kernel   Src: 508 is valid
+Kernel   Des: 508 is valid
+Kernel   Print all children after adding (child pid = 3):
+Kernel   1. Process with pid=2 and delayed time 0
+Kernel   2. Process with pid=3 and delayed time 0
+Kernel   Doing a context switch from process 1 to process 2!
+Kernel   Completed a context switch from process 1 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   vpn 510 is already used
+Kernel   vpn 509 is already used
+Kernel   vpn 508 is already used
+Kernel   Print vpn of new page table 507
+Kernel   Print pfn of new page table 974
+Kernel   Phys addr for new page table is 0x3ce000
+Kernel   Created a child with pid 4
+Kernel   Src: 508 is valid
+Kernel   Des: 508 is valid
+Kernel   Print all children after adding (child pid = 4):
+Kernel   1. Process with pid=4 and delayed time 0
+Kernel   Doing a context switch from process 2 to process 3!
+Kernel   Completed a context switch from process 2 to process 3!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 3 to process 1!
+Kernel   Completed a context switch from process 3 to process 1!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 1 to process 4!
+Kernel   Completed a context switch from process 1 to process 4!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 4 to process 2!
+Kernel   Completed a context switch from process 4 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 2 to process 3!
+Kernel   Completed a context switch from process 2 to process 3!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 3 to process 1!
+Kernel   Completed a context switch from process 3 to process 1!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 1 to process 4!
+Kernel   Completed a context switch from process 1 to process 4!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 4 to process 2!
+Kernel   Completed a context switch from process 4 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 2 to process 3!
+Kernel   Completed a context switch from process 2 to process 3!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 3 to process 1!
+Kernel   Completed a context switch from process 3 to process 1!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 1 to process 4!
+Kernel   Completed a context switch from process 1 to process 4!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 4 to process 2!
+Kernel   Completed a context switch from process 4 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 2 to process 3!
+Kernel   Completed a context switch from process 2 to process 3!
+Kernel   trap_tty_transmit_handler
+Kernel   Doing a context switch from process 3 to process 1!
+Kernel   Completed a context switch from process 3 to process 1!
+Kernel   trap_tty_transmit_handler
+Kernel   Print a reading queue!!!
+Kernel   Queue is empty
+Kernel   Terminating 1 and or running 4!
+Kernel   Wrote new pt0 and flushed!
+Kernel   Before freeing a page table
+Kernel   Print its vpn: 510
+Kernel   Print its virt_address: 0x3fe000
+Kernel   Free pages2
+Kernel   Active is 1
+Kernel   Not in status
+Kernel   After letting know status
+Kernel   Did active status!
+Kernel   Did children!
+Kernel   Parent null!
+Kernel   Doing a context switch from process 4 to process 2!
+Kernel   Completed a context switch from process 4 to process 2!
+Kernel   trap_tty_transmit_handler
+Kernel   Print a reading queue!!!
+Kernel   Queue is empty
+Kernel   Terminating 2 and or running 3!
+Kernel   Wrote new pt0 and flushed!
+Kernel   Before freeing a page table
+Kernel   Print its vpn: 509
+Kernel   Print its virt_address: 0x3fd000
+Kernel   Free pages2
+Kernel   Active is 2
+Kernel   Not in status
+Kernel   After letting know status
+Kernel   Did active status!
+Kernel   Did children!
+Kernel   Parent null!
+Kernel   Print a reading queue!!!
+Kernel   Queue is empty
+Kernel   Terminating 3 and or running 4!
+Kernel   Wrote new pt0 and flushed!
+Kernel   Before freeing a page table
+Kernel   Print its vpn: 508
+Kernel   Print its virt_address: 0x3fc000
+Kernel   Free pages2
+Kernel   Active is 3
+Kernel   Not in status
+Kernel   After letting know status
+Kernel   Did active status!
+Kernel   Did children!
+Kernel   Parent null!
 Kernel   Idle is the last process running. I am going to halt
