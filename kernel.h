@@ -29,11 +29,6 @@ struct pcb {
     int numToRead;
 };
 
-// struct child {
-//     struct child *next;
-//     struct child *prev;
-//     pcb *pcb;
-// };
 
 struct queue {
     pcb *head;

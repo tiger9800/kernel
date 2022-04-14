@@ -78,8 +78,6 @@ static void enqueue(pcb* proc, queue* queue);
 static pcb *dequeue(queue* queue);
 static void delayProcess(pcb* proc, int delay);
 static void runNextProcess();
-static void printQueue(queue q);
-static void printChildren(queue q);
 static pcb *init_pcb();
 static void addChild(pcb* proc, queue* queue);
 // static int removeChild(pcb *parent, pcb *childPCB);
@@ -106,6 +104,14 @@ static int checkWritePtr(int *statusPtr);
 static int checkBufKernelRead(int len, void* buf);
 static int checkBufKernelWrite(int len, void* buf);
 
+/**
+ * @brief Starts up the kernel
+ * 
+ * @param info registers put  on 
+ * @param pmem_size 
+ * @param orig_brk 
+ * @param cmd_args 
+ */
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
     (void)cmd_args;
 
@@ -178,7 +184,13 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         TracePrintf(0, "No enough physical or virtual memory to create a process\n");
         Halt();
     }
+    TracePrintf(0, "I'm here\n");
     // Save current context to the saved context of process to be run after KernelStart()
+    int count = (DOWN_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT) - (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT);
+    if(count > free_ll.count) {
+        printf("Not enough memory to create an init process");
+        Halt();
+    }
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
     // Switch from idle process to init.
     if (active->pid == idle_PCB.pid) {
@@ -194,6 +206,7 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
             LoadProgram(cmd_args[0], cmd_args, info, initPCB->page_table0, free_ll, initPCB);
         }
     }
+    TracePrintf(0, "I'm done with kernel start");
 }
 
 
@@ -205,14 +218,14 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;  
     (void)p1;
     int curr_page;
-
+    
     // Make a "deep" copy of the kernel stack.
     for (curr_page = (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page < (DOWN_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT); curr_page++) {
         // Get a free pfn for this page.
         struct pte *dest = &((pcb*)p2)->page_table0[curr_page];
         struct pte *src = &((pcb*)p1)->page_table0[curr_page];
         if (copyPTE(dest, src, curr_page) == ERROR) {
-            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            //TracePrintf(0, "No enough free physical memory to complete operation\n");
             // Call "terminate process" that will:
             
             // 1) "unmap" page_table0 address
@@ -232,7 +245,7 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
 SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;
     (void)p1;
-    TracePrintf(0, "Doing a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+    //TracePrintf(0, "Doing a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     void *pt0_physical_addr = find_PT0_physical_addr((pcb *)p2);
     // Let hardware know a physical address of a new page table 0.
     WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
@@ -240,7 +253,7 @@ SavedContext *switchProcesses(SavedContext *ctxp, void *p1, void *p2) {
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
     // Make process 2 active.
     active = (pcb *)p2;
-    TracePrintf(0, "Completed a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+    //TracePrintf(0, "Completed a context switch from process %i to process %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     return &((pcb*)p2)->ctx;
 }
 
@@ -248,15 +261,13 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     //Terminate p1 and switch to p2
     (void)ctxp;
     (void)p1;
-    TracePrintf(0, "Print a reading queue!!!\n");
-    printQueue(terminals[0].readQ);
-    TracePrintf(0, "Terminating %i and or running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
+    //TracePrintf(0, "Terminating %i and or running %i!\n", ((pcb *)p1)->pid, ((pcb *)p2)->pid);
     void *pt0_physical_addr = find_PT0_physical_addr((pcb *)p2);
     // Let hardware know a physical address of a new page table 0.
     WriteRegister(REG_PTR0, (RCS421RegVal)pt0_physical_addr);
     // Flush TLB for an entire region 0.
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)TLB_FLUSH_0);
-    TracePrintf(0, "Wrote new pt0 and flushed!\n");
+    //TracePrintf(0, "Wrote new pt0 and flushed!\n");
     //do all the free memory stuff
     int currPage;
     for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
@@ -266,41 +277,32 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     } 
     struct pte *region0_addr = active->page_table0;
     unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
-    TracePrintf(0, "Before freeing a page table\n");
-    TracePrintf(0, "Print its vpn: %i\n", idx);
-    TracePrintf(0, "Print its virt_address: %p\n", (idx << PAGESHIFT) + VMEM_1_BASE);
+    //TracePrintf(0, "Before freeing a page table\n");
+    //TracePrintf(0, "Print its vpn: %i\n", idx);
+    //TracePrintf(0, "Print its virt_address: %p\n", (idx << PAGESHIFT) + VMEM_1_BASE);
     freePage(&region1[idx], region0_addr);
-    TracePrintf(0, "Free pages2\n");
+    //TracePrintf(0, "Free pages2\n");
     // Working with status queue:
     // Free pcbs of children that was not reaped by wait.
     if (active == NULL) {
-        TracePrintf(0, "Active is null\n");
+        //TracePrintf(0, "Active is null\n");
     } else {
-        TracePrintf(0, "Active is %i\n", active->pid);
+        //TracePrintf(0, "Active is %i\n", active->pid);
     }
     if(active->statusQ != NULL && active->statusQ->count>0) {
-        TracePrintf(0, "In status\n");
+        //TracePrintf(0, "In status\n");
         pcb *currChild = dequeue(active->statusQ);
-        if (currChild == NULL) TracePrintf(0, "first child is null\n");
-        else TracePrintf(0, "first child is not null\n");
-        TracePrintf(0, "Did first dequeue pid=%i\n", currChild->pid);
-        TracePrintf(0, "Heyyyy%i\n", currChild->pid);
         while(currChild != NULL) {
-            TracePrintf(0, "About to free a currChild%i\n", currChild->pid);
+            //TracePrintf(0, "About to free a currChild%i\n", currChild->pid);
             free(currChild);
-            TracePrintf(0, "Freed\n");
+            //TracePrintf(0, "Freed\n");
             currChild = dequeue(active->statusQ);
         }
-        TracePrintf(0, "Exit loop\n");
-    } else {
-        TracePrintf(0, "Not in status\n");
+        //TracePrintf(0, "Exit loop\n");
     }
-    TracePrintf(0, "After letting know status\n");
-    // Free a status queue.
     if (active->statusQ != NULL) {
         free(active->statusQ);
     }
-    TracePrintf(0, "Did active status!\n");
 
     // Working with a children queue.
     // Tell every alive child that the parent exited, so they can free their own pcb.
@@ -314,14 +316,11 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     if (active->childrenQ != NULL) {
         free(active->childrenQ);
     }
-    TracePrintf(0, "Did children!\n");
 
     if(active->parent == NULL) {
-        TracePrintf(0, "Parent null!\n");
         // If process does not have a parent, process can free its pcb.
         free(active);
     } else {
-        TracePrintf(0, "Parent not null!\n");
         // If process has a parent, we should remove its pcb from parent's children queue.
         if (removeChild(active->parent->childrenQ, active) == -1) {
             TracePrintf(0, "Parent doesn't have a child with pid=%i in its children queue!\n", active->pid);
@@ -329,12 +328,7 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
         // Now we should add its pcb to its parent's status queue.
         enqueue(active, active->parent->statusQ);
         
-        // Print a status queue.
-        TracePrintf(0, "Print a status queue of the parent after process %i exited:\n", active->pid);
-        //printQueue(*(active->parent->statusQ));
-        // Print a children queue.
-        TracePrintf(0, "Print a children queue of the parent after process %i exited:\n", active->pid);
-        printChildren(*(active->parent->childrenQ));
+
     }
 
     // Make process 2 active.
@@ -380,17 +374,17 @@ void trap_kernel_handler(ExceptionInfo *info) {
             info->regs[0] = KernelWrite(info);
             break;
         default:
-            TracePrintf(0, "Invalid code in the trap_kernel_handler\n");
+            printf("Invalid code in the trap_kernel_handler\n");
     }
 }
 
 void trap_clock_handler(ExceptionInfo *info) {
     (void)info;
-    TracePrintf(0, "trap_clock_handler\n");
+    //TracePrintf(0, "trap_clock_handler\n");
     // Decrement a delay_offset of the first blocked process.
     if (blockedQ.head != NULL) {
        blockedQ.head->delay_offset--;
-       TracePrintf(0, "Pid %i left to wait %i\n",blockedQ.head->pid, blockedQ.head->delay_offset);
+       //TracePrintf(0, "Pid %i left to wait %i\n",blockedQ.head->pid, blockedQ.head->delay_offset);
     }
     // Put all processes whose delay is 0 to a ready queue.
     pcb *curr_process = blockedQ.head;
@@ -415,17 +409,17 @@ void trap_clock_handler(ExceptionInfo *info) {
                 enqueue(active, &readyQ);
             }
             prevActive = active;
-            // TracePrintf(0, "Print a blocked queue before context switch:\n");
+            // //TracePrintf(0, "Print a blocked queue before context switch:\n");
             //printQueue(blockedQ);
-            // TracePrintf(0, "Print a ready queue before context switch:\n");
+            // //TracePrintf(0, "Print a ready queue before context switch:\n");
             //printQueue(readyQ);
             ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
         }
     } else {
         prevActive = active;
-        // TracePrintf(0, "Print a blocked queue:\n");
+        // //TracePrintf(0, "Print a blocked queue:\n");
         //printQueue(blockedQ);
-        // TracePrintf(0, "Print a ready queue:\n");
+        // //TracePrintf(0, "Print a ready queue:\n");
         //printQueue(readyQ);
     }
 }
@@ -489,18 +483,18 @@ void trap_illegal_handler(ExceptionInfo *info) {
 }
 
 void trap_memory_handler(ExceptionInfo *info) {
-    TracePrintf(0, "trap_memory_handler!\n");
-    TracePrintf(0, "Requested address: %p\n", info->addr);
-    TracePrintf(0, "Current min_sp: %p\n", active->min_sp);
-    TracePrintf(0, "Current break: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
-    TracePrintf(0, "Requested vpn: %u\n", (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
-    TracePrintf(0, "Current min_sp vpn: %u\n", (uintptr_t)(active->min_sp) >> PAGESHIFT);
-    TracePrintf(0, "Current brk vpn: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
+    //TracePrintf(0, "trap_memory_handler!\n");
+    //TracePrintf(0, "Requested address: %p\n", info->addr);
+    //TracePrintf(0, "Current min_sp: %p\n", active->min_sp);
+    //TracePrintf(0, "Current break: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
+    //TracePrintf(0, "Requested vpn: %u\n", (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT);
+    //TracePrintf(0, "Current min_sp vpn: %u\n", (uintptr_t)(active->min_sp) >> PAGESHIFT);
+    //TracePrintf(0, "Current brk vpn: %u\n", (uintptr_t)(active->brk) >> PAGESHIFT);
 
 
-    // TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
-    // TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
-    // TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
+    // //TracePrintf(0, "trap_memory_handler, code:%i\n", info->code);
+    // //TracePrintf(0, "trap_memory_handler, pc:%i\n", info->pc);
+    // //TracePrintf(0, "trap_memory_handler, sp:%i\n", info->sp);
 
 
     unsigned int curr_page = (DOWN_TO_PAGE(info->addr)) >> PAGESHIFT;
@@ -508,7 +502,7 @@ void trap_memory_handler(ExceptionInfo *info) {
         // Just set a stack pointer to this address.
         // info->sp = info->addr;
     } else if (info->addr == NULL || info->addr <= active->brk || info->addr >= active->min_sp) {
-        TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
+        //TracePrintf(0, "ERROR: disallowed memory access for process %i:\n", KernelGetPid());
         switch (info->code) {
             case TRAP_MEMORY_MAPERR:
                 printf("No mapping at addr %p in process %i\n", info->addr, active->pid);
@@ -550,14 +544,14 @@ void trap_memory_handler(ExceptionInfo *info) {
         // info->sp = info->addr;
         // Lower a pointer to the lowest allocated page for the user stack.
         active->min_sp = (void *)DOWN_TO_PAGE(info->addr);
-        TracePrintf(0, "Process's stack was expanded.\n");
+        //TracePrintf(0, "Process's stack was expanded.\n");
     }
 }
 
 void trap_math_handler(ExceptionInfo *info) {
     // same as in trap_illegal (look at info->code for better description of error)
     (void)info;
-    // TracePrintf(0, "trap_math_handler");
+    // //TracePrintf(0, "trap_math_handler");
     switch (info->code) {
             case TRAP_MATH_INTDIV:
                 printf("Integer divide by zero in process %i\n", active->pid);
@@ -597,7 +591,7 @@ void trap_math_handler(ExceptionInfo *info) {
 }
 
 void trap_tty_transmit_handler(ExceptionInfo *info) {
-    TracePrintf(0, "trap_tty_transmit_handler\n");
+    //TracePrintf(0, "trap_tty_transmit_handler\n");
     // The previous TtyTransmit hardware operation on info->code terminal has completed
     int term = info->code;
     // Unblock the blocked process that started this TtyWrite kernel call that started this output (head of writeQ)
@@ -613,26 +607,26 @@ void trap_tty_transmit_handler(ExceptionInfo *info) {
 }
 
 void trap_tty_receive_handler(ExceptionInfo *info) {
-    TracePrintf(0, "trap_tty_receive_handler\n");
+    //TracePrintf(0, "trap_tty_receive_handler\n");
     // a new line of input is available from the terminal of number info->code
     int term = info->code;
     int len = TtyReceive(term, input_buf, TERMINAL_MAX_LINE);
-    TracePrintf(0, "Called TtyReceive and got len %i\n", len);
+    //TracePrintf(0, "Called TtyReceive and got len %i\n", len);
     line *nextLine = malloc(sizeof(line));
     nextLine->init_ptr = malloc(sizeof(char)*len);
     nextLine->content = nextLine->init_ptr;
     memcpy(nextLine->content, input_buf, len);
     nextLine->len = len;
-    TracePrintf(0, "added data to the buffer\n");
+    //TracePrintf(0, "added data to the buffer\n");
     terminals[term].read_data = addData(nextLine, terminals[term].read_data);
     //unblock all processes and let them read if they can
     int total_len = 0;
     while(terminals[term].readQ.count > 0 && total_len < len) {
-        TracePrintf(0, "About to dequeue\n");
+        //TracePrintf(0, "About to dequeue\n");
         pcb* newProc = dequeue(&terminals[term].readQ);
-        TracePrintf(0, "Process %i is about to be put on ready q\n", newProc->pid);
+        //TracePrintf(0, "Process %i is about to be put on ready q\n", newProc->pid);
         enqueue(newProc, &readyQ);
-        TracePrintf(0, "Process %i is put on ready q\n", newProc->pid);
+        //TracePrintf(0, "Process %i is put on ready q\n", newProc->pid);
         total_len += newProc->numToRead;
     }
 }  
@@ -742,13 +736,13 @@ void addInvalidPages() {
 
 // Adds a physical page to a free list of pages.
 void addPage(int pfn) {
-    // TracePrintf(0, "I'm in addPage and pfn is %i\n", pfn);
+    // //TracePrintf(0, "I'm in addPage and pfn is %i\n", pfn);
     // Get a virtual address that maps to desired pfn.
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(pfn);
     currFrame->next = free_ll.head;
     // Set a head to a physical address of this page.
     free_ll.head = (struct physical_frame *)(uintptr_t)(pfn << PAGESHIFT);
-    // TracePrintf(0, "free_ll.head is %p\n", free_ll.head);
+    // //TracePrintf(0, "free_ll.head is %p\n", free_ll.head);
     free_ll.count++;
     unReservePage();  
 }
@@ -756,17 +750,17 @@ void addPage(int pfn) {
 // Removes a free page from the list of fre pages.
 int getFreePage() {
     if (free_ll.count == 0) {
-        TracePrintf(0, "Not enough free physical pages in getFreePage()\n");
+        //TracePrintf(0, "Not enough free physical pages in getFreePage()\n");
         return -1;
     }
-    // TracePrintf(0, "I'm in get free page and head is %p\n", free_ll.head);
+    // //TracePrintf(0, "I'm in get free page and head is %p\n", free_ll.head);
     int resultPfn = ((uintptr_t)free_ll.head >> PAGESHIFT);
     // Map a virtual address to resultPfn.
     struct physical_frame* currFrame = (struct physical_frame *)reservePage(resultPfn);
     free_ll.head = currFrame->next; 
     free_ll.count--;
     unReservePage();
-    // TracePrintf(0, "Took a new pfn from free list %i\n", resultPfn);
+    // //TracePrintf(0, "Took a new pfn from free list %i\n", resultPfn);
     return resultPfn;
 }
 
@@ -790,25 +784,25 @@ static struct pte *getNewPageTable() {
     // Reserve a vpn in page table 1 for this purpose.
     int vpn = PAGE_TABLE_LEN - 2;
     while(vpn >= 0 && region1[vpn].valid) {
-        TracePrintf(0, "vpn %i is already used\n", vpn);
+        //TracePrintf(0, "vpn %i is already used\n", vpn);
         vpn--;
     }
     if (vpn < 0) {
         // No enough free virtual pages in region 1.
         return NULL;
     }
-    TracePrintf(0, "Print vpn of new page table %i\n", vpn);
+    //TracePrintf(0, "Print vpn of new page table %i\n", vpn);
     // Otherwise, pte is not valid and we can create a new mapping for a region 0 page table.
     region1[vpn].valid = 1;
     // Get a physical page for this page table.
     int pfn = getFreePage();
     if (pfn == -1) {
-        TracePrintf(0, "No enough free physical memory to complete operation\n");
+        //TracePrintf(0, "No enough free physical memory to complete operation\n");
         return NULL;
     }
     region1[vpn].pfn = pfn;
-    TracePrintf(0, "Print pfn of new page table %i\n", pfn);
-    TracePrintf(0, "Phys addr for new page table is %p\n", (uintptr_t)pfn << PAGESHIFT);
+    //TracePrintf(0, "Print pfn of new page table %i\n", pfn);
+    //TracePrintf(0, "Phys addr for new page table is %p\n", (uintptr_t)pfn << PAGESHIFT);
     region1[vpn].kprot = PROT_READ|PROT_WRITE;
     region1[vpn].uprot = PROT_NONE; 
 
@@ -830,9 +824,9 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
     
     if (curr_page == 508) {
         if (src->valid == 0) {
-            TracePrintf(0, "Src: 508 is invalid\n");
+            //TracePrintf(0, "Src: 508 is invalid\n");
         } else {
-            TracePrintf(0, "Src: 508 is valid\n");
+            //TracePrintf(0, "Src: 508 is valid\n");
         }
     }
     if(!src->valid) {
@@ -843,7 +837,7 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
         dest->uprot = src->uprot;
         int pfn = getFreePage();
         if (pfn == -1) {
-            TracePrintf(0, "No enough free physical memory to complete operation\n");
+            //TracePrintf(0, "No enough free physical memory to complete operation\n");
             return ERROR;
         }
         dest->pfn = pfn;
@@ -856,9 +850,9 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
     }
     if (curr_page == 508) {
         if (dest->valid == 0) {
-            TracePrintf(0, "Des: 508 is invalid\n");
+            //TracePrintf(0, "Des: 508 is invalid\n");
         } else {
-            TracePrintf(0, "Des: 508 is valid\n");
+            //TracePrintf(0, "Des: 508 is valid\n");
         }
     }
     return 0;
@@ -867,20 +861,25 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
 static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
     int curr_page;
     // Make a "deep" copy of the user memory.
+    
+    curr_page = MEM_INVALID_PAGES;
+    int numValid = 0;
+    // Make sure we have enough physical memory for making a deep copy of parent's memory.
+    while (curr_page < (DOWN_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT)) {
+        if(srcProc->page_table0[curr_page].valid)
+            numValid++;
+        curr_page++;
+    }
+    if (numValid > free_ll.count) {
+        printf("Not enough memory for copying the memory image of the parent. Cloning failed.");
+        return ERROR;
+    }
+    
     for (curr_page = MEM_INVALID_PAGES; curr_page < (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page++) {
         // Get a free pfn for this page if needed.
         struct pte *dest = &destProc->page_table0[curr_page];
         struct pte *src = &srcProc->page_table0[curr_page];
-        if (copyPTE(dest, src, curr_page) == ERROR) {
-            TracePrintf(0, "No enough free physical memory to complete operation\n");
-            // Call "terminate process" that will:
-            // 1) "unmap" page_table0 address
-            // 2) free a physical page for this process's page table0
-            // 3) add all valid pages in this page table to a free list.
-            // 4) save exit status and add process to the statusQueue of its parent.
-            // Return context of the 1st process since switch wasn't successful.
-            return -1;
-        }
+        copyPTE(dest, src, curr_page);
     }
     return 0;
 }
@@ -991,7 +990,7 @@ static void delayProcess(pcb* proc, int delay) {
         }
         blockedQ.count++;
     }
-    TracePrintf(0, "Printing the elements of blocked queue:\n");
+    //TracePrintf(0, "Printing the elements of blocked queue:\n");
     //printQueue(blockedQ);
 }
 
@@ -1008,29 +1007,6 @@ static void runNextProcess() {
     ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
 }
 
-static void printQueue(queue q) {
-    int i = 1;
-    pcb *cur = q.head;
-    if (q.count == 0){
-        TracePrintf(0, "Queue is empty\n");
-    }
-    while(cur != NULL) {
-        TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
-        cur = cur->next;
-    }
-}
-
-static void printChildren(queue q) {
-    int i = 1;
-    pcb *cur = q.head;
-    if (q.count == 0){
-        TracePrintf(0, "Queue is empty\n");
-    }
-    while(cur != NULL) {
-        TracePrintf(0, "%i. Process with pid=%i and delayed time %i\n", i++, cur->pid, cur->delay_offset);
-        cur = cur->nextChild;
-    }
-}
 
 static pcb *init_pcb() {
     pcb *newPCB = malloc(sizeof(pcb));
@@ -1083,7 +1059,7 @@ static int KernelUserBrk(ExceptionInfo *info) {
     // addr must be between the process's break and stack pointer.
     // This is a request to enlarge process's heap to "cover" addr.
     int new_gap = ((uintptr_t)(DOWN_TO_PAGE(info->sp) - UP_TO_PAGE(addr)) >> PAGESHIFT);
-    TracePrintf(0, "new gap when malloc was done: %i\n", new_gap);
+    //TracePrintf(0, "new gap when malloc was done: %i\n", new_gap);
     // Check that there is more than one page between process's break and a new stack pointer.
     if (new_gap < 1) {
         return ERROR; 
@@ -1096,7 +1072,7 @@ static int KernelUserBrk(ExceptionInfo *info) {
     int i;
     unsigned int curr_page = (UP_TO_PAGE(active->brk) >> PAGESHIFT) % PAGE_TABLE_LEN;
     for (i = 0; i < count; i++) {
-        TracePrintf(0, "VPN we use for malloc: %i\n", curr_page);
+        //TracePrintf(0, "VPN we use for malloc: %i\n", curr_page);
         (active->page_table0)[curr_page].valid = 1;
         (active->page_table0)[curr_page].kprot = PROT_READ|PROT_WRITE;
         (active->page_table0)[curr_page].uprot = PROT_READ|PROT_WRITE;
@@ -1134,18 +1110,17 @@ static int KernelFork() {
         active->childrenQ->count = 0;
     }
 
-
-    TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
+    //TracePrintf(0, "Created a child with pid %i\n", childPCB->pid);
     if (copyMemoryImage(childPCB, active) == -1) {
-        TracePrintf(0, "Copy memory image failed");
+        unsigned int vpn = ((uintptr_t)childPCB->page_table0 >> PAGESHIFT) % PAGE_TABLE_LEN;
+
+        freePage(&region1[vpn], childPCB->page_table0);
+        free(childPCB);
+        printf("Copy memory in fork failed");
         return ERROR;
     }
     ContextSwitch(cloneContext, &childPCB->ctx, (void *)active, (void *)childPCB);
     if(active->pid == childPCB->pid) {
-        // TracePrintf(0, "Print a blocked queue when a child is running (pid = %i):\n", active->pid);
-        //printQueue(blockedQ);
-        // TracePrintf(0, "Print a ready queue when a child is running (pid = %i):\n", active->pid);
-        //printQueue(readyQ);
         return 0;
     } else {
         // Add a child to the ready queue.
@@ -1153,19 +1128,14 @@ static int KernelFork() {
         // Add a child to the children queue
         childPCB->parent = active;
         addChild(childPCB, active->childrenQ);
-        // TracePrintf(0, "Print a blocked queue when a parent is running (pid = %i):\n", active->pid);
-        // //printQueue(blockedQ);
-        // TracePrintf(0, "Print a ready queue when a parent is running (pid = %i):\n", active->pid);
-        //printQueue(readyQ);
         return childPCB->pid;
     }
 }
 
 static int KernelExec(ExceptionInfo *info) {
     // active already exists and has a page table and other stuff
-    //check the name
+    // check the name
 
-    TracePrintf(0, "About to verify name\n");
     if(stringVerifyRead((char* )info->regs[1])==ERROR) {
         printf("Name passed to execute is invalid\n");
         return ERROR;
@@ -1173,7 +1143,7 @@ static int KernelExec(ExceptionInfo *info) {
 
     char **args = (char **)info->regs[2];
     int i = 0;
-    TracePrintf(0, "About to verify arguments\n");
+    //TracePrintf(0, "About to verify arguments\n");
     while(args[i]!=NULL){
 
         if(stringVerifyRead(args[i])==ERROR) {
@@ -1198,19 +1168,10 @@ static int KernelExec(ExceptionInfo *info) {
 }
 
 static void KernelExit(int status) {
-    // Call "terminate process" that will:
-    // 1) add all valid pages in this page table to a free list.
-    // 2) "unmap" page_table0 address 
-    // 3) free a physical page for this process's page table0
-    // 4) if statusQ != NULL, iterate over all children in StatusQ and free their PCB's
-    // 5) save exit status to this process's PCB (don't free it yet!) 
-    // 6) Go to its parent pcb, and enqueue process's pcb to the statusQueue of its parent.
-    // 7) Context switch (use a terminateSwitch function) to the next ready process in ready queue or idle otherwise
-    // 8) check counts of all queues, if there are no processes left, halt the kernel!!!
     
     active->status = status;
     if(active->parent != NULL && active->parent->waiting) {
-            TracePrintf(0, "Parent is done waiting. It's on readyQ now\n");
+            //TracePrintf(0, "Parent is done waiting. It's on readyQ now\n");
             enqueue(active->parent, &readyQ);
             active->parent->waiting = false;
     }
@@ -1218,18 +1179,13 @@ static void KernelExit(int status) {
     pcb *nextReady = dequeue(&readyQ);
     // Context switch to this process.
     if (nextReady != NULL) {
-        // There is the next non-idle procees that we can switch to!
-        // TracePrintf(0, "Print a blocked queue before context switch:\n");
-        //printQueue(blockedQ);
-        // TracePrintf(0, "Print a ready queue before context switch:\n");
-        //printQueue(readyQ);
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)nextReady);
     } else if (blockedQ.count > 0 || io_queus_count() > 0) {
         // If there are some blocked processes, switch to an idle process!
         ContextSwitch(terminateSwitch, &active->ctx, (void *)active, (void *)&idle_PCB);
     } else {
         // There no more ready/blocked/I/O processes waiting, so we can Halt() an entire kernel.
-        TracePrintf(0, "Idle is the last process running. I am going to halt\n");
+        //TracePrintf(0, "Idle is the last process running. I am going to halt\n");
         Halt();
     }
     
@@ -1258,8 +1214,7 @@ static void addChild(pcb* proc, queue* queue) {
         queue->tail = proc;
     }
     queue->count++;
-    TracePrintf(0, "Print all children after adding (child pid = %i):\n", proc->pid);
-    printChildren(*(active->childrenQ));
+    //TracePrintf(0, "Print all children after adding (child pid = %i):\n", proc->pid);
 }
 
 // Renamed for consistency.
@@ -1301,9 +1256,9 @@ static int removeChild(queue* queue, pcb* elem) {
  * @return On success returns pid and puts status into status
  */
 static int KernelWait(int *status) {
-    TracePrintf(0, "In wait!!!\n");
+    //TracePrintf(0, "In wait!!!\n");
     if (active->statusQ == NULL) {
-        TracePrintf(0, "No status queue initialized!\n");
+        //TracePrintf(0, "No status queue initialized!\n");
         return ERROR;
     }
     if(checkWritePtr(status)==ERROR) {
@@ -1311,7 +1266,7 @@ static int KernelWait(int *status) {
     }
 
     if(active->statusQ->count == 0 && active->childrenQ->count == 0) {
-        TracePrintf(0, "Nothing to wait on\n");
+        //TracePrintf(0, "Nothing to wait on\n");
         return ERROR;
     }
     else if(active->statusQ->count > 0) {
@@ -1323,7 +1278,7 @@ static int KernelWait(int *status) {
     }
     else {
         active->waiting = true;
-        TracePrintf(0, "Process %i is waiting for a child to terminate\n", active->pid);
+        //TracePrintf(0, "Process %i is waiting for a child to terminate\n", active->pid);
         runNextProcess();//we will come back once our child is free
         //here, we know there is a child to reap
         pcb *deadChild = dequeue(active->statusQ);
@@ -1340,7 +1295,7 @@ static int KernelWait(int *status) {
 static int KernelRead(ExceptionInfo *info) {
     // Check all params (create separate function)
 
-    //TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
+    ////TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
     
     
     int term = info->regs[1];
@@ -1359,35 +1314,35 @@ static int KernelRead(ExceptionInfo *info) {
     int ret_len = 0;
     while(true) {
         if (terminals[term].read_data != NULL) {     
-            TracePrintf(0, "Start copying for process %i\n", active->pid);
+            //TracePrintf(0, "Start copying for process %i\n", active->pid);
             ret_len = MIN(len, terminals[term].read_data->len);
-            TracePrintf(0, "1192\n");
+            //TracePrintf(0, "1192\n");
             memcpy(buf, terminals[term].read_data->content, ret_len);
-            TracePrintf(0, "1194\n");
-            TracePrintf(0,"len %i\n", terminals[term].read_data->len);
-            TracePrintf(0,"ret_len %i\n", ret_len);
+            //TracePrintf(0, "1194\n");
+            //TracePrintf(0,"len %i\n", terminals[term].read_data->len);
+            //TracePrintf(0,"ret_len %i\n", ret_len);
             if (ret_len == terminals[term].read_data->len) {
                 // Can free this line struct
-                 TracePrintf(0,"About to free\n");
+                 //TracePrintf(0,"About to free\n");
                 free(removeReadData(&terminals[term]));
-                TracePrintf(0, "1197\n");
+                //TracePrintf(0, "1197\n");
             } else {
                 // Move the pointer for contents
                 terminals[term].read_data->content += ret_len;
-                TracePrintf(0, "1201\n");
+                //TracePrintf(0, "1201\n");
                 
                 // Decrement available length
                 terminals[term].read_data->len -= ret_len;
-                TracePrintf(0, "1202\n");
+                //TracePrintf(0, "1202\n");
             }
             break;
         } else {
-            TracePrintf(0, "I'm blocking for process %i\n", active->pid);
+            //TracePrintf(0, "I'm blocking for process %i\n", active->pid);
             active->numToRead = len;
             // Block a reader until TtyReceive interrupt happens.
             enqueue(active, &terminals[term].readQ);
             runNextProcess();
-            TracePrintf(0, "Process %i returned to KernelRead\n", active->pid);
+            //TracePrintf(0, "Process %i returned to KernelRead\n", active->pid);
         }
     }
     return ret_len;
@@ -1440,14 +1395,14 @@ static line *removeReadData(term *t) {
     }
     line *ret_val = t->read_data;
     t->read_data = t->read_data->next;
-    TracePrintf(0, "I'm about to free the init_prt\n");
+    //TracePrintf(0, "I'm about to free the init_prt\n");
     if (ret_val->init_ptr == NULL) {
-        TracePrintf(0, "NULLLLL\n");
+        //TracePrintf(0, "NULLLLL\n");
     } else {
 
     }
     free(ret_val->init_ptr);
-    TracePrintf(0, "Free success in removeReadData\n");
+    //TracePrintf(0, "Free success in removeReadData\n");
     return ret_val;
 }
 // Return the write data.
@@ -1463,9 +1418,9 @@ static line *removeWriteData(term *t) {
 static int stringVerifyRead(char *str) {
     //verify that each 
     char* curr_char = str;
-    //TracePrintf(0, "I'm verfying\n");
+    ////TracePrintf(0, "I'm verfying\n");
     while(*curr_char != '\0') {
-        //TracePrintf(0, "Start verify iteration\n");
+        ////TracePrintf(0, "Start verify iteration\n");
         //check if in processes memory
         if((uintptr_t)curr_char >= VMEM_0_LIMIT || (uintptr_t)curr_char < MEM_INVALID_SIZE) {
             return ERROR;
@@ -1485,21 +1440,21 @@ static int stringVerifyRead(char *str) {
 }
 
 static int checkWritePtr(int *statusPtr) {
-    //TracePrintf(0, "Start checking writePtr\n");
+    ////TracePrintf(0, "Start checking writePtr\n");
     if((uintptr_t)statusPtr >= VMEM_0_LIMIT || (uintptr_t)statusPtr < MEM_INVALID_SIZE) {
-            TracePrintf(0, "Return ERROR not in region 0\n");
+            //TracePrintf(0, "Return ERROR not in region 0\n");
             return ERROR;
     }
 
     unsigned int vpn = (uintptr_t)statusPtr >> PAGESHIFT;
 
     if(active->page_table0[vpn].valid != 1) {
-            TracePrintf(0, "Return ERROR because statusPtr invalid\n");
+            //TracePrintf(0, "Return ERROR because statusPtr invalid\n");
             return ERROR;
     } 
-    //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+    ////TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
     if((active->page_table0[vpn].kprot & PROT_WRITE) != PROT_WRITE) {//check if kernel can read here
-            TracePrintf(0, "Return ERROR because wrong protection\n");
+            //TracePrintf(0, "Return ERROR because wrong protection\n");
             return ERROR;
     }
     return 0;
@@ -1510,24 +1465,24 @@ static int checkBufKernelRead(int len, void* buf) {
     while(len > 0) {
         void* curr_ptr = buf - len - 1;
         if((uintptr_t)curr_ptr >= VMEM_0_LIMIT || (uintptr_t)curr_ptr < MEM_INVALID_SIZE) {
-            TracePrintf(0, "Return ERROR not in region 0\n");
+            //TracePrintf(0, "Return ERROR not in region 0\n");
             return ERROR;
         }   
 
         unsigned int vpn = (uintptr_t)curr_ptr >> PAGESHIFT;
 
         if(active->page_table0[vpn].valid != 1) {
-            TracePrintf(0, "Return ERROR because buf vpn invalid\n");
+            //TracePrintf(0, "Return ERROR because buf vpn invalid\n");
             return ERROR;
         } 
-        //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+        ////TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
         if((active->page_table0[vpn].kprot & PROT_WRITE) != PROT_WRITE) {//check if kernel can write into the buffer
-            TracePrintf(0, "Return ERROR because wrong protection for buf\n");
+            //TracePrintf(0, "Return ERROR because wrong protection for buf\n");
             return ERROR;
         }
 
         if((active->page_table0[vpn].uprot & PROT_READ) != PROT_READ) {//check if user can read from the buffer.
-            TracePrintf(0, "Return ERROR because wrong protection for buf\n");
+            //TracePrintf(0, "Return ERROR because wrong protection for buf\n");
             return ERROR;
         }
         len--;
@@ -1542,19 +1497,20 @@ static int checkBufKernelWrite(int len, void* buf) {
     while(len > 0) {
         void* curr_ptr = buf - len - 1;
         if((uintptr_t)curr_ptr >= VMEM_0_LIMIT || (uintptr_t)curr_ptr < MEM_INVALID_SIZE) {
-            TracePrintf(0, "Return ERROR not in region 0\n");
+            printf("buf is not in region 0 for for kernelWrite");
             return ERROR;
         }   
 
         unsigned int vpn = (uintptr_t)curr_ptr >> PAGESHIFT;
 
         if(active->page_table0[vpn].valid != 1) {
-            TracePrintf(0, "Return ERROR because buf vpn invalid\n");
+            //TracePrintf(0, "Return ERROR because buf vpn invalid\n");
             return ERROR;
         } 
-        //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+        ////TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
         if((active->page_table0[vpn].kprot & PROT_READ) != PROT_READ) {//check if kernel can write from the buffer
-            TracePrintf(0, "Return ERROR because wrong protection for kprot\n");
+            //TracePrintf(0, "Return ERROR because wrong protection for kprot\n");
+
             return ERROR;
         }
 
