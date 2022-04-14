@@ -14,14 +14,45 @@ Kernel   Src: 508 is valid
 Kernel   Des: 508 is valid
 Kernel   Doing a context switch from process 0 to process 1!
 Kernel   Completed a context switch from process 0 to process 1!
-Kernel   LoadProgram 'blowstack', args 0x1fffc0
+Kernel   LoadProgram 'exectest', args 0x1fffb0
+Kernel   LoadProgram: LoadInfo status 0
+Kernel   text_size 0x7000, data_size 0x128, bss_size 0x3090
+Kernel   entry 0x10100
+Kernel   LoadProgram: size 21, argcount 3
+Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
+Kernel   I'm done with load
+Kernel   About to verify name
+Kernel   I'm verfying
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   About to verify arguments
+Kernel   I'm verfying
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   Start verify iteration
+Kernel   I'm verfying
+Kernel   Start verify iteration
+Kernel   LoadProgram 'blowstack', args 0x1fafb8
 Kernel   LoadProgram: LoadInfo status 0
 Kernel   text_size 0x7000, data_size 0x128, bss_size 0x3090
 Kernel   entry 0x10100
 Kernel   LoadProgram: size 12, argcount 2
 Kernel   LoadProgram: text_npg 7, data_bss_npg 4, stack_npg 1
 Kernel   I'm done with load
-Kernel   I'm done with load and aboue to exit Kernel startUser     blowstack initially calling foo depth 5
+User     blowstack initially calling foo depth 5
 Kernel   trap_memory_handler!
 Kernel   Requested address: 0x1eadec
 Kernel   Current min_sp: 0x1fafc0
