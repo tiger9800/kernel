@@ -178,7 +178,6 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         TracePrintf(0, "No enough physical or virtual memory to create a process\n");
         Halt();
     }
-
     // Save current context to the saved context of process to be run after KernelStart()
     ContextSwitch(cloneContext, &initPCB->ctx, (void *)&idle_PCB, (void *)initPCB);
     // Switch from idle process to init.
@@ -206,6 +205,7 @@ SavedContext  *cloneContext(SavedContext *ctxp, void *p1, void *p2) {
     (void)ctxp;  
     (void)p1;
     int curr_page;
+
     // Make a "deep" copy of the kernel stack.
     for (curr_page = (DOWN_TO_PAGE(KERNEL_STACK_BASE) >> PAGESHIFT); curr_page < (DOWN_TO_PAGE(KERNEL_STACK_LIMIT) >> PAGESHIFT); curr_page++) {
         // Get a free pfn for this page.
