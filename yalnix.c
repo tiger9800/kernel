@@ -33,6 +33,8 @@ term* terminals;
 // Create input buffer (for more efficiency).
 char* input_buf;
 
+term t1[20];
+
 // PID of the next process to be created.
 int currPID = 1;
 
@@ -253,13 +255,15 @@ SavedContext *terminateSwitch(SavedContext *ctxp, void *p1, void *p2) {
     int currPage;
     for(currPage = MEM_INVALID_PAGES; currPage < PAGE_TABLE_LEN; currPage++) {
         if(active->page_table0[currPage].valid) {
-            freePage(active->page_table0 + currPage, 0);
+            freePage(active->page_table0 + currPage, (void *)(((uintptr_t)currPage) << PAGESHIFT));
         }
     } 
     struct pte *region0_addr = active->page_table0;
     unsigned int idx = ((uintptr_t)region0_addr >> PAGESHIFT) % PAGE_TABLE_LEN;
-    freePage(&region1[idx], 1);
-    TracePrintf(0, "Free pages\n");
+    TracePrintf(0, "Before freeing a page table\n");
+    TracePrintf(0, "Print its vpn: %i\n", idx);
+    TracePrintf(0, "Print its virt_address: %p\n", (idx << PAGESHIFT) + VMEM_1_BASE);
+    freePage(&region1[idx], region0_addr);
     TracePrintf(0, "Free pages2\n");
     // Working with status queue:
     // Free pcbs of children that was not reaped by wait.
@@ -545,7 +549,7 @@ void trap_memory_handler(ExceptionInfo *info) {
 
 void trap_math_handler(ExceptionInfo *info) {
     // same as in trap_illegal (look at info->code for better description of error)
-    // (void)info;
+    (void)info;
     // TracePrintf(0, "trap_math_handler");
 
     
@@ -596,7 +600,7 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
 int SetKernelBrk(void *addr) { 
     if(!vm_enabled) {
         if(addr > (void *)VMEM_LIMIT) {
-           return -1;//before exiting kernelstart we request invalid memory
+           return -1; //before exiting kernelstart we request invalid memory
         }
         currentBrk = addr;
     } else {
@@ -679,14 +683,12 @@ static void initFreePages(int start_addr, int end_addr) {
 }
 
 // Frees the pte of the page table.
-void freePage(struct pte* newPte, int region) {
+void freePage(struct pte* newPte, void *vir_addr) {
     
     addPage(newPte->pfn);  
     newPte->valid = 0;
     // Do TLB flush for this specific pte.
-    int vpn = (((uintptr_t)newPte & PAGEOFFSET) / sizeof(struct pte)) + region*PAGE_TABLE_LEN;
-    
-    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal) (vpn << PAGESHIFT));
+    WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)vir_addr);
 }
 
 // Adds all invalid pages to a free list of pages.
@@ -1239,7 +1241,13 @@ static int removeChild(queue* queue, pcb* elem) {
  * @return On success returns pid and puts status into status
  */
 static int KernelWait(int *status) {
+    TracePrintf(0, "In wait!!!\n");
+    if (active->statusQ == NULL) {
+        TracePrintf(0, "No status queue initialized!\n");
+        return ERROR;
+    }
     if(active->statusQ->count == 0 && active->childrenQ->count == 0) {
+        TracePrintf(0, "Nothing to wait on\n");
         return ERROR;
     }
     else if(active->statusQ->count > 0) {
