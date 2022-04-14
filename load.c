@@ -184,12 +184,12 @@ LoadProgram(char *name, char **args, ExceptionInfo* info, struct pte* region0, s
     // >>>> memory page indicated by that PTE's pfn field.  Set all
     // >>>> of these PTEs to be no longer valid.
 
-    for(i = VMEM_0_BASE; i < KERNEL_STACK_BASE >> PAGESHIFT; i++) {
+    for(i = VMEM_0_BASE >> PAGESHIFT; i < KERNEL_STACK_BASE >> PAGESHIFT; i++) {
         // If a page is valid, free it.
         if(region0[i].valid == 1) {
             // Add to the free list, by making it point to free list head.
             // Set a valid bit to 0.
-            freePage(&region0[i], 0);  
+            freePage(&region0[i], (void*)((uintptr_t)i << PAGESHIFT));  
         }
     }
 
