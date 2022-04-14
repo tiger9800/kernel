@@ -97,7 +97,12 @@ static int KernelWait(int *status);
 static int KernelRead(ExceptionInfo *info);
 static int KernelWrite(ExceptionInfo *info);
 
+
+
 static int stringVerifyRead(char *str);
+static int checkWritePtr(int *statusPtr);
+static int checkBufKernelRead(int len, void* buf);
+static int checkBufKernelWrite(int len, void* buf);
 
 void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, char ** cmd_args) {
     (void)cmd_args;
@@ -353,7 +358,7 @@ void trap_kernel_handler(ExceptionInfo *info) {
             KernelExit(info->regs[1]);
             break;
         case YALNIX_WAIT:
-            info->regs[0] = KernelWait((int*) info->regs[1]);
+            info->regs[0] = KernelWait((int*)info->regs[1]);
             break;
         case YALNIX_GETPID:
             info->regs[0] = KernelGetPid();
@@ -1200,7 +1205,7 @@ static void KernelExit(int status) {
     // 6) Go to its parent pcb, and enqueue process's pcb to the statusQueue of its parent.
     // 7) Context switch (use a terminateSwitch function) to the next ready process in ready queue or idle otherwise
     // 8) check counts of all queues, if there are no processes left, halt the kernel!!!
-
+    
     active->status = status;
     if(active->parent != NULL && active->parent->waiting) {
             TracePrintf(0, "Parent is done waiting. It's on readyQ now\n");
@@ -1294,6 +1299,10 @@ static int removeChild(queue* queue, pcb* elem) {
  * @return On success returns pid and puts status into status
  */
 static int KernelWait(int *status) {
+    if(checkWritePtr(status)==ERROR) {
+        return ERROR;
+    }
+
     if(active->statusQ->count == 0 && active->childrenQ->count == 0) {
         return ERROR;
     }
@@ -1318,18 +1327,27 @@ static int KernelWait(int *status) {
 
 }
 
+
+
 static int KernelRead(ExceptionInfo *info) {
     // Check all params (create separate function)
-    TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
+
+    //TracePrintf(0, "I'm in KernelRead for process %i\n", active->pid);
+    
+    
     int term = info->regs[1];
     if (term < 0 || term >= NUM_TERMINALS) {
         return ERROR;
     }
     void *buf = (void *)info->regs[2];
+    //we need to check the buf and see if both kernel and user can write in it
     int len = info->regs[3];
     if (len < 0) return ERROR;
     if (len == 0) return 0;
     // Check buf!!!
+    if(checkBufKernelRead(len, buf) == ERROR) {
+        return ERROR;
+    }
     int ret_len = 0;
     while(true) {
         if (terminals[term].read_data != NULL) {     
@@ -1377,6 +1395,11 @@ static int KernelWrite(ExceptionInfo *info) {
     int len = info->regs[3];
     if (len < 0) return ERROR;
     if (len == 0) return 0;
+
+    if(checkBufKernelWrite(len, buf) == ERROR) {
+        return ERROR;
+    }
+
     line *nextLine = malloc(sizeof(line));
     nextLine->init_ptr = malloc(sizeof(char)*len);
     nextLine->content = nextLine->init_ptr;
@@ -1432,9 +1455,9 @@ static line *removeWriteData(term *t) {
 static int stringVerifyRead(char *str) {
     //verify that each 
     char* curr_char = str;
-    TracePrintf(0, "I'm verfying\n");
+    //TracePrintf(0, "I'm verfying\n");
     while(*curr_char != '\0') {
-        TracePrintf(0, "Start verify iteration\n");
+        //TracePrintf(0, "Start verify iteration\n");
         //check if in processes memory
         if((uintptr_t)curr_char >= VMEM_0_LIMIT || (uintptr_t)curr_char < MEM_INVALID_SIZE) {
             return ERROR;
@@ -1445,11 +1468,91 @@ static int stringVerifyRead(char *str) {
         if(active->page_table0[vpn].valid != 1) {
             return ERROR;
         } 
-        if((active->page_table0[vpn].kprot & PROT_READ) != 1) {//check if kernel can read here
+        if((active->page_table0[vpn].kprot & PROT_READ) != PROT_READ || (active->page_table0[vpn].uprot & PROT_READ) != PROT_READ) {//check if kernel can read here
             return ERROR;
         }
         curr_char++;
     }
+    return 0;
+}
+
+static int checkWritePtr(int *statusPtr) {
+    //TracePrintf(0, "Start checking writePtr\n");
+    if((uintptr_t)statusPtr >= VMEM_0_LIMIT || (uintptr_t)statusPtr < MEM_INVALID_SIZE) {
+            TracePrintf(0, "Return ERROR not in region 0\n");
+            return ERROR;
+    }
+
+    unsigned int vpn = (uintptr_t)statusPtr >> PAGESHIFT;
+
+    if(active->page_table0[vpn].valid != 1) {
+            TracePrintf(0, "Return ERROR because statusPtr invalid\n");
+            return ERROR;
+    } 
+    //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+    if((active->page_table0[vpn].kprot & PROT_WRITE) != PROT_WRITE) {//check if kernel can read here
+            TracePrintf(0, "Return ERROR because wrong protection\n");
+            return ERROR;
+    }
+    return 0;
+
+}
+
+static int checkBufKernelRead(int len, void* buf) {
+    while(len > 0) {
+        void* curr_ptr = buf - len - 1;
+        if((uintptr_t)curr_ptr >= VMEM_0_LIMIT || (uintptr_t)curr_ptr < MEM_INVALID_SIZE) {
+            TracePrintf(0, "Return ERROR not in region 0\n");
+            return ERROR;
+        }   
+
+        unsigned int vpn = (uintptr_t)curr_ptr >> PAGESHIFT;
+
+        if(active->page_table0[vpn].valid != 1) {
+            TracePrintf(0, "Return ERROR because buf vpn invalid\n");
+            return ERROR;
+        } 
+        //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+        if((active->page_table0[vpn].kprot & PROT_WRITE) != PROT_WRITE) {//check if kernel can write into the buffer
+            TracePrintf(0, "Return ERROR because wrong protection for buf\n");
+            return ERROR;
+        }
+
+        if((active->page_table0[vpn].uprot & PROT_READ) != PROT_READ) {//check if user can read from the buffer.
+            TracePrintf(0, "Return ERROR because wrong protection for buf\n");
+            return ERROR;
+        }
+        len--;
+    }
+        
+    return 0;
+    
+}
+
+static int checkBufKernelWrite(int len, void* buf) { 
+
+    while(len > 0) {
+        void* curr_ptr = buf - len - 1;
+        if((uintptr_t)curr_ptr >= VMEM_0_LIMIT || (uintptr_t)curr_ptr < MEM_INVALID_SIZE) {
+            TracePrintf(0, "Return ERROR not in region 0\n");
+            return ERROR;
+        }   
+
+        unsigned int vpn = (uintptr_t)curr_ptr >> PAGESHIFT;
+
+        if(active->page_table0[vpn].valid != 1) {
+            TracePrintf(0, "Return ERROR because buf vpn invalid\n");
+            return ERROR;
+        } 
+        //TracePrintf(0, "Current protection %i\n", active->page_table0[vpn].kprot);
+        if((active->page_table0[vpn].kprot & PROT_READ) != PROT_READ) {//check if kernel can write from the buffer
+            TracePrintf(0, "Return ERROR because wrong protection for kprot\n");
+            return ERROR;
+        }
+
+        len--;
+    }
+        
     return 0;
 }
 
