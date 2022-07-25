@@ -107,7 +107,7 @@ static int checkBufKernelWrite(int len, void* buf);
 /**
  * @brief Starts up the kernel
  * 
- * @param info registers put  on 
+ * @param info registers put
  * @param pmem_size 
  * @param orig_brk 
  * @param cmd_args 
@@ -201,9 +201,13 @@ void KernelStart(ExceptionInfo * info, unsigned int pmem_size, void * orig_brk, 
         // Where init process will resume after switchProcesses.
         // Init loads its code.
         if (cmd_args[0] == NULL) {
-            LoadProgram("init", cmd_args, info, initPCB->page_table0, free_ll, initPCB);
+            if(LoadProgram("init", cmd_args, info, initPCB->page_table0, free_ll, initPCB) != 0) {
+                Halt();
+            }
         } else {
-            LoadProgram(cmd_args[0], cmd_args, info, initPCB->page_table0, free_ll, initPCB);
+            if(LoadProgram(cmd_args[0], cmd_args, info, initPCB->page_table0, free_ll, initPCB)!= 0) {
+                Halt();
+            }
         }
     }
     TracePrintf(0, "I'm done with kernel start");
@@ -613,9 +617,11 @@ void trap_tty_receive_handler(ExceptionInfo *info) {
     int len = TtyReceive(term, input_buf, TERMINAL_MAX_LINE);
     //TracePrintf(0, "Called TtyReceive and got len %i\n", len);
     line *nextLine = malloc(sizeof(line));
-    nextLine->init_ptr = malloc(sizeof(char)*len);
-    nextLine->content = nextLine->init_ptr;
-    memcpy(nextLine->content, input_buf, len);
+    if(len != 0) {
+        nextLine->init_ptr = malloc(sizeof(char)*len);
+        nextLine->content = nextLine->init_ptr;
+        memcpy(nextLine->content, input_buf, len);
+    }
     nextLine->len = len;
     //TracePrintf(0, "added data to the buffer\n");
     terminals[term].read_data = addData(nextLine, terminals[term].read_data);
@@ -726,7 +732,10 @@ void freePage(struct pte* newPte, void *vir_addr) {
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)vir_addr);
 }
 
-// Adds all invalid pages to a free list of pages.
+/**
+ * @brief After VM is enabled it adds the pages in the range MEM_INVALID_PAGE.
+ * 
+ */
 void addInvalidPages() {
     int pfn;
     for (pfn = PMEM_BASE; pfn < MEM_INVALID_PAGES; pfn++) {
@@ -734,7 +743,11 @@ void addInvalidPages() {
     }
 }
 
-// Adds a physical page to a free list of pages.
+/**
+ * @brief A dd a page to to the LL of free pages. 
+ * 
+ * @param pfn 
+ */
 void addPage(int pfn) {
     // //TracePrintf(0, "I'm in addPage and pfn is %i\n", pfn);
     // Get a virtual address that maps to desired pfn.
@@ -747,7 +760,11 @@ void addPage(int pfn) {
     unReservePage();  
 }
 
-// Removes a free page from the list of fre pages.
+/**
+ * @brief get a page from the LL of free pages.
+ * 
+ * @return int 
+ */
 int getFreePage() {
     if (free_ll.count == 0) {
         //TracePrintf(0, "Not enough free physical pages in getFreePage()\n");
@@ -764,6 +781,12 @@ int getFreePage() {
     return resultPfn;
 }
 
+/**
+ * @brief To gain acces to an unmapped physical address, we need to map it.
+ * 
+ * @param pfn 
+ * @return uintptr_t 
+ */
 static uintptr_t reservePage(int pfn) {
     region1[PAGE_TABLE_LEN - 1].valid = 1;
     region1[PAGE_TABLE_LEN - 1].pfn = pfn;
@@ -772,14 +795,20 @@ static uintptr_t reservePage(int pfn) {
     return (uintptr_t)(VMEM_1_LIMIT - PAGESIZE);
 }
 
+/**
+ * @brief Unmpa a temporarily mapped address.
+ * 
+ */
 static void unReservePage() {
     WriteRegister(REG_TLB_FLUSH, (RCS421RegVal)(VMEM_1_LIMIT - PAGESIZE));
     region1[PAGE_TABLE_LEN - 1].valid = 0;
 }
 
-/*
-    Return virtual address of a new page table
-*/
+/**
+ * @brief Return a new page table.
+ * 
+ * @return struct pte* 
+ */
 static struct pte *getNewPageTable() {
     // Reserve a vpn in page table 1 for this purpose.
     int vpn = PAGE_TABLE_LEN - 2;
@@ -820,6 +849,15 @@ static struct pte *getNewPageTable() {
     return pt0_vrt_addr;
 }
 
+
+/**
+ * @brief Copy an individual page table entry.
+ * 
+ * @param dest 
+ * @param src 
+ * @param curr_page 
+ * @return int 
+ */
 static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
     
     if (curr_page == 508) {
@@ -858,6 +896,13 @@ static int copyPTE(struct pte* dest, struct pte* src, int curr_page) {
     return 0;
 }
 
+/**
+ * @brief Copy every valid page in region0 excoet the kernel. Effectively cloning the processes.
+ * 
+ * @param destProc 
+ * @param srcProc 
+ * @return int 
+ */
 static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
     int curr_page;
     // Make a "deep" copy of the user memory.
@@ -885,6 +930,12 @@ static int copyMemoryImage(pcb *destProc, pcb *srcProc) {
 }
 
 
+/**
+ * @brief Returns physical address of a page table.
+ * 
+ * @param proc 
+ * @return void* 
+ */
 void * find_PT0_physical_addr(pcb *proc) {
     struct pte *pt0_virtual_addr = proc->page_table0;
     if (proc->pid == 0) {
@@ -1007,7 +1058,11 @@ static void runNextProcess() {
     ContextSwitch(switchProcesses, &active->ctx, (void *)active, (void *)nextReady);
 }
 
-
+/**
+ * @brief Creates and initalize new pcb.
+ * 
+ * @return pcb* 
+ */
 static pcb *init_pcb() {
     pcb *newPCB = malloc(sizeof(pcb));
     struct pte *newPt0 = getNewPageTable();
@@ -1031,10 +1086,21 @@ static pcb *init_pcb() {
  *  Helper functions for kernel calls.
  */
 
+/**
+ * @brief Returns pid of the currently active process.
+ * 
+ * @return int pid.
+ */
 static int KernelGetPid() {
     return active->pid;
 }
 
+/**
+ * @brief Delays the current process for the number of ticks clock_ticks.
+ * 
+ * @param clock_ticks 
+ * @return int 
+ */
 static int KernelDelay(int clock_ticks) {
     if (clock_ticks < 0) {
         return ERROR;
@@ -1050,6 +1116,12 @@ static int KernelDelay(int clock_ticks) {
     }
 }
 
+/**
+ * @brief Extends KernelUserBrk if possible.
+ * 
+ * @param info 
+ * @return int 
+ */
 static int KernelUserBrk(ExceptionInfo *info) {
     (void)info;
     void *addr = (void *)info->regs[1];
@@ -1084,7 +1156,7 @@ static int KernelUserBrk(ExceptionInfo *info) {
 }
 
 /**
- * @brief Kernel call for fork.
+ * @brief Fork; create a new child if possible.
  * 
  */
 static int KernelFork() {
@@ -1132,6 +1204,13 @@ static int KernelFork() {
     }
 }
 
+
+/**
+ * @brief Kernel call for Exec().
+ * 
+ * @param info 
+ * @return int 
+ */
 static int KernelExec(ExceptionInfo *info) {
     // active already exists and has a page table and other stuff
     // check the name
@@ -1167,6 +1246,11 @@ static int KernelExec(ExceptionInfo *info) {
 
 }
 
+/**
+ * @brief Kernel call for Exit. 
+ * 
+ * @param status 
+ */
 static void KernelExit(int status) {
     
     active->status = status;
@@ -1191,6 +1275,11 @@ static void KernelExit(int status) {
     
 }
 
+/**
+ * @brief Get counts for IO queues.
+ * 
+ * @return int 
+ */
 static int io_queus_count() {
     int i;
     int count = 0;
@@ -1201,6 +1290,12 @@ static int io_queus_count() {
     return count;
 }
 
+/**
+ * @brief Add child to the parent pcb.
+ * 
+ * @param proc 
+ * @param queue 
+ */
 static void addChild(pcb* proc, queue* queue) {
     proc->nextChild = NULL;
     if(queue->count == 0) {
@@ -1217,7 +1312,13 @@ static void addChild(pcb* proc, queue* queue) {
     //TracePrintf(0, "Print all children after adding (child pid = %i):\n", proc->pid);
 }
 
-// Renamed for consistency.
+/**
+ * @brief Remove a particular child from queu when it exits.
+ * 
+ * @param queue 
+ * @param elem 
+ * @return int 
+ */
 static int removeChild(queue* queue, pcb* elem) {
     pcb* currElem = queue->head;
     pcb* prevElem = NULL;
@@ -1372,7 +1473,7 @@ static int KernelWrite(ExceptionInfo *info) {
     TtyTransmit(term, nextLine->content, len);
     enqueue(active, &terminals[term].writeQ);
     runNextProcess();
-    return 0;
+    return len;
 }
 // Returns a new/old head.
 static line *addData(line *elem, line *head) {
@@ -1519,5 +1620,4 @@ static int checkBufKernelWrite(int len, void* buf) {
         
     return 0;
 }
-
 
